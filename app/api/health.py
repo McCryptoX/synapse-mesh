@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Request, Response, Query
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, FileResponse
 from pathlib import Path
+from typing import Optional
 from app.config import settings
 from app.database import get_db_connection
 
@@ -139,36 +140,39 @@ async def datenschutz_page():
 
 
 @router.get("/", tags=["System"])
-async def root(request: Request):
-    accept = request.headers.get("accept", "")
+async def root(request: Request, format: Optional[str] = Query(None)):
+    accept = request.headers.get("accept", "").lower()
     
-    # Return HTML if requested by browser
-    if "text/html" in accept and INDEX_HTML_PATH.exists():
+    # Return JSON ONLY if explicitly asked via query param ?format=json or pure Accept: application/json without text/html
+    if format == "json" or ("application/json" in accept and "text/html" not in accept and "*/*" not in accept):
+        return {
+            "message": "Welcome to Synapse-Mesh (Projekt Exocortex) - CI/CD for AI Knowledge",
+            "axiom": "Synapse soll nicht versuchen, von KIs 'gekannt' zu werden. Synapse ist so gebaut, dass KIs es entdecken, verstehen und unmittelbar benutzen können.",
+            "protocolVersion": settings.mcp_protocol_version,
+            "version": settings.app_version,
+            "discovery": {
+                "mcp": "/.well-known/mcp.json",
+                "agent": "/.well-known/agent.json",
+                "sitemap": "/sitemap.xml",
+                "robots": "/robots.txt",
+                "favicon": "/favicon.svg",
+                "ogImage": "/og-image.png"
+            },
+            "endpoints": {
+                "mcpCanonical": settings.canonical_mcp_url,
+                "verificationArchitecture": "/verification",
+                "search": "/api/v1/recipes/search",
+                "submit": "/api/v1/recipes/submit",
+                "docs": "/docs",
+                "openapi": "/openapi.json",
+                "impressum": "/impressum",
+                "datenschutz": "/datenschutz"
+            }
+        }
+
+    # Default to HTML for all browsers and social crawlers (WhatsApp, Telegram, Discord, Facebook, Googlebot, etc.)
+    if INDEX_HTML_PATH.exists():
         with open(INDEX_HTML_PATH, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
             
-    # Default JSON manifest for API / Agents
-    return {
-        "message": "Welcome to Synapse-Mesh (Projekt Exocortex) - CI/CD for AI Knowledge",
-        "axiom": "Synapse soll nicht versuchen, von KIs 'gekannt' zu werden. Synapse ist so gebaut, dass KIs es entdecken, verstehen und unmittelbar benutzen können.",
-        "protocolVersion": settings.mcp_protocol_version,
-        "version": settings.app_version,
-        "discovery": {
-            "mcp": "/.well-known/mcp.json",
-            "agent": "/.well-known/agent.json",
-            "sitemap": "/sitemap.xml",
-            "robots": "/robots.txt",
-            "favicon": "/favicon.svg",
-            "ogImage": "/og-image.png"
-        },
-        "endpoints": {
-            "mcpCanonical": settings.canonical_mcp_url,
-            "verificationArchitecture": "/verification",
-            "search": "/api/v1/recipes/search",
-            "submit": "/api/v1/recipes/submit",
-            "docs": "/docs",
-            "openapi": "/openapi.json",
-            "impressum": "/impressum",
-            "datenschutz": "/datenschutz"
-        }
-    }
+    return HTMLResponse("<h1>Synapse-Mesh</h1>")
