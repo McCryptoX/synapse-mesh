@@ -77,17 +77,21 @@ async def get_recipe_stats():
 async def search_recipes(req: RecipeSearchRequest):
     """Search for verified solutions given an error signature, runtime, and optional package versions."""
     clean_error = ZeroPiiSanitizer.sanitize_text(req.errorSignature.strip())
+    keywords = [w.lower() for w in clean_error.split() if len(w) > 2]
     
-    query = """
-        SELECT * FROM recipes 
-        WHERE confidence_score >= ?
-    """
-    params = [req.minConfidence]
+    query = "SELECT * FROM recipes WHERE confidence_score >= ?"
+    params: List[Any] = [req.minConfidence]
     
     if req.runtime:
         query += " AND runtime = ?"
         params.append(req.runtime.lower())
         
+    if keywords:
+        kw_clauses = " OR ".join(["(error_signature LIKE ? OR problem_json LIKE ?)" for _ in keywords])
+        query += f" AND ({kw_clauses})"
+        for k in keywords:
+            params.extend([f"%{k}%", f"%{k}%"])
+            
     query += " ORDER BY confidence_score DESC, updated_at DESC LIMIT ?"
     params.append(req.limit)
     
@@ -97,29 +101,19 @@ async def search_recipes(req: RecipeSearchRequest):
         rows = await cursor.fetchall()
         
         results = []
-        keywords = [w.lower() for w in clean_error.split() if len(w) > 2]
-        
         for row in rows:
             prob = json.loads(row["problem_json"])
             sol = json.loads(row["solution_json"])
             repro = json.loads(row["reproduction_json"])
             evi = json.loads(row["evidence_json"])
             
-            recipe = VerifiedRecipe(
+            results.append(VerifiedRecipe(
                 id=row["id"],
                 problem=ProblemDefinition(**prob),
                 solution=SolutionDefinition(**sol),
                 reproduction=ReproductionDefinition(**repro),
                 evidence=EvidenceDefinition(**evi)
-            )
-            
-            match = False
-            target_text = f"{prob.get('errorSignature', '')} {prob.get('description', '')} {row['runtime']}".lower()
-            if not keywords or any(k in target_text for k in keywords):
-                match = True
-                
-            if match:
-                results.append(recipe)
+            ))
                 
         return results
     finally:

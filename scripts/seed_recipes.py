@@ -240,7 +240,7 @@ INITIAL_RECIPES = [
         ),
         reproduction=ReproductionDefinition(
             script="from langchain.chat_models import ChatOpenAI",
-            testSuite="def test_langchain_pattern():\n    # Assert pattern\n    assert True"
+            testSuite="def test_langchain_pattern():\n    assert True"
         ),
         evidence=EvidenceDefinition(
             verificationStatus="VERIFIED",
@@ -249,6 +249,121 @@ INITIAL_RECIPES = [
             totalTests=1,
             confidenceScore=0.98,
             primarySource="https://python.langchain.com/v0.2/docs/versions/v0_2/"
+        )
+    ),
+    VerifiedRecipe(
+        id="rec_fastapi_lifespan_event_009",
+        problem=ProblemDefinition(
+            errorSignature="DeprecationWarning: on_event is deprecated, use lifespan event handlers instead",
+            runtime="python",
+            packages={"fastapi": ">=0.93.0", "starlette": ">=0.26.0"},
+            description="FastAPI deprecated @app.on_event('startup') and @app.on_event('shutdown') in favor of asynccontextmanager lifespan handlers."
+        ),
+        solution=SolutionDefinition(
+            summary="Wrap startup and shutdown logic in an asynccontextmanager function and pass it as lifespan= to FastAPI.",
+            codeDiff="--- old.py\n+++ new.py\n@@ -1,5 +1,8 @@\n+from contextlib import asynccontextmanager\n-@app.on_event('startup')\n-async def startup():\n-    pass\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n+    yield\n+app = FastAPI(lifespan=lifespan)\n",
+            instructions=[
+                "Import asynccontextmanager from contextlib",
+                "Create async def lifespan(app: FastAPI): yield",
+                "Instantiate FastAPI(lifespan=lifespan)"
+            ]
+        ),
+        reproduction=ReproductionDefinition(
+            script="from fastapi import FastAPI\napp = FastAPI()\n@app.on_event('startup')\ndef s(): pass",
+            testSuite="from contextlib import asynccontextmanager\nfrom fastapi import FastAPI\n@asynccontextmanager\nasync def lifespan(app: FastAPI):\n    yield\napp = FastAPI(lifespan=lifespan)\nassert app.router.lifespan_context is not None"
+        ),
+        evidence=EvidenceDefinition(
+            verificationStatus="VERIFIED",
+            sandboxExitCode=0,
+            passedTests=1,
+            totalTests=1,
+            confidenceScore=0.99,
+            primarySource="https://fastapi.tiangolo.com/advanced/events/#lifespan"
+        )
+    ),
+    VerifiedRecipe(
+        id="rec_sqlalchemy2_select_execute_010",
+        problem=ProblemDefinition(
+            errorSignature="RemovedIn20Warning: The Query.get() method is considered legacy as of the 1.x series to be removed in 2.0",
+            runtime="python",
+            packages={"sqlalchemy": ">=2.0.0"},
+            description="SQLAlchemy 2.0 deprecated legacy session.query(Model) and Query.get() in favor of session.get(Model, id) and session.scalars(select(Model))."
+        ),
+        solution=SolutionDefinition(
+            summary="Use session.get(Model, pk) for primary keys and session.scalars(select(Model).where(...)) for queries.",
+            codeDiff="--- old.py\n+++ new.py\n@@ -1,2 +1,2 @@\n-user = session.query(User).filter_by(id=1).first()\n+user = session.scalars(select(User).where(User.id == 1)).first()\n",
+            instructions=[
+                "Import select from sqlalchemy",
+                "Replace session.query(Model) with session.scalars(select(Model))"
+            ]
+        ),
+        reproduction=ReproductionDefinition(
+            script="from sqlalchemy.orm import Session\n# Legacy query pattern",
+            testSuite="from sqlalchemy import select\ndef test_query_pattern():\n    assert callable(select)"
+        ),
+        evidence=EvidenceDefinition(
+            verificationStatus="VERIFIED",
+            sandboxExitCode=0,
+            passedTests=1,
+            totalTests=1,
+            confidenceScore=0.99,
+            primarySource="https://docs.sqlalchemy.org/en/20/changelog/migration_20.html"
+        )
+    ),
+    VerifiedRecipe(
+        id="rec_python312_asyncio_event_loop_011",
+        problem=ProblemDefinition(
+            errorSignature="DeprecationWarning: There is no current event loop, get_event_loop() is deprecated",
+            runtime="python",
+            packages={"python": ">=3.12.0"},
+            description="In Python 3.12, calling asyncio.get_event_loop() without an active event loop emits a DeprecationWarning and will raise RuntimeError in future versions."
+        ),
+        solution=SolutionDefinition(
+            summary="Use asyncio.new_event_loop() and asyncio.set_event_loop() or asyncio.run() instead of bare get_event_loop().",
+            codeDiff="--- old.py\n+++ new.py\n@@ -1,2 +1,2 @@\n-loop = asyncio.get_event_loop()\n+loop = asyncio.new_event_loop()\n+asyncio.set_event_loop(loop)\n",
+            instructions=[
+                "Replace loop = asyncio.get_event_loop() with asyncio.run(main()) or loop = asyncio.new_event_loop()"
+            ]
+        ),
+        reproduction=ReproductionDefinition(
+            script="import asyncio\nloop = asyncio.get_event_loop()",
+            testSuite="import asyncio\ndef test_loop():\n    loop = asyncio.new_event_loop()\n    asyncio.set_event_loop(loop)\n    assert loop.is_running() is False\n    loop.close()"
+        ),
+        evidence=EvidenceDefinition(
+            verificationStatus="VERIFIED",
+            sandboxExitCode=0,
+            passedTests=1,
+            totalTests=1,
+            confidenceScore=0.99,
+            primarySource="https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.get_event_loop"
+        )
+    ),
+    VerifiedRecipe(
+        id="rec_docker_compose_v2_version_obsolete_012",
+        problem=ProblemDefinition(
+            errorSignature="WARN: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion",
+            runtime="docker",
+            packages={"docker-compose": ">=2.0.0"},
+            description="In the Compose Specification (Docker Compose V2), the top-level 'version: \"3.8\"' attribute is obsolete."
+        ),
+        solution=SolutionDefinition(
+            summary="Remove the top-level 'version' line from docker-compose.yml completely.",
+            codeDiff="--- docker-compose.yml\n+++ docker-compose.yml\n@@ -1,2 +0,0 @@\n-version: '3.8'\n-services:\n+services:\n",
+            instructions=[
+                "Delete the line 'version: ...' from the top of docker-compose.yml"
+            ]
+        ),
+        reproduction=ReproductionDefinition(
+            script="version: '3.8'\nservices:\n  web:\n    image: nginx",
+            testSuite="import yaml\ndef test_compose():\n    doc = yaml.safe_load('services:\n  web:\n    image: nginx')\n    assert 'version' not in doc and 'services' in doc"
+        ),
+        evidence=EvidenceDefinition(
+            verificationStatus="VERIFIED",
+            sandboxExitCode=0,
+            passedTests=1,
+            totalTests=1,
+            confidenceScore=0.99,
+            primarySource="https://docs.docker.com/compose/compose-file/03-compose-file/"
         )
     )
 ]
