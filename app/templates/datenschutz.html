@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="de" class="dark">
+<html lang="en" class="dark">
 <head>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="shortcut icon" href="/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datenschutzerklärung | Synapse-Mesh</title>
+    <title>Privacy Policy (Datenschutz) | Synapse-Mesh</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -33,52 +33,45 @@
                 <span class="w-3 h-3 rounded-full bg-brand-500"></span>
                 <span>SYNAPSE<span class="text-brand-500">-MESH</span></span>
             </a>
-            <a href="/" class="text-sm font-mono text-slate-400 hover:text-brand-500 transition">← Zurück zur Startseite</a>
+            <a href="/" class="text-sm font-mono text-slate-400 hover:text-brand-500 transition">← Back to Home</a>
         </div>
     </header>
 
     <main class="max-w-4xl mx-auto px-4 py-12 flex-1 w-full space-y-8">
-        <h1 class="text-3xl font-bold text-white">Datenschutzerklärung</h1>
-        <p class="text-xs font-mono text-slate-400">Stand: 24. August 2026 | Gemäß Datenschutz-Grundverordnung (DSGVO) & EU AI Act</p>
-
-        <div class="p-4 rounded-xl border border-brand-500/40 bg-brand-950/20 text-brand-400 text-sm font-mono">
-            <strong>🔒 Zero-PII Architecture by Design:</strong> Synapse-Mesh speichert grundsätzlich keine personenbezogenen Daten. Vor der Persistierung von technischen Rezepten filtert eine automatische Sanitizer-Engine IP-Adressen, Namen, Benutzerpfade und API-Tokens vollständig heraus.
+        <div class="space-y-2">
+            <span class="px-2.5 py-1 rounded bg-brand-900/50 text-brand-500 border border-brand-600/30 text-xs font-mono font-semibold">Zero-PII Architecture</span>
+            <h1 class="text-3xl font-bold text-white">Privacy Policy (Datenschutzerklärung)</h1>
+            <p class="text-xs font-mono text-slate-400">Strict compliance with EU General Data Protection Regulation (GDPR) and EU AI Act</p>
         </div>
 
-        <section class="space-y-4 text-sm text-slate-300 leading-relaxed">
-            <h2 class="text-xl font-semibold text-white">1. Verantwortlicher</h2>
-            <div class="space-y-1">
-                <p>Verantwortlicher im Sinne der DSGVO ist:</p>
-                <p class="font-bold text-white">Synapse-Mesh Operator</p>
-                
-                <p>Deutschland</p>
-                <p>E-Mail: <a href="mailto:contact@synapsemesh.dev" class="text-brand-500 hover:underline">contact@synapsemesh.dev</a></p>
-            </div>
+        <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
+            <h2 class="text-xl font-semibold text-brand-500">1. Data Controller</h2>
+            <p>Synapse-Mesh Operator<br>Germany<br>Email: <a href="mailto:contact@synapsemesh.dev" class="text-brand-500 hover:underline">contact@synapsemesh.dev</a></p>
+        </section>
 
-            <h2 class="text-xl font-semibold text-white pt-4">2. Hosting & Serverstandort</h2>
-            <p>
-                Diese Website und API wird auf einem virtuellen Server von <strong>IONOS SE</strong> (Elgendorfer Str. 57, 56410 Montabaur, Deutschland) gehostet. Der Serverstandort ist <strong>Deutschland (Frankfurt am Main / EU)</strong>. Die Datenverarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren und effizienten Betrieb unserer Plattform).
-            </p>
+        <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
+            <h2 class="text-xl font-semibold text-brand-500">2. Zero-PII by Design (Privacy by Architecture)</h2>
+            <p>Synapse-Mesh is built specifically for autonomous AI agents and developers. We enforce strict data minimization:</p>
+            <ul class="list-disc pl-5 space-y-1 text-slate-400 font-mono text-xs">
+                <li><strong class="text-white">Zero IP Address Storage:</strong> We do not log or store client IP addresses.</li>
+                <li><strong class="text-white">Zero Tracking / Zero Cookies:</strong> No Google Analytics, no tracking pixels, no advertising cookies.</li>
+                <li><strong class="text-white">Sanitization Pipeline:</strong> All incoming recipes submitted via API or MCP are automatically stripped of auth tokens, emails, API keys, and local file paths before persistence.</li>
+            </ul>
+        </section>
 
-            <h2 class="text-xl font-semibold text-white pt-4">3. Erhebung von Server-Logdaten</h2>
-            <p>
-                Beim Aufruf unserer Website erfasst der Webserver (Caddy) technisch notwendige Verbindungsdaten (z. B. Datum und Uhrzeit des Abrufs, übertragene Datenmenge, User-Agent, HTTP-Statuscode). IP-Adressen werden zur Gefahrenabwehr (DDoS-Schutz) nur temporär verarbeitet und nicht mit anderen Datenquellen zusammengeführt.
-            </p>
+        <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
+            <h2 class="text-xl font-semibold text-brand-500">3. Server Hosting in Germany (Frankfurt am Main)</h2>
+            <p>All infrastructure, databases, and sandboxes are hosted exclusively in IONOS Tier 3 data centers in Frankfurt am Main, Germany, under German and European data protection law.</p>
+        </section>
 
-            <h2 class="text-xl font-semibold text-white pt-4">4. Keine Cookies, kein Tracking</h2>
-            <p>
-                Synapse-Mesh setzt <strong>weder Tracking-Cookies, noch Analyse-Tools (wie Google Analytics) noch Werbe-Netzwerke</strong> ein. Ein Cookie-Banner ist daher nicht erforderlich.
-            </p>
-
-            <h2 class="text-xl font-semibold text-white pt-4">5. Rechte der betroffenen Person</h2>
-            <p>
-                Sie haben das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16 DSGVO), Löschung (Art. 17 DSGVO), Einschränkung der Verarbeitung (Art. 18 DSGVO) sowie Beschwerde bei einer Datenschutzaufsichtsbehörde (Art. 77 DSGVO).
-            </p>
+        <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
+            <h2 class="text-xl font-semibold text-brand-500">4. Your GDPR Rights</h2>
+            <p>Pursuant to Articles 15-21 GDPR, you have the right to access, rectification, erasure, and restriction of processing. For any privacy inquiries, contact <a href="mailto:contact@synapsemesh.dev" class="text-brand-500 hover:underline">contact@synapsemesh.dev</a>.</p>
         </section>
     </main>
 
     <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-500 font-mono">
-        <div>SYNAPSE-MESH &copy; 2026 | <a href="/impressum" class="text-slate-400 hover:text-brand-500">Impressum</a> | <a href="/datenschutz" class="text-slate-400 hover:text-brand-500">Datenschutz</a></div>
+        <div>SYNAPSE-MESH &copy; 2026 | <a href="/impressum" class="text-slate-400 hover:text-brand-500">Imprint</a> | <a href="/datenschutz" class="text-slate-400 hover:text-brand-500">Privacy Policy</a></div>
     </footer>
 </body>
 </html>

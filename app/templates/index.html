@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="dark">
+<html lang="en" class="dark">
 <head>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="shortcut icon" href="/favicon.ico">
@@ -120,19 +120,19 @@
             </div>
             
             <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-                CI/CD für <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-300 to-cyan-400">KI-Wissen</span>
+                CI/CD for <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-300 to-cyan-400">AI Knowledge</span>
             </h1>
 
             <p class="text-slate-400 max-w-3xl mx-auto text-lg leading-relaxed">
-                Synapse-Mesh ist kein RAG und keine bloße Doku-Sammlung. Es ist die verifizierte Solution Registry für Coding-Agenten: 
-                <strong>Problem ➔ Sandbox-Test ➔ Verifizierter Patch ➔ Maschinen-Evidenz</strong>.
+                Synapse-Mesh is not a vector RAG and not a passive doc-crawler. It is the execution-verified living solution registry for autonomous coding agents: 
+                <strong>Problem ➔ Sandbox Reproduce ➔ Verified AST Patch ➔ Machine-Checkable Evidence</strong>.
             </p>
 
-            <!-- Leitaxiom Box -->
+            <!-- Guiding Axiom Box -->
             <div class="max-w-3xl mx-auto p-4 rounded-xl border border-brand-500/30 bg-slate-900/60 text-slate-300 font-mono text-sm text-left glow-border">
-                <span class="text-brand-500 font-bold">⚡ Leitaxiom:</span>
+                <span class="text-brand-500 font-bold">⚡ Guiding Axiom:</span>
                 <p class="mt-1 text-slate-300 italic">
-                    „Synapse soll nicht versuchen, von KIs ‚gekannt‘ zu werden. Synapse ist so gebaut, dass KIs es entdecken, verstehen und unmittelbar benutzen können.“
+                    "Synapse should not attempt to be 'known' by AI models through retraining cycles. Synapse is built so that AI models can discover, understand, and immediately execute it as a tool at runtime."
                 </p>
             </div>
         </section>
@@ -140,11 +140,11 @@
         <!-- Stats Counter Section -->
         <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-verified-count" class="text-3xl font-bold text-brand-500 font-mono">...</div>
+                <div id="stat-verified-count" class="text-3xl font-bold text-brand-500 font-mono">50</div>
                 <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Verified Solutions</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-pass-rate" class="text-3xl font-bold text-emerald-400 font-mono">...</div>
+                <div id="stat-pass-rate" class="text-3xl font-bold text-emerald-400 font-mono">93%</div>
                 <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Sandbox Pass Rate</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
@@ -164,7 +164,7 @@
                     <h2 class="text-xl font-bold text-white flex items-center space-x-2">
                         <span>🧪 Live Verification Trace (Showcase)</span>
                     </h2>
-                    <p class="text-slate-400 text-xs font-mono mt-0.5">Wie Synapse-Mesh Lösungen in isolierten Sandboxes verifiziert</p>
+                    <p class="text-slate-400 text-xs font-mono mt-0.5">How Synapse-Mesh verifies solutions inside isolated, hermetic sandboxes</p>
                 </div>
                 <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">
                     STATUS: VERIFIED (Exit Code 0)
@@ -194,7 +194,7 @@
                 </div>
             </div>
             <div class="text-right">
-                <a href="/verification" class="text-xs font-mono text-brand-500 hover:underline">Vollständige Verification Architecture Spezifikation lesen →</a>
+                <a href="/verification" class="text-xs font-mono text-brand-500 hover:underline">Read Complete Verification Architecture Specification →</a>
             </div>
         </section>
 
@@ -205,13 +205,13 @@
                     <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
                         <span>🔍 Live Solution Explorer</span>
                     </h2>
-                    <p class="text-slate-400 text-sm">Durchsuche verifizierte Fehlersignaturen und CI/CD-getestete Code-Diffs.</p>
+                    <p class="text-slate-400 text-sm">Search verified error signatures, breaking changes, and continuous CI/CD diffs.</p>
                 </div>
             </div>
 
             <!-- Search Input -->
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Fehlermeldung eingeben (z. B. 'orm_mode', 'datetime.utcnow', 'Mapping', 'Next.js', 'React 19')..." 
+                <input type="text" id="searchInput" placeholder="Search error signature (e.g. 'orm_mode', 'datetime.utcnow', 'Mapping', 'Next.js', 'React 19')..." 
                        class="w-full px-5 py-4 pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono text-sm shadow-inner transition">
                 <svg class="w-5 h-5 text-slate-500 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -220,7 +220,7 @@
 
             <!-- Search Results Container -->
             <div id="resultsContainer" class="space-y-4">
-                <div class="text-center py-8 text-slate-500 font-mono text-sm">Rezepte werden geladen...</div>
+                <div class="text-center py-8 text-slate-500 font-mono text-sm">Loading verified recipes...</div>
             </div>
         </section>
 
@@ -228,10 +228,10 @@
         <section id="connect" class="p-8 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-6">
             <div class="space-y-2">
                 <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
-                    <span>🔌 1-Klick MCP Integration (Spec 2026-07-28)</span>
+                    <span>🔌 1-Click MCP Integration (Spec 2026-07-28)</span>
                 </h2>
                 <p class="text-slate-400 text-sm">
-                    Füge Synapse-Mesh über die kanonische URL <code class="text-brand-500">https://mcp.synapsemesh.dev</code> zu **Claude Desktop**, **Cursor**, **ChatGPT Actions** oder **Antigravity** hinzu.
+                    Connect Synapse-Mesh directly via the canonical URL <code class="text-brand-500">https://mcp.synapsemesh.dev</code> to **Claude Desktop**, **Cursor**, **ChatGPT Actions**, or **Antigravity**.
                 </p>
             </div>
 
@@ -244,7 +244,7 @@
   }
 }</code></pre>
                 <button onclick="copyMcpConfig()" id="copyBtn" class="absolute top-4 right-4 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-mono transition flex items-center space-x-1.5">
-                    <span id="copyText">📋 Kopieren</span>
+                    <span id="copyText">📋 Copy</span>
                 </button>
             </div>
         </section>
@@ -255,9 +255,9 @@
     <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-500 font-mono space-y-3">
         <div>SYNAPSE-MESH &copy; 2026 &bull; Platform v0.1.0-beta &bull; MCP Protocol 2026-07-28</div>
         <div class="space-x-4">
-            <a href="/impressum" class="text-slate-400 hover:text-brand-500 transition underline">Impressum (§ 5 DDG)</a>
+            <a href="/impressum" class="text-slate-400 hover:text-brand-500 transition underline">Imprint (§ 5 DDG)</a>
             <span>•</span>
-            <a href="/datenschutz" class="text-slate-400 hover:text-brand-500 transition underline">Datenschutz (DSGVO)</a>
+            <a href="/datenschutz" class="text-slate-400 hover:text-brand-500 transition underline">Privacy Policy (GDPR)</a>
             <span>•</span>
             <a href="/verification" class="text-slate-400 hover:text-brand-500 transition underline">Verification Pipeline</a>
             <span>•</span>
@@ -288,13 +288,13 @@
             try {
                 let recipes = [];
                 if (!query) {
-                    const res = await fetch('/api/v1/recipes?limit=25');
+                    const res = await fetch('/api/v1/recipes?limit=50');
                     recipes = await res.json();
                 } else {
                     const res = await fetch('/api/v1/recipes/search', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ errorSignature: query, limit: 15 })
+                        body: JSON.stringify({ errorSignature: query, limit: 20 })
                     });
                     recipes = await res.json();
                 }
@@ -303,7 +303,7 @@
                 recipes = recipes.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED');
 
                 if (recipes.length === 0) {
-                    container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">Keine verifizierten Rezepte für "${query}" gefunden.</div>`;
+                    container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No verified recipes found for "${query}".</div>`;
                     return;
                 }
 
@@ -322,18 +322,18 @@
                             ${escapeHtml(r.problem.errorSignature)}
                         </div>
                         <div class="text-sm text-slate-300">
-                            <strong>Lösung:</strong> ${escapeHtml(r.solution.summary)}
+                            <strong>Solution:</strong> ${escapeHtml(r.solution.summary)}
                         </div>
                         ${r.solution.codeDiff ? `
                             <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.solution.codeDiff)}</code></pre>
                         ` : ''}
                         <div class="text-right">
-                            <a href="/recipes/${r.id}" class="text-xs font-mono text-slate-400 hover:text-brand-500 transition">Detailansicht & Sandbox Logs →</a>
+                            <a href="/recipes/${r.id}" class="text-xs font-mono text-slate-400 hover:text-brand-500 transition">Detail View & Sandbox Logs →</a>
                         </div>
                     </div>
                 `).join('');
             } catch (err) {
-                container.innerHTML = `<div class="p-4 text-rose-400 font-mono text-xs">Fehler beim Laden: ${err.message}</div>`;
+                container.innerHTML = `<div class="p-4 text-rose-400 font-mono text-xs">Error loading recipes: ${err.message}</div>`;
             }
         }
 
@@ -360,8 +360,8 @@
             }, null, 2);
             navigator.clipboard.writeText(config);
             const text = document.getElementById('copyText');
-            text.innerText = '✓ Kopiert!';
-            setTimeout(() => { text.innerText = '📋 Kopieren'; }, 2000);
+            text.innerText = '✓ Copied!';
+            setTimeout(() => { text.innerText = '📋 Copy'; }, 2000);
         }
 
         loadStats();
