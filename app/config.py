@@ -4,9 +4,11 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     app_name: str = "Synapse-Mesh (Exocortex)"
-    app_version: str = "0.1.0"
+    app_version: str = "0.1.0-beta"
+    mcp_protocol_version: str = "2026-07-28"
     domain: str = "synapsemesh.dev"
     base_url: str = "https://synapsemesh.dev"
+    canonical_mcp_url: str = "https://mcp.synapsemesh.dev"
     environment: str = "production"
     log_level: str = "INFO"
     

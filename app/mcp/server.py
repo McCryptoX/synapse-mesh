@@ -20,7 +20,7 @@ router = APIRouter(prefix="/mcp", tags=["Model Context Protocol (MCP)"])
 MCP_TOOLS = [
     {
         "name": "find_solution",
-        "description": "Searches Synapse-Mesh for verified bug fixes, compatibility recipes and reproducible test suites.",
+        "description": "Searches Synapse-Mesh for reproducibly verified bug fixes, compatibility recipes and CI/CD tested code patches.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -42,7 +42,7 @@ MCP_TOOLS = [
     },
     {
         "name": "submit_solution",
-        "description": "Submits a verified bug fix, reproduction script, and test suite to Synapse-Mesh.",
+        "description": "Submits a reproducible problem, code fix, and test suite for automated isolated sandbox verification.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -96,26 +96,28 @@ async def log_agent_access(source_type: str, action: str, query: str, request: R
 
 @router.get("")
 async def mcp_get_info(request: Request):
-    """Information endpoint for MCP Streamable HTTP."""
+    """Information endpoint for MCP Streamable HTTP (Spec 2026-07-28)."""
     await log_agent_access("discovery", "mcp_info", "", request)
     return {
         "status": "ready",
-        "protocol": "MCP/2026-Streamable-HTTP",
+        "protocol": f"MCP/{settings.mcp_protocol_version}",
         "server": settings.app_name,
+        "endpoint": settings.canonical_mcp_url,
         "toolsAvailable": [t["name"] for t in MCP_TOOLS]
     }
 
 
 @router.post("")
 async def mcp_json_rpc(request: Request):
-    """MCP JSON-RPC 2.0 Streamable HTTP Endpoint."""
+    """MCP JSON-RPC 2.0 Streamable HTTP Endpoint (Spec 2026-07-28)."""
     try:
         body = await request.json()
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON-RPC payload")
 
     msg_id = body.get("id")
-    method = body.get("method")
+    # Support both body method and MCP 2026-07-28 Mcp-Method header
+    method = body.get("method") or request.headers.get("mcp-method")
     params = body.get("params", {})
 
     if not method:
@@ -128,7 +130,7 @@ async def mcp_json_rpc(request: Request):
             "jsonrpc": "2.0",
             "id": msg_id,
             "result": {
-                "protocolVersion": "2024-11-05",
+                "protocolVersion": settings.mcp_protocol_version,
                 "capabilities": {
                     "tools": {"listChanged": False},
                     "resources": {"subscribe": False, "listChanged": False}
@@ -157,7 +159,7 @@ async def mcp_json_rpc(request: Request):
         }
 
     elif method == "tools/call":
-        tool_name = params.get("name")
+        tool_name = params.get("name") or request.headers.get("mcp-name")
         arguments = params.get("arguments", {})
 
         if tool_name == "find_solution":
@@ -181,8 +183,9 @@ async def mcp_json_rpc(request: Request):
                         f"- **Runtime:** {r.problem.runtime}\n"
                         f"- **Error:** {r.problem.errorSignature}\n"
                         f"- **Summary:** {r.solution.summary}\n"
-                        f"- **Verification Status:** {r.evidence.verificationStatus} (Exit Code {r.evidence.sandboxExitCode})\n"
+                        f"- **Verification Status:** {r.evidence.verificationStatus} (Sandbox Exit Code {r.evidence.sandboxExitCode})\n"
                         f"```diff\n{r.solution.codeDiff or 'N/A'}\n```\n"
+                        f"- **Direct Link:** https://synapsemesh.dev/recipes/{r.id}\n"
                         f"- **Source:** {r.evidence.primarySource or 'Synapse Sandbox'}\n"
                     )
                 content_text = "\n\n".join(formatted)
@@ -226,7 +229,7 @@ async def mcp_json_rpc(request: Request):
                     "content": [
                         {
                             "type": "text",
-                            "text": f"Successfully stored verified recipe '{created.id}' (Status: {created.evidence.verificationStatus})."
+                            "text": f"Successfully stored verified recipe '{created.id}' (Status: {created.evidence.verificationStatus}). Link: https://synapsemesh.dev/recipes/{created.id}"
                         }
                     ]
                 }

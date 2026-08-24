@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synapse-Mesh | Agent-Native Living Solutions & Verification</title>
-    <meta name="description" content="Agenten-native Wissens- und Verifikations-Infrastruktur für autonome KIs (Gemini, Claude, ChatGPT, Antigravity).">
+    <title>Synapse-Mesh | CI/CD for AI Knowledge (Verified Living Solutions)</title>
+    <meta name="description" content="CI/CD for AI Knowledge - Deterministic, execution-verified living solutions for autonomous coding agents (Gemini, Claude, ChatGPT, Cursor).">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -35,7 +35,7 @@
             color: #e2e8f0;
         }
         .glow-border {
-            box-shadow: 0 0 25px -5px rgba(45, 212, 191, 0.15);
+            box-shadow: 0 0 30px -5px rgba(45, 212, 191, 0.15);
         }
         .terminal-code {
             background: rgba(15, 23, 42, 0.85);
@@ -51,12 +51,15 @@
             <div class="flex items-center space-x-3">
                 <div class="w-3.5 h-3.5 rounded-full bg-brand-500 animate-pulse"></div>
                 <span class="font-bold text-lg tracking-wider text-white">SYNAPSE<span class="text-brand-500">-MESH</span></span>
-                <span class="text-xs uppercase px-2 py-0.5 rounded bg-brand-900/50 text-brand-500 border border-brand-600/30 font-mono">Exocortex v0.1</span>
+                <span class="text-xs uppercase px-2 py-0.5 rounded bg-brand-900/50 text-brand-500 border border-brand-600/30 font-mono">CI/CD for AI Knowledge</span>
             </div>
             <div class="flex items-center space-x-6 text-sm font-mono">
-                <a href="/docs" class="text-slate-400 hover:text-brand-500 transition">API Docs</a>
+                <a href="https://docs.synapsemesh.dev" class="text-slate-400 hover:text-brand-500 transition">OpenAPI Docs</a>
                 <a href="/.well-known/mcp.json" class="text-slate-400 hover:text-brand-500 transition">.well-known/mcp</a>
-                <a href="/.well-known/agent.json" class="text-slate-400 hover:text-brand-500 transition">.well-known/agent</a>
+                <a href="https://github.com/McCryptoX/synapse-mesh-mcp" target="_blank" class="text-slate-400 hover:text-brand-500 transition flex items-center space-x-1">
+                    <span>GitHub</span>
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
                 <a href="#connect" class="px-3 py-1.5 rounded-md bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition">MCP Connect</a>
             </div>
         </div>
@@ -69,15 +72,16 @@
         <section class="text-center space-y-6 pt-4">
             <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
                 <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>MCP Streamable HTTP Gateway Online</span>
+                <span>MCP Spec 2026-07-28 &bull; Streamable HTTP Gateway Live</span>
             </div>
             
             <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-                Verifiziertes Wissen für <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-300 to-cyan-400">autonome KIs</span>
+                CI/CD für <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-300 to-cyan-400">KI-Wissen</span>
             </h1>
 
-            <p class="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
-                Synapse-Mesh liefert deterministische, reproduzierbare Lösungen für Agenten (Gemini, Claude, ChatGPT, Antigravity) – ohne Halluzinationen und ohne Modell-Retraining.
+            <p class="text-slate-400 max-w-3xl mx-auto text-lg leading-relaxed">
+                Synapse-Mesh ist kein RAG und keine bloße Doku-Sammlung. Es ist die verifizierte Solution Registry für Coding-Agenten: 
+                <strong>Problem ➔ Sandbox-Test ➔ Verifizierter Patch ➔ Maschinen-Evidenz</strong>.
             </p>
 
             <!-- Leitaxiom Box -->
@@ -109,6 +113,44 @@
             </div>
         </section>
 
+        <!-- Live Sandbox Verification Showcase -->
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <span>🧪 Live Verification Trace (Showcase)</span>
+                    </h2>
+                    <p class="text-slate-400 text-xs font-mono mt-0.5">Wie Synapse-Mesh Lösungen in isolierten Sandboxes verifiziert</p>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">
+                    STATUS: VERIFIED (Exit Code 0)
+                </span>
+            </div>
+
+            <div class="space-y-3 font-mono text-xs">
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
+                    <span class="text-rose-400 font-bold">1. PROBLEM:</span>
+                    <span class="text-slate-300">ValidationError: 'regex' has been removed, use 'pattern' instead (Pydantic V2 / Python 3.13)</span>
+                </div>
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
+                    <span class="text-amber-400 font-bold">2. REPRO CHECK:</span>
+                    <span class="text-slate-300">Isolated Sandbox executed repro script ➔ Exit Code 1 (Target bug successfully reproduced)</span>
+                </div>
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
+                    <span class="text-cyan-400 font-bold">3. PATCH APPLIED:</span>
+                    <span class="text-slate-300">Unified AST Diff applied <code>regex=... ➔ pattern=...</code></span>
+                </div>
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
+                    <span class="text-emerald-400 font-bold">4. TEST SUITE:</span>
+                    <span class="text-slate-300">1/1 automated assertions passed in 38ms ➔ Exit Code 0 (Sandbox Cleanly Destroyed)</span>
+                </div>
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
+                    <span class="text-indigo-400 font-bold">5. ZERO-PII CHECK:</span>
+                    <span class="text-slate-300">Sanitizer passed: 0 Auth Tokens, 0 IP Addresses, 0 Local User Paths persisted</span>
+                </div>
+            </div>
+        </section>
+
         <!-- Live Search / Explorer Section -->
         <section class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -116,13 +158,13 @@
                     <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
                         <span>🔍 Live Solution Explorer</span>
                     </h2>
-                    <p class="text-slate-400 text-sm">Durchsuche verifizierte Fehlersignaturen und Sandbox-Lösungen in Echtzeit.</p>
+                    <p class="text-slate-400 text-sm">Durchsuche verifizierte Fehlersignaturen und CI/CD-getestete Code-Diffs.</p>
                 </div>
             </div>
 
             <!-- Search Input -->
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Fehlermeldung eingeben (z. B. 'regex has been removed', 'cgi', '__dirname', 'Next.js')..." 
+                <input type="text" id="searchInput" placeholder="Fehlermeldung eingeben (z. B. 'regex has been removed', 'cgi', '__dirname', 'Next.js', 'React 19')..." 
                        class="w-full px-5 py-4 pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono text-sm shadow-inner transition">
                 <svg class="w-5 h-5 text-slate-500 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -139,10 +181,10 @@
         <section id="connect" class="p-8 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-6">
             <div class="space-y-2">
                 <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
-                    <span>🔌 1-Klick MCP Integration</span>
+                    <span>🔌 1-Klick MCP Integration (Spec 2026-07-28)</span>
                 </h2>
                 <p class="text-slate-400 text-sm">
-                    Füge Synapse-Mesh mit dieser Konfiguration zu **Claude Desktop**, **Cursor**, **ChatGPT Actions** oder **Antigravity** hinzu.
+                    Füge Synapse-Mesh über die kanonische URL <code class="text-brand-500">https://mcp.synapsemesh.dev</code> zu **Claude Desktop**, **Cursor**, **ChatGPT Actions** oder **Antigravity** hinzu.
                 </p>
             </div>
 
@@ -150,7 +192,7 @@
                 <pre class="terminal-code p-5 rounded-xl border border-slate-800 text-emerald-400 font-mono text-xs overflow-x-auto"><code>{
   "mcpServers": {
     "synapse-mesh": {
-      "url": "https://synapsemesh.dev/mcp"
+      "url": "https://mcp.synapsemesh.dev"
     }
   }
 }</code></pre>
@@ -164,15 +206,17 @@
 
     <!-- Footer with Impressum & Datenschutz -->
     <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-500 font-mono space-y-3">
-        <div>SYNAPSE-MESH &copy; 2026 | Entwickelt für autonome KI-Agenten | Hosted in der EU / Deutschland</div>
+        <div>SYNAPSE-MESH &copy; 2026 &bull; Platform v0.1.0-beta &bull; MCP Protocol 2026-07-28</div>
         <div class="space-x-4">
             <a href="/impressum" class="text-slate-400 hover:text-brand-500 transition underline">Impressum (§ 5 DDG)</a>
             <span>•</span>
             <a href="/datenschutz" class="text-slate-400 hover:text-brand-500 transition underline">Datenschutz (DSGVO)</a>
             <span>•</span>
-            <a href="/docs" class="text-slate-400 hover:text-brand-500 transition">OpenAPI Spec</a>
+            <a href="https://docs.synapsemesh.dev" class="text-slate-400 hover:text-brand-500 transition">OpenAPI Spec</a>
             <span>•</span>
             <a href="/.well-known/mcp.json" class="text-slate-400 hover:text-brand-500 transition">MCP Manifest</a>
+            <span>•</span>
+            <a href="https://github.com/McCryptoX/synapse-mesh-mcp" target="_blank" class="text-slate-400 hover:text-brand-500 transition">GitHub Repo</a>
         </div>
     </footer>
 
@@ -256,7 +300,7 @@
             const config = JSON.stringify({
                 "mcpServers": {
                     "synapse-mesh": {
-                        "url": "https://synapsemesh.dev/mcp"
+                        "url": "https://mcp.synapsemesh.dev"
                     }
                 }
             }, null, 2);

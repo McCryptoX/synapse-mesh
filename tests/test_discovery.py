@@ -12,6 +12,7 @@ async def test_well_known_mcp():
     assert data["name"] == "Synapse-Mesh"
     assert "find_solution" in data["capabilities"]["tools"]
     assert data["transport"]["type"] == "streamable-http"
+    assert data["transport"]["endpoint"] == "https://mcp.synapsemesh.dev"
 
 
 @pytest.mark.asyncio
@@ -23,7 +24,8 @@ async def test_well_known_agent():
     assert data["agentName"] == "Synapse-Mesh-Exocortex"
     assert data["evidenceFirst"] is True
     assert data["zeroPii"] is True
-    assert "MCP/2026" in data["protocols"]
+    assert "MCP/2026-07-28" in data["protocols"]
+
 
 @pytest.mark.asyncio
 async def test_impressum_and_privacy_pages():

@@ -1,5 +1,6 @@
 import pytest
 from app.core.sandbox import SandboxRunner
+from app.database import init_db
 from httpx import AsyncClient, ASGITransport
 from app.main import app
 
@@ -24,9 +25,11 @@ async def test_sandbox_failure():
 
 @pytest.mark.asyncio
 async def test_recipe_stats_endpoint():
+    await init_db()
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         res = await ac.get("/api/v1/recipes/stats")
     assert res.status_code == 200
     data = res.json()
     assert "totalRecipes" in data
     assert "verifiedRecipes" in data
+    assert "agentUsage" in data

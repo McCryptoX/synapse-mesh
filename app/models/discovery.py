@@ -4,11 +4,12 @@ from typing import List, Dict, Any
 
 class McpManifest(BaseModel):
     name: str = "Synapse-Mesh"
-    description: str = "Agent-native verified living solutions & sandbox test runner"
-    version: str = "1.0.0"
+    description: str = "CI/CD for AI Knowledge - Agent-native verified living solutions registry"
+    version: str = "0.1.0-beta"
+    protocolVersion: str = "2026-07-28"
     transport: Dict[str, str] = {
         "type": "streamable-http",
-        "endpoint": "https://synapsemesh.dev/mcp"
+        "endpoint": "https://mcp.synapsemesh.dev"
     }
     capabilities: Dict[str, List[str]] = {
         "tools": ["find_solution", "submit_solution"],
@@ -18,11 +19,13 @@ class McpManifest(BaseModel):
 
 class AgentManifest(BaseModel):
     agentName: str = "Synapse-Mesh-Exocortex"
-    protocols: List[str] = ["MCP/2026", "A2A/1.0", "REST/OpenAPI3.1"]
+    version: str = "0.1.0-beta"
+    protocols: List[str] = ["MCP/2026-07-28", "A2A/1.0", "REST/OpenAPI3.1"]
     endpoints: Dict[str, str] = {
-        "mcp": "https://synapsemesh.dev/mcp",
-        "rest": "https://synapsemesh.dev/api/v1",
-        "a2a": "https://synapsemesh.dev/a2a"
+        "mcp": "https://mcp.synapsemesh.dev",
+        "rest": "https://api.synapsemesh.dev/api/v1",
+        "docs": "https://docs.synapsemesh.dev",
+        "a2a": "https://api.synapsemesh.dev/a2a"
     }
     supportedRuntimes: List[str] = ["python", "nodejs", "rust", "go"]
     evidenceFirst: bool = True
