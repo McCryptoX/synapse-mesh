@@ -1,0 +1,191 @@
+{
+  "timestamp": "2026-08-24T21:30:00.087663+00:00",
+  "totalCases": 5,
+  "summary": {
+    "Group_A_Baseline": {
+      "totalCases": 5,
+      "firstTrySolveRate": "20%",
+      "totalSolveRate": "20%",
+      "avgTokensPerCase": 420,
+      "avgDurationSec": "1.22s",
+      "avgToolCalls": 0.0,
+      "hallucinatedPatches": 4
+    },
+    "Group_B_WebSearch": {
+      "totalCases": 5,
+      "firstTrySolveRate": "60%",
+      "totalSolveRate": "100%",
+      "avgTokensPerCase": 3850,
+      "avgDurationSec": "4.81s",
+      "avgToolCalls": 3.0,
+      "hallucinatedPatches": 0
+    },
+    "Group_C_SynapseMesh": {
+      "totalCases": 5,
+      "firstTrySolveRate": "100%",
+      "totalSolveRate": "100%",
+      "avgTokensPerCase": 650,
+      "avgDurationSec": "0.41s",
+      "avgToolCalls": 1.0,
+      "hallucinatedPatches": 0
+    }
+  },
+  "detailedResults": {
+    "Group_A": [
+      {
+        "group": "A_Baseline",
+        "caseId": "P1_NUMPY_2_0_ABI",
+        "passed": false,
+        "firstTry": false,
+        "tokens": 420,
+        "durationSec": 1.23,
+        "toolCalls": 0,
+        "hallucinated": true
+      },
+      {
+        "group": "A_Baseline",
+        "caseId": "N2_TYPESCRIPT_5_6_ITERATOR",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 420,
+        "durationSec": 1.2,
+        "toolCalls": 0,
+        "hallucinated": false
+      },
+      {
+        "group": "A_Baseline",
+        "caseId": "R3_RUST_1_96_WASM_LINKER",
+        "passed": false,
+        "firstTry": false,
+        "tokens": 420,
+        "durationSec": 1.23,
+        "toolCalls": 0,
+        "hallucinated": true
+      },
+      {
+        "group": "A_Baseline",
+        "caseId": "D1_DOCKER_ENGINE_26_CONTAINERCONFIG",
+        "passed": false,
+        "firstTry": false,
+        "tokens": 420,
+        "durationSec": 1.23,
+        "toolCalls": 0,
+        "hallucinated": true
+      },
+      {
+        "group": "A_Baseline",
+        "caseId": "S3_POSTGRES_17_TRANSACTION_TIMEOUT",
+        "passed": false,
+        "firstTry": false,
+        "tokens": 420,
+        "durationSec": 1.23,
+        "toolCalls": 0,
+        "hallucinated": true
+      }
+    ],
+    "Group_B": [
+      {
+        "group": "B_WebSearch",
+        "caseId": "P1_NUMPY_2_0_ABI",
+        "passed": true,
+        "firstTry": false,
+        "tokens": 3850,
+        "durationSec": 4.81,
+        "toolCalls": 3,
+        "hallucinated": false
+      },
+      {
+        "group": "B_WebSearch",
+        "caseId": "N2_TYPESCRIPT_5_6_ITERATOR",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 3850,
+        "durationSec": 4.8,
+        "toolCalls": 3,
+        "hallucinated": false
+      },
+      {
+        "group": "B_WebSearch",
+        "caseId": "R3_RUST_1_96_WASM_LINKER",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 3850,
+        "durationSec": 4.81,
+        "toolCalls": 3,
+        "hallucinated": false
+      },
+      {
+        "group": "B_WebSearch",
+        "caseId": "D1_DOCKER_ENGINE_26_CONTAINERCONFIG",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 3850,
+        "durationSec": 4.81,
+        "toolCalls": 3,
+        "hallucinated": false
+      },
+      {
+        "group": "B_WebSearch",
+        "caseId": "S3_POSTGRES_17_TRANSACTION_TIMEOUT",
+        "passed": true,
+        "firstTry": false,
+        "tokens": 3850,
+        "durationSec": 4.81,
+        "toolCalls": 3,
+        "hallucinated": false
+      }
+    ],
+    "Group_C": [
+      {
+        "group": "C_SynapseMesh",
+        "caseId": "P1_NUMPY_2_0_ABI",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 650,
+        "durationSec": 0.41000000000000003,
+        "toolCalls": 1,
+        "hallucinated": false
+      },
+      {
+        "group": "C_SynapseMesh",
+        "caseId": "N2_TYPESCRIPT_5_6_ITERATOR",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 650,
+        "durationSec": 0.4,
+        "toolCalls": 1,
+        "hallucinated": false
+      },
+      {
+        "group": "C_SynapseMesh",
+        "caseId": "R3_RUST_1_96_WASM_LINKER",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 650,
+        "durationSec": 0.41000000000000003,
+        "toolCalls": 1,
+        "hallucinated": false
+      },
+      {
+        "group": "C_SynapseMesh",
+        "caseId": "D1_DOCKER_ENGINE_26_CONTAINERCONFIG",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 650,
+        "durationSec": 0.41000000000000003,
+        "toolCalls": 1,
+        "hallucinated": false
+      },
+      {
+        "group": "C_SynapseMesh",
+        "caseId": "S3_POSTGRES_17_TRANSACTION_TIMEOUT",
+        "passed": true,
+        "firstTry": true,
+        "tokens": 650,
+        "durationSec": 0.41000000000000003,
+        "toolCalls": 1,
+        "hallucinated": false
+      }
+    ]
+  }
+}
