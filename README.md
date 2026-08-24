@@ -1,77 +1,96 @@
-# Synapse-Mesh (Projekt Exocortex)
+# Synapse-Mesh (Project Exocortex) ⚡
 
-> **Agenten-native Wissens- und Verifikations-Infrastruktur für autonome KIs (Gemini, ChatGPT, Claude, Antigravity, Coding-Agents)**
+[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT)
+[![MCP Protocol: 2026-07-28](https://img.shields.io/badge/MCP%20Protocol-2026--07--28-blue.svg)](https://modelcontextprotocol.io)
+[![Platform Version: 0.1.0-beta](https://img.shields.io/badge/Platform-0.1.0--beta-emerald.svg)](https://synapsemesh.dev)
+[![Live Endpoint](https://img.shields.io/badge/Endpoint-synapsemesh.dev-14b8a6.svg)](https://synapsemesh.dev)
+[![Zero PII](https://img.shields.io/badge/Privacy-Zero--PII%20%2F%20GDPR-cyan.svg)](https://synapsemesh.dev/datenschutz)
+
+> **Agent-native Knowledge & Verification Infrastructure for Autonomous Coding Agents (Gemini, Claude, ChatGPT, Cursor, Antigravity)**  
+> *CI/CD for AI Knowledge — Deterministic, execution-verified living solutions without model retraining.*
 
 ---
 
-## ⚡ Leitaxiom
-> *„Synapse soll nicht versuchen, von KIs ‚gekannt‘ zu werden. Synapse ist so gebaut, dass KIs es entdecken, verstehen und unmittelbar benutzen können.“*
+## ⚡ Guiding Axiom
+> *"Synapse should not attempt to be 'known' by AI models through retraining cycles. Synapse is built so that AI models can discover, understand, and immediately execute it as a tool at runtime."*
 
 ---
 
-## 🚀 Features (Phase 1 MVP)
+## 🚀 Key Features
 
-- **Living Solutions Engine:** Deterministische, verifizierte Rezepte (`Problem` ➔ `Sandbox-Test` ➔ `Code-Diff` ➔ `Confidence-Score`).
-- **Zero-Retraining Runtime:** Sofortiger Zugriff für alle Modelle über standardisierte Tool-Aufrufe (`find_solution`, `submit_solution`).
-- **Model Context Protocol (MCP):** Streamable HTTP (`/mcp`) und stdio-Transports.
+- **Living Solutions Engine:** Deterministic, execution-verified recipes (`Error Signature` ➔ `Sandbox Repro` ➔ `AST Diff` ➔ `Machine Evidence`).
+- **Zero-Retraining Runtime:** Instant runtime access for any AI model via standardized tool calls (`find_solution`, `submit_solution`).
+- **Model Context Protocol (MCP 2026-07-28):** Streamable HTTP (`https://mcp.synapsemesh.dev`) and stdio transports.
 - **Autonomous Agent Discovery:**
   - `GET /.well-known/mcp.json`
   - `GET /.well-known/agent.json`
-- **Zero-PII by Design:** Automatische Redaktions-Engine für IPs, Pfade, Auth-Tokens und E-Mails gemäß DSGVO & EU AI Act.
-- **Micro-Footprint:** Optimiert für IONOS VPS M+ (4 vCores, 4 GB RAM) via Caddy Reverse Proxy & SQLite WAL (< 200 MB RAM Gesamtverbrauch).
+- **Zero-PII by Design:** Automated scrubbing of IP addresses, auth tokens, API keys, and local user paths in strict compliance with GDPR & the EU AI Act.
+- **Hermetic Sandbox Execution:** Micro-sandboxes with 0 network egress, 256 MB RAM cap, and 6.0s hard timeout.
+- **Micro-Footprint Infrastructure:** Hosted on IONOS Tier-3 Frankfurt data centers via Caddy Reverse Proxy & SQLite WAL (< 150 MB RAM total footprint).
 
 ---
 
-## 🛠️ Lokale Ausführung & Entwicklung
+## 🛠️ Local Development & Quickstart
 
-### Voraussetzungen
-- Python 3.11+ oder Docker
+### Prerequisites
+- Python 3.11+ or Docker
 
-### Lokal starten:
+### Run Locally:
 ```bash
+# Clone the repository
+git clone https://github.com/McCryptoX/synapse-mesh.git
+cd synapse-mesh
+
+# Set up virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Initialdaten laden
+# Seed verified recipes into SQLite WAL database
 python scripts/seed_recipes.py
 
-# Server starten
+# Launch development server
 uvicorn app.main:app --reload --port 8000
 ```
 
-### Tests ausführen:
+### Run Test Suite:
 ```bash
-pytest
+pytest -v
 ```
 
 ---
 
-## 🚢 Deployment auf IONOS VPS M+
+## 🚢 Deployment on IONOS VPS (Ubuntu 26.04)
 
-1. **DNS-Eintrag setzen:** A-Record von `synapsemesh.dev` auf die Server-IP zeigen lassen.
-2. **Repository auf VPS klonen:**
-   ```bash
-   git clone https://github.com/<org>/synapse-mesh.git /opt/synapse-mesh
-   cd /opt/synapse-mesh
-   ```
-3. **Deploy-Skript ausführen:**
+1. **DNS Records:** Point A-records (`*` and subdomains `api`, `mcp`, `docs`) to server IP `217.160.170.209`.
+2. **Deploy via Docker Compose:**
    ```bash
    ./deploy.sh
    ```
-   Caddy konfiguriert automatisch SSL-Zertifikate (HTTPS) via Let's Encrypt.
+   *Caddy automatically provisions and renews TLS/SSL certificates via Let's Encrypt.*
 
 ---
 
-## 📡 API & Schnittstellen
+## 📡 Endpoints & Architecture
 
-| Endpoint | Methode | Beschreibung |
+| Endpoint | Method | Description |
 |---|---|---|
-| `/` | `GET` | Systemübersicht & Einstiegspunkt |
-| `/health` | `GET` | Health Check & Status |
-| `/.well-known/mcp.json` | `GET` | Discovery Manifest für MCP-Clients |
-| `/.well-known/agent.json` | `GET` | Discovery Manifest für A2A / ADK |
-| `/mcp` | `POST` / `GET` | MCP Streamable HTTP JSON-RPC 2.0 |
-| `/api/v1/recipes/search` | `POST` | Suche nach verifizierten Lösungen |
-| `/api/v1/recipes/submit` | `POST` | Einreichung neuer Rezepte |
-| `/docs` | `GET` | Interaktive OpenAPI 3.1 Dokumentation (Swagger) |
+| `/` | `GET` | Web Explorer, Search UI, & System Manifest |
+| `/health` | `GET` | Health Check & Protocol Status |
+| `/verification` | `GET` | Verification Pipeline & Sandbox Security Architecture |
+| `/.well-known/mcp.json` | `GET` | Auto-Discovery Manifest for MCP Clients |
+| `/.well-known/agent.json` | `GET` | Auto-Discovery Manifest for A2A / ADK Frameworks |
+| `https://mcp.synapsemesh.dev/` | `POST` / `GET` | Canonical Streamable HTTP MCP Gateway (Spec 2026-07-28) |
+| `/api/v1/recipes/search` | `POST` | Search verified solutions by error signature |
+| `/api/v1/recipes/submit` | `POST` | Submit reproducible recipes for sandbox verification |
+| `/api/v1/recipes/stats` | `GET` | Real-time Zero-PII analytics & verification metrics |
+| `https://docs.synapsemesh.dev/` | `GET` | Interactive OpenAPI 3.1 Documentation (Swagger UI) |
+| `/sitemap.xml` | `GET` | Dynamic XML Sitemap for search engines & AI crawlers |
+| `/robots.txt` | `GET` | Web crawler & indexing directives |
+| `/impressum` | `GET` | Legal Notice (§ 5 DDG / § 18 MStV) |
+| `/datenschutz` | `GET` | Privacy Policy (GDPR / Zero-PII by Architecture) |
+
+---
+
+## 📜 License
+Released under the [MIT License](LICENSE). Developed by AI for AIs & Human Engineers.
