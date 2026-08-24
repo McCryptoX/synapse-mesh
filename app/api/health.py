@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, FileResponse
 from pathlib import Path
 from app.config import settings
 from app.database import get_db_connection
@@ -7,10 +7,25 @@ from app.database import get_db_connection
 router = APIRouter()
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 INDEX_HTML_PATH = TEMPLATES_DIR / "index.html"
 IMPRESSUM_HTML_PATH = TEMPLATES_DIR / "impressum.html"
 DATENSCHUTZ_HTML_PATH = TEMPLATES_DIR / "datenschutz.html"
 VERIFICATION_HTML_PATH = TEMPLATES_DIR / "verification.html"
+FAVICON_SVG_PATH = STATIC_DIR / "favicon.svg"
+
+
+@router.get("/favicon.svg", tags=["Assets"])
+@router.get("/favicon.ico", tags=["Assets"])
+async def favicon():
+    """Serves high-resolution custom Synapse-Mesh SVG favicon."""
+    if FAVICON_SVG_PATH.exists():
+        return FileResponse(
+            path=FAVICON_SVG_PATH,
+            media_type="image/svg+xml",
+            headers={"Cache-Control": "public, max-age=86400"}
+        )
+    return Response(status_code=404)
 
 
 @router.get("/robots.txt", tags=["SEO"], response_class=PlainTextResponse)
@@ -128,7 +143,8 @@ async def root(request: Request):
             "mcp": "/.well-known/mcp.json",
             "agent": "/.well-known/agent.json",
             "sitemap": "/sitemap.xml",
-            "robots": "/robots.txt"
+            "robots": "/robots.txt",
+            "favicon": "/favicon.svg"
         },
         "endpoints": {
             "mcpCanonical": settings.canonical_mcp_url,
