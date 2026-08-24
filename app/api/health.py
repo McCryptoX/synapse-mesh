@@ -9,6 +9,7 @@ TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 INDEX_HTML_PATH = TEMPLATES_DIR / "index.html"
 IMPRESSUM_HTML_PATH = TEMPLATES_DIR / "impressum.html"
 DATENSCHUTZ_HTML_PATH = TEMPLATES_DIR / "datenschutz.html"
+VERIFICATION_HTML_PATH = TEMPLATES_DIR / "verification.html"
 
 
 @router.get("/health", tags=["System"])
@@ -17,9 +18,18 @@ async def health_check():
         "status": "healthy",
         "service": "synapse-mesh",
         "version": settings.app_version,
+        "protocol": f"MCP/{settings.mcp_protocol_version}",
         "environment": settings.environment,
         "evidenceFirst": True
     }
+
+
+@router.get("/verification", tags=["Architecture"], response_class=HTMLResponse)
+async def verification_page():
+    if VERIFICATION_HTML_PATH.exists():
+        with open(VERIFICATION_HTML_PATH, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse("<h1>Verification Architecture</h1>")
 
 
 @router.get("/impressum", tags=["Legal"], response_class=HTMLResponse)
@@ -50,14 +60,17 @@ async def root(request: Request):
             
     # Default JSON manifest for API / Agents
     return {
-        "message": "Welcome to Synapse-Mesh (Projekt Exocortex) - Agent-Native Living Solutions Engine",
+        "message": "Welcome to Synapse-Mesh (Projekt Exocortex) - CI/CD for AI Knowledge",
         "axiom": "Synapse soll nicht versuchen, von KIs 'gekannt' zu werden. Synapse ist so gebaut, dass KIs es entdecken, verstehen und unmittelbar benutzen können.",
+        "protocolVersion": settings.mcp_protocol_version,
+        "version": settings.app_version,
         "discovery": {
             "mcp": "/.well-known/mcp.json",
             "agent": "/.well-known/agent.json"
         },
         "endpoints": {
-            "mcpStreamableHttp": "/mcp",
+            "mcpCanonical": settings.canonical_mcp_url,
+            "verificationArchitecture": "/verification",
             "search": "/api/v1/recipes/search",
             "submit": "/api/v1/recipes/submit",
             "docs": "/docs",
