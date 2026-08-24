@@ -1,4 +1,4 @@
-synapsemesh.dev, www.synapsemesh.dev {
+synapsemesh.dev, www.synapsemesh.dev, api.synapsemesh.dev, status.synapsemesh.dev {
     encode zstd gzip
 
     # Security Headers
@@ -10,6 +10,46 @@ synapsemesh.dev, www.synapsemesh.dev {
     }
 
     # Proxy to FastAPI App
+    reverse_proxy api:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+mcp.synapsemesh.dev {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    rewrite / /mcp
+
+    reverse_proxy api:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+docs.synapsemesh.dev {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    rewrite / /docs
+
     reverse_proxy api:8000 {
         header_up Host {host}
         header_up X-Real-IP {remote_host}
