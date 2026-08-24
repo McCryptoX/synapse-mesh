@@ -7,6 +7,8 @@ services:
     restart: unless-stopped
     volumes:
       - ./data:/app/data
+      - ./scripts:/app/scripts:ro
+      - ./benchmark:/app/benchmark:ro
     environment:
       - ENVIRONMENT=production
       - DOMAIN=synapsemesh.dev
