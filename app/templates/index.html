@@ -11,7 +11,7 @@
     <meta name="author" content="Synapse-Mesh Operator">
     <link rel="canonical" href="https://synapsemesh.dev/">
 
-    <!-- OpenGraph / Facebook / LinkedIn -->
+    <!-- OpenGraph / Social Cards -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://synapsemesh.dev/">
     <meta property="og:image" content="https://synapsemesh.dev/og-image.png">
@@ -26,9 +26,6 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Synapse-Mesh | CI/CD for AI Knowledge">
     <meta name="twitter:description" content="Deterministic, execution-verified living solutions for autonomous coding agents.">
-
-    <!-- Favicon (SVG Data-URI) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23134e4a'/><circle cx='50' cy='50' r='25' fill='%2314b8a6'/><circle cx='50' cy='50' r='10' fill='%23ffffff'/></svg>">
 
     <!-- Schema.org Structured Data (JSON-LD) -->
     <script type="application/ld+json">
@@ -143,12 +140,12 @@
         <!-- Stats Counter Section -->
         <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-total" class="text-3xl font-bold text-brand-500 font-mono">...</div>
-                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Living Recipes</div>
+                <div id="stat-verified-count" class="text-3xl font-bold text-brand-500 font-mono">...</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Verified Solutions</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-verified" class="text-3xl font-bold text-emerald-400 font-mono">100%</div>
-                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Sandbox Verified</div>
+                <div id="stat-pass-rate" class="text-3xl font-bold text-emerald-400 font-mono">...</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Sandbox Pass Rate</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
                 <div class="text-3xl font-bold text-cyan-400 font-mono">0 PII</div>
@@ -214,7 +211,7 @@
 
             <!-- Search Input -->
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Fehlermeldung eingeben (z. B. 'regex has been removed', 'datetime.utcnow', 'Mapping', 'Next.js', 'React 19')..." 
+                <input type="text" id="searchInput" placeholder="Fehlermeldung eingeben (z. B. 'orm_mode', 'datetime.utcnow', 'Mapping', 'Next.js', 'React 19')..." 
                        class="w-full px-5 py-4 pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono text-sm shadow-inner transition">
                 <svg class="w-5 h-5 text-slate-500 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -278,7 +275,9 @@
             try {
                 const res = await fetch('/api/v1/recipes/stats');
                 const data = await res.json();
-                document.getElementById('stat-total').innerText = data.totalRecipes || '0';
+                document.getElementById('stat-verified-count').innerText = data.verifiedRecipes || '0';
+                const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 100;
+                document.getElementById('stat-pass-rate').innerText = passRate + '%';
             } catch(e) {
                 console.error(e);
             }
@@ -289,16 +288,19 @@
             try {
                 let recipes = [];
                 if (!query) {
-                    const res = await fetch('/api/v1/recipes?limit=10');
+                    const res = await fetch('/api/v1/recipes?limit=25');
                     recipes = await res.json();
                 } else {
                     const res = await fetch('/api/v1/recipes/search', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ errorSignature: query, limit: 10 })
+                        body: JSON.stringify({ errorSignature: query, limit: 15 })
                     });
                     recipes = await res.json();
                 }
+
+                // Filter out non-verified in frontend view
+                recipes = recipes.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED');
 
                 if (recipes.length === 0) {
                     container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">Keine verifizierten Rezepte für "${query}" gefunden.</div>`;
@@ -313,7 +315,7 @@
                                 <a href="/recipes/${r.id}" class="font-mono text-sm font-semibold text-brand-500 hover:underline">${r.id}</a>
                             </div>
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
-                                ✓ VERIFIED (${Math.round(r.evidence.confidenceScore * 100)}% Confidence)
+                                ✓ VERIFIED_SANDBOX (Exit Code ${r.evidence.sandboxExitCode})
                             </span>
                         </div>
                         <div class="text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40">
