@@ -214,7 +214,7 @@
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="flex items-center space-x-2">
                                 <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-500 border border-slate-700">${r.problem.runtime}</span>
-                                <span class="font-mono text-sm font-semibold text-white">${r.id}</span>
+                                <a href="/recipes/${r.id}" class="font-mono text-sm font-semibold text-brand-500 hover:underline">${r.id}</a>
                             </div>
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
                                 ✓ VERIFIED (${Math.round(r.evidence.confidenceScore * 100)}% Confidence)
@@ -229,6 +229,9 @@
                         ${r.solution.codeDiff ? `
                             <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.solution.codeDiff)}</code></pre>
                         ` : ''}
+                        <div class="text-right">
+                            <a href="/recipes/${r.id}" class="text-xs font-mono text-slate-400 hover:text-brand-500 transition">Detailansicht & Sandbox Logs →</a>
+                        </div>
                     </div>
                 `).join('');
             } catch (err) {

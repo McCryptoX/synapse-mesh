@@ -41,3 +41,12 @@ async def test_submit_and_search_recipe():
         found = search_res.json()
         assert len(found) > 0
         assert found[0]["id"] == "rec_test_001"
+
+@pytest.mark.asyncio
+async def test_recipe_detail_html_page():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/recipes/rec_test_001")
+        assert res.status_code == 200
+        assert "text/html" in res.headers["content-type"]
+        assert "rec_test_001" in res.text
+        assert "Sandbox Execution Evidence" in res.text

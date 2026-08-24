@@ -1,4 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from pathlib import Path
+from jinja2 import Environment, FileSystemLoader
 import json
 import uuid
 from datetime import datetime, timezone
@@ -16,10 +19,13 @@ from app.database import get_db_connection
 from app.core.sanitizer import ZeroPiiSanitizer
 from app.core.sandbox import SandboxRunner
 
-router = APIRouter(prefix="/api/v1/recipes", tags=["Living Solutions Recipes"])
+router = APIRouter(tags=["Living Solutions Recipes"])
+
+TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=True)
 
 
-@router.get("/stats", tags=["System"])
+@router.get("/api/v1/recipes/stats", tags=["System"])
 async def get_recipe_stats():
     """Returns real-time statistics about verified recipes in Synapse-Mesh."""
     db = await get_db_connection()
@@ -43,7 +49,7 @@ async def get_recipe_stats():
         await db.close()
 
 
-@router.post("/search", response_model=List[VerifiedRecipe])
+@router.post("/api/v1/recipes/search", response_model=List[VerifiedRecipe])
 async def search_recipes(req: RecipeSearchRequest):
     """Search for verified solutions given an error signature, runtime, and optional package versions."""
     clean_error = ZeroPiiSanitizer.sanitize_text(req.errorSignature.strip())
@@ -96,7 +102,7 @@ async def search_recipes(req: RecipeSearchRequest):
         await db.close()
 
 
-@router.post("/submit", response_model=VerifiedRecipe, status_code=201)
+@router.post("/api/v1/recipes/submit", response_model=VerifiedRecipe, status_code=201)
 async def submit_recipe(req: RecipeSubmitRequest):
     """Submits a new living solution recipe, sanitizes it and executes automated sandbox verification."""
     recipe_id = req.id or f"rec_{uuid.uuid4().hex[:12]}"
@@ -145,7 +151,7 @@ async def submit_recipe(req: RecipeSubmitRequest):
         await db.close()
 
 
-@router.post("/{recipe_id}/verify", response_model=VerifiedRecipe)
+@router.post("/api/v1/recipes/{recipe_id}/verify", response_model=VerifiedRecipe)
 async def verify_recipe_by_id(recipe_id: str):
     """Re-runs the sandbox verification for an existing recipe and updates evidence logs."""
     db = await get_db_connection()
@@ -194,9 +200,19 @@ async def verify_recipe_by_id(recipe_id: str):
         await db.close()
 
 
-@router.get("/{recipe_id}", response_model=VerifiedRecipe)
+@router.get("/recipes/{recipe_id}", response_class=HTMLResponse, tags=["Web UI"])
+async def get_recipe_html_page(request: Request, recipe_id: str):
+    """HTML Web Detail Page with Schema.org JSON-LD for Search Engines & Developers."""
+    recipe = await get_recipe_by_id(recipe_id)
+    template = jinja_env.get_template("recipe_detail.html")
+    confidence_percent = int(recipe.evidence.confidenceScore * 100)
+    html_content = template.render(recipe=recipe, confidence_percent=confidence_percent)
+    return HTMLResponse(content=html_content)
+
+
+@router.get("/api/v1/recipes/{recipe_id}", response_model=VerifiedRecipe)
 async def get_recipe_by_id(recipe_id: str):
-    """Retrieve a specific recipe by ID."""
+    """Retrieve a specific recipe by ID as JSON."""
     db = await get_db_connection()
     try:
         cursor = await db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
@@ -220,7 +236,7 @@ async def get_recipe_by_id(recipe_id: str):
         await db.close()
 
 
-@router.get("", response_model=List[VerifiedRecipe])
+@router.get("/api/v1/recipes", response_model=List[VerifiedRecipe])
 async def list_recipes(limit: int = Query(20, ge=1, le=100)):
     """List recently verified recipes."""
     db = await get_db_connection()

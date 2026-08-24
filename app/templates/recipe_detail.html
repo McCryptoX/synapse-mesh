@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ recipe.problem.errorSignature }} | Synapse-Mesh Verified Solution</title>
+    <meta name="description" content="{{ recipe.solution.summary }}">
+    
+    <!-- Schema.org JSON-LD for Search Engines & AI Crawlers -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "{{ recipe.problem.errorSignature }}",
+      "description": "{{ recipe.solution.summary }}",
+      "url": "https://synapsemesh.dev/recipes/{{ recipe.id }}",
+      "author": {
+        "@type": "Organization",
+        "name": "Synapse-Mesh Exocortex"
+      },
+      "dateModified": "{{ recipe.evidence.lastTestedAt }}",
+      "proficiencyLevel": "Expert",
+      "articleBody": "{{ recipe.solution.summary }}"
+    }
+    </script>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 500: '#14b8a6', 600: '#0d9488', 900: '#134e4a' }
+                    },
+                    fontFamily: {
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #090d16; color: #e2e8f0; }
+        .terminal-code { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+    <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/" class="font-bold text-lg tracking-wider text-white flex items-center space-x-2">
+                <span class="w-3 h-3 rounded-full bg-brand-500"></span>
+                <span>SYNAPSE<span class="text-brand-500">-MESH</span></span>
+            </a>
+            <a href="/" class="text-sm font-mono text-slate-400 hover:text-brand-500 transition">← Alle Rezepte</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-12 flex-1 w-full space-y-8">
+        
+        <!-- Breadcrumb & Badges -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-2 text-xs font-mono text-slate-400">
+                <a href="/" class="hover:text-brand-500">Synapse</a>
+                <span>/</span>
+                <span>Recipes</span>
+                <span>/</span>
+                <span class="text-brand-500">{{ recipe.id }}</span>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+                ✓ SANDBOX VERIFIED ({{ confidence_percent }}% Confidence)
+            </span>
+        </div>
+
+        <!-- Problem Header -->
+        <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-500 border border-slate-700">{{ recipe.problem.runtime }}</span>
+                <span class="text-xs font-mono text-slate-500">ID: {{ recipe.id }}</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-mono font-bold text-rose-400 bg-slate-950/80 p-4 rounded-xl border border-rose-950/50">
+                {{ recipe.problem.errorSignature }}
+            </h1>
+            <p class="text-slate-300 text-base leading-relaxed">
+                {{ recipe.problem.description }}
+            </p>
+        </div>
+
+        <!-- Solution Card -->
+        <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-5">
+            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                <span>💡 Verifizierte Lösung</span>
+            </h2>
+            <p class="text-slate-300 text-sm">
+                {{ recipe.solution.summary }}
+            </p>
+
+            {% if recipe.solution.codeDiff %}
+            <div class="space-y-1.5">
+                <div class="text-xs font-mono text-slate-400 uppercase tracking-wider">Patch / Code Diff:</div>
+                <pre class="terminal-code p-4 rounded-xl border border-slate-800 text-emerald-300 font-mono text-xs overflow-x-auto"><code>{{ recipe.solution.codeDiff }}</code></pre>
+            </div>
+            {% endif %}
+
+            {% if recipe.evidence.primarySource %}
+            <div class="pt-2 text-xs font-mono text-slate-400">
+                <span>Offizielle Referenz: </span>
+                <a href="{{ recipe.evidence.primarySource }}" target="_blank" rel="noopener" class="text-brand-500 hover:underline">{{ recipe.evidence.primarySource }}</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Verification Proof -->
+        <div class="p-6 rounded-2xl border border-slate-800/80 bg-slate-900/30 space-y-3 font-mono text-xs text-slate-400">
+            <div class="text-white font-semibold flex items-center space-x-2">
+                <span>🧪 Sandbox Execution Evidence</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+                    <span class="text-slate-500">Exit Code:</span> <span class="text-emerald-400 font-bold">{{ recipe.evidence.sandboxExitCode }}</span>
+                </div>
+                <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+                    <span class="text-slate-500">Tests Passed:</span> <span class="text-emerald-400 font-bold">{{ recipe.evidence.passedTests }} / {{ recipe.evidence.totalTests }}</span>
+                </div>
+                <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+                    <span class="text-slate-500">Confidence:</span> <span class="text-brand-500 font-bold">{{ confidence_percent }}%</span>
+                </div>
+                <div class="p-2.5 rounded bg-slate-950 border border-slate-800">
+                    <span class="text-slate-500">Protocol:</span> <span class="text-indigo-400 font-bold">MCP 2026</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MCP Usage CTA -->
+        <div class="p-6 rounded-xl border border-brand-500/30 bg-slate-900/60 text-center space-y-3">
+            <h3 class="text-lg font-bold text-white">Dieses Wissen in deinen KI-Stack einbinden</h3>
+            <p class="text-slate-400 text-xs font-mono">
+                Nutze den Endpoint <code class="text-brand-500">https://synapsemesh.dev/mcp</code> in Claude, ChatGPT oder Cursor.
+            </p>
+            <a href="/#connect" class="inline-block px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold font-mono text-xs transition">
+                1-Klick MCP Setup
+            </a>
+        </div>
+
+    </main>
+
+    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-500 font-mono">
+        <div>SYNAPSE-MESH &copy; 2026 | <a href="/impressum" class="text-slate-400 hover:text-brand-500">Impressum</a> | <a href="/datenschutz" class="text-slate-400 hover:text-brand-500">Datenschutz</a></div>
+    </footer>
+</body>
+</html>
