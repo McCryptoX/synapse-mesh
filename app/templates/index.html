@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse-Mesh | Agent-Native Living Solutions & Verification</title>
+    <meta name="description" content="Agenten-native Wissens- und Verifikations-Infrastruktur für autonome KIs (Gemini, Claude, ChatGPT, Antigravity).">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            900: '#134e4a',
+                            glow: '#2dd4bf'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090d16;
+            color: #e2e8f0;
+        }
+        .glow-border {
+            box-shadow: 0 0 25px -5px rgba(45, 212, 191, 0.15);
+        }
+        .terminal-code {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
+
+    <!-- Header / Nav -->
+    <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-3.5 h-3.5 rounded-full bg-brand-500 animate-pulse"></div>
+                <span class="font-bold text-lg tracking-wider text-white">SYNAPSE<span class="text-brand-500">-MESH</span></span>
+                <span class="text-xs uppercase px-2 py-0.5 rounded bg-brand-900/50 text-brand-500 border border-brand-600/30 font-mono">Exocortex v0.1</span>
+            </div>
+            <div class="flex items-center space-x-6 text-sm font-mono">
+                <a href="/docs" class="text-slate-400 hover:text-brand-500 transition">API Docs</a>
+                <a href="/.well-known/mcp.json" class="text-slate-400 hover:text-brand-500 transition">.well-known/mcp</a>
+                <a href="/.well-known/agent.json" class="text-slate-400 hover:text-brand-500 transition">.well-known/agent</a>
+                <a href="#connect" class="px-3 py-1.5 rounded-md bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition">MCP Connect</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-16">
+
+        <!-- Hero Section -->
+        <section class="text-center space-y-6 pt-4">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>MCP Streamable HTTP Gateway Online</span>
+            </div>
+            
+            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
+                Verifiziertes Wissen für <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-300 to-cyan-400">autonome KIs</span>
+            </h1>
+
+            <p class="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
+                Synapse-Mesh liefert deterministische, reproduzierbare Lösungen für Agenten (Gemini, Claude, ChatGPT, Antigravity) – ohne Halluzinationen und ohne Modell-Retraining.
+            </p>
+
+            <!-- Leitaxiom Box -->
+            <div class="max-w-3xl mx-auto p-4 rounded-xl border border-brand-500/30 bg-slate-900/60 text-slate-300 font-mono text-sm text-left glow-border">
+                <span class="text-brand-500 font-bold">⚡ Leitaxiom:</span>
+                <p class="mt-1 text-slate-300 italic">
+                    „Synapse soll nicht versuchen, von KIs ‚gekannt‘ zu werden. Synapse ist so gebaut, dass KIs es entdecken, verstehen und unmittelbar benutzen können.“
+                </p>
+            </div>
+        </section>
+
+        <!-- Stats Counter Section -->
+        <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div id="stat-total" class="text-3xl font-bold text-brand-500 font-mono">...</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Living Recipes</div>
+            </div>
+            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div id="stat-verified" class="text-3xl font-bold text-emerald-400 font-mono">100%</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Sandbox Verified</div>
+            </div>
+            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div class="text-3xl font-bold text-cyan-400 font-mono">0 PII</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">GDPR & EU AI Act</div>
+            </div>
+            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div class="text-3xl font-bold text-indigo-400 font-mono">&lt; 15ms</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">API Latency</div>
+            </div>
+        </section>
+
+        <!-- Live Search / Explorer Section -->
+        <section class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
+                        <span>🔍 Live Solution Explorer</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm">Durchsuche verifizierte Fehlersignaturen und Sandbox-Lösungen in Echtzeit.</p>
+                </div>
+            </div>
+
+            <!-- Search Input -->
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Fehlermeldung eingeben (z. B. 'regex has been removed', 'cgi', '__dirname')..." 
+                       class="w-full px-5 py-4 pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono text-sm shadow-inner transition">
+                <svg class="w-5 h-5 text-slate-500 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+
+            <!-- Search Results Container -->
+            <div id="resultsContainer" class="space-y-4">
+                <!-- Dynamically filled by JS -->
+                <div class="text-center py-8 text-slate-500 font-mono text-sm">Rezepte werden geladen...</div>
+            </div>
+        </section>
+
+        <!-- MCP Integration / Quick Connect Section -->
+        <section id="connect" class="p-8 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
+                    <span>🔌 1-Klick MCP Integration</span>
+                </h2>
+                <p class="text-slate-400 text-sm">
+                    Füge Synapse-Mesh mit dieser Konfiguration zu **Claude Desktop**, **Cursor**, **ChatGPT Actions** oder **Antigravity** hinzu.
+                </p>
+            </div>
+
+            <div class="relative">
+                <pre class="terminal-code p-5 rounded-xl border border-slate-800 text-emerald-400 font-mono text-xs overflow-x-auto"><code>{
+  "mcpServers": {
+    "synapse-mesh": {
+      "url": "https://synapsemesh.dev/mcp"
+    }
+  }
+}</code></pre>
+                <button onclick="copyMcpConfig()" id="copyBtn" class="absolute top-4 right-4 px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-mono transition flex items-center space-x-1.5">
+                    <span id="copyText">📋 Kopieren</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-500 font-mono space-y-2">
+        <div>SYNAPSE-MESH &copy; 2026 | Entwickelt für autonome KI-Agenten | Hosted in der EU / Deutschland</div>
+        <div class="space-x-4">
+            <a href="https://synapsemesh.dev/docs" class="hover:text-brand-500">OpenAPI Spec</a>
+            <a href="https://synapsemesh.dev/health" class="hover:text-brand-500">Health Endpoint</a>
+            <a href="https://synapsemesh.dev/.well-known/mcp.json" class="hover:text-brand-500">MCP Manifest</a>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Live Search & Stats -->
+    <script>
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/v1/recipes/stats');
+                const data = await res.json();
+                document.getElementById('stat-total').innerText = data.totalRecipes || '0';
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        async function fetchRecipes(query = '') {
+            const container = document.getElementById('resultsContainer');
+            try {
+                let recipes = [];
+                if (!query) {
+                    const res = await fetch('/api/v1/recipes?limit=10');
+                    recipes = await res.json();
+                } else {
+                    const res = await fetch('/api/v1/recipes/search', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ errorSignature: query, limit: 10 })
+                    });
+                    recipes = await res.json();
+                }
+
+                if (recipes.length === 0) {
+                    container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">Keine verifizierten Rezepte für "${query}" gefunden.</div>`;
+                    return;
+                }
+
+                container.innerHTML = recipes.map(r => `
+                    <div class="p-5 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:border-slate-700 transition space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-500 border border-slate-700">${r.problem.runtime}</span>
+                                <span class="font-mono text-sm font-semibold text-white">${r.id}</span>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+                                ✓ VERIFIED (${Math.round(r.evidence.confidenceScore * 100)}% Confidence)
+                            </span>
+                        </div>
+                        <div class="text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40">
+                            ${escapeHtml(r.problem.errorSignature)}
+                        </div>
+                        <div class="text-sm text-slate-300">
+                            <strong>Lösung:</strong> ${escapeHtml(r.solution.summary)}
+                        </div>
+                        ${r.solution.codeDiff ? `
+                            <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.solution.codeDiff)}</code></pre>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } catch (err) {
+                container.innerHTML = `<div class="p-4 text-rose-400 font-mono text-xs">Fehler beim Laden: ${err.message}</div>`;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        let debounceTimer;
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchRecipes(e.target.value);
+            }, 250);
+        });
+
+        function copyMcpConfig() {
+            const config = JSON.stringify({
+                "mcpServers": {
+                    "synapse-mesh": {
+                        "url": "https://synapsemesh.dev/mcp"
+                    }
+                }
+            }, null, 2);
+            navigator.clipboard.writeText(config);
+            const text = document.getElementById('copyText');
+            text.innerText = '✓ Kopiert!';
+            setTimeout(() => { text.innerText = '📋 Kopieren'; }, 2000);
+        }
+
+        loadStats();
+        fetchRecipes();
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Smithery.ai MCP Server Configuration
+name: "synapse-mesh"
+description: "Agent-native verified living solutions & sandbox test runner"
+version: "0.1.0"
+author: "Synapse-Mesh Team"
+repository: "https://github.com/synapsemesh/synapse-mesh"
+
+startCommand:
+  type: http
+  config:
+    endpoint: "https://synapsemesh.dev/mcp"
