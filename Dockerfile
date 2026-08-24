@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certifi
     && npm install -g express@5.0.1 supertest \
     && rm -rf /var/lib/apt/lists/*
 
+ENV PYTHONPATH="/app"
 ENV NODE_PATH="/usr/lib/node_modules:/usr/local/lib/node_modules"
 
 # Create non-root user

@@ -9,17 +9,19 @@ services:
       - ./data:/app/data
       - ./scripts:/app/scripts:ro
       - ./benchmark:/app/benchmark:ro
+      - ./tests:/app/tests:ro
     environment:
       - ENVIRONMENT=production
       - DOMAIN=synapsemesh.dev
       - LOG_LEVEL=INFO
+      - PYTHONPATH=/app
     deploy:
       resources:
         limits:
           cpus: '2.0'
-          memory: 384M
+          memory: 1024M
         reservations:
-          memory: 128M
+          memory: 256M
     networks:
       - synapse_net
 

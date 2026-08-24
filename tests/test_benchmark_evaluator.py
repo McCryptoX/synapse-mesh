@@ -4,17 +4,19 @@ from benchmark.evaluator import ScientificBenchmarkEvaluator
 
 
 @pytest.mark.asyncio
-async def test_pilot_benchmark_cases():
-    evaluator = ScientificBenchmarkEvaluator(dataset_file="benchmark/pilot_dataset.json")
-    results = await evaluator.run_full_evaluation()
+async def test_hardened_benchmark_cases():
+    evaluator = ScientificBenchmarkEvaluator(dataset_file="benchmark/hardened_cases.json")
+    cases = evaluator.load_cases()
+    assert len(cases) >= 3, "Must evaluate at least 3 hardened cases"
     
-    assert len(results) == 5, "Must evaluate all 5 pilot cases"
     node_available = shutil.which("node") is not None
 
-    for r in results:
-        if r.family == "Node.js" and not node_available:
+    for c in cases:
+        if c.family == "Node.js" and not node_available:
             continue
-        assert r.preFailPassed is True, f"Case {r.caseId} must fail during pre-patch repro"
-        assert r.postPassPassed is True, f"Case {r.caseId} must pass after valid patch"
-        assert r.mutationRejected is True, f"Case {r.caseId} must reject mutated patch"
-        assert r.fullyVerified is True, f"Case {r.caseId} must be fully verified"
+        res = await evaluator.evaluate_case(c)
+        assert res.preFailPassed is True, f"Case {c.id} must fail during pre-patch repro"
+        assert res.signatureMatched is True, f"Case {c.id} must match error signature regex"
+        assert res.postPassPassed is True, f"Case {c.id} must pass after valid patch"
+        assert res.mutationsRejected == res.mutationsTotal, f"Case {c.id} must reject all web-fehlfix mutations"
+        assert res.fullyVerified is True, f"Case {c.id} must be fully verified"
