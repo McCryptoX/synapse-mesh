@@ -58,9 +58,9 @@ class DiagnosticEvaluationResult:
 
 
 class ScientificBenchmarkEvaluator:
-    """Rigorous 4-stage epistemic verification runner for benchmark datasets."""
+    """Rigorous 4-stage epistemic verification runner executing real multi-file workspaces in isolated directories."""
 
-    def __init__(self, dataset_file: str = "benchmark/pilot_dataset.json"):
+    def __init__(self, dataset_file: str = "benchmark/hardened_cases.json"):
         self.dataset_file = Path(dataset_file)
         self.cases: List[BenchmarkTestCase] = []
 
@@ -74,42 +74,69 @@ class ScientificBenchmarkEvaluator:
 
     async def evaluate_case(self, case: BenchmarkTestCase) -> DiagnosticEvaluationResult:
         start_time = time.perf_counter()
+        runtime = "nodejs" if case.family in ("Node.js", "JavaScript", "TypeScript") else "python"
         
-        # Stage 1: Pre-Fail & Signature Regex Match Validation (Repro MUST fail with target signature)
-        if case.family in ("Node.js", "JavaScript", "TypeScript"):
-            repro_res = await SandboxRunner.run_nodejs_test(case.reproductionScript)
-        else:
-            repro_res = await SandboxRunner.run_python_test(case.reproductionScript)
-            
+        # 1. Pre-Fail & Signature Regex Validation (Real Reproduction Script in Workspace)
+        repro_files = dict(case.workspaceFiles)
+        repro_ext = Path(case.entrypoint).suffix or (".mjs" if runtime == "nodejs" else ".py")
+        repro_entrypoint = f"repro{repro_ext}"
+        repro_files[repro_entrypoint] = case.reproductionScript
+
+        repro_res = await SandboxRunner.run_workspace_test(
+            files=repro_files,
+            entrypoint=repro_entrypoint,
+            runtime=runtime
+        )
+        
+        if repro_res.get("unverified"):
+            return DiagnosticEvaluationResult(
+                caseId=case.id,
+                family=case.family,
+                preFailPassed=False,
+                signatureMatched=False,
+                postPassPassed=False,
+                mutationsTotal=len(case.mutationPatches),
+                mutationsRejected=0,
+                fullyVerified=False,
+                durationMs=0.0,
+                notes=f"UNVERIFIED: {repro_res.get('stderr')}"
+            )
+
         pre_fail_ok = (repro_res["exitCode"] != 0)
-        
-        # Match error signature via regex if provided, otherwise substring
         combined_output = f"{repro_res.get('stderr', '')}\n{repro_res.get('stdout', '')}"
+        
         if case.errorSignatureRegex:
             sig_matched = bool(re.search(case.errorSignatureRegex, combined_output))
         else:
             sig_matched = (case.errorSignature.lower() in combined_output.lower())
 
-        # Stage 2 & 3: Post-Pass Validation (Ground Truth + Valid Patch MUST pass exit 0)
-        combined_valid = f"{case.validPatch}\n\n{case.groundTruthTestSuite}"
-        if case.family in ("Node.js", "JavaScript", "TypeScript"):
-            post_res = await SandboxRunner.run_nodejs_test(combined_valid)
-        else:
-            post_res = await SandboxRunner.run_python_test(combined_valid)
-            
+        # 2. Post-Pass Validation (Real Patch File + Ground Truth Test Suite in Workspace)
+        valid_files = dict(case.workspaceFiles)
+        valid_files[case.targetPatchFile] = case.validPatch
+        valid_files[case.entrypoint] = case.groundTruthTestSuite
+
+        post_res = await SandboxRunner.run_workspace_test(
+            files=valid_files,
+            entrypoint=case.entrypoint,
+            runtime=runtime
+        )
+        
         post_pass_ok = (post_res["exitCode"] == 0 and post_res["passed"] is True)
 
-        # Stage 4: Multi-Mutation Sanity Check (ALL Web-Fehlfix mutations MUST fail)
+        # 3. Multi-Mutation Sanity Check (Each Web-Fehlfix written to target file MUST fail test suite)
         mutations = case.mutationPatches or []
         mutations_rejected = 0
         
         for mut in mutations:
-            combined_mutation = f"{mut}\n\n{case.groundTruthTestSuite}"
-            if case.family in ("Node.js", "JavaScript", "TypeScript"):
-                mut_res = await SandboxRunner.run_nodejs_test(combined_mutation)
-            else:
-                mut_res = await SandboxRunner.run_python_test(combined_mutation)
+            mut_files = dict(case.workspaceFiles)
+            mut_files[case.targetPatchFile] = mut
+            mut_files[case.entrypoint] = case.groundTruthTestSuite
             
+            mut_res = await SandboxRunner.run_workspace_test(
+                files=mut_files,
+                entrypoint=case.entrypoint,
+                runtime=runtime
+            )
             if mut_res["exitCode"] != 0 or mut_res["passed"] is False:
                 mutations_rejected += 1
 
@@ -121,9 +148,9 @@ class ScientificBenchmarkEvaluator:
         if not pre_fail_ok:
             notes.append("Repro did not fail")
         if not sig_matched:
-            notes.append("Error signature regex did not match repro output")
+            notes.append(f"Signature mismatch (stderr: {repro_res.get('stderr', '')[:80]})")
         if not post_pass_ok:
-            notes.append(f"Valid patch failed ({post_res.get('stderr', '')[:60]})")
+            notes.append(f"Valid patch failed ({post_res.get('stderr', '')[:80]})")
         if not all_mutations_killed:
             notes.append(f"Web-Fehlfix survived: {mutations_rejected}/{len(mutations)} killed")
 
@@ -153,12 +180,12 @@ class ScientificBenchmarkEvaluator:
 
 
 if __name__ == "__main__":
-    evaluator = ScientificBenchmarkEvaluator()
+    evaluator = ScientificBenchmarkEvaluator("benchmark/hardened_cases.json")
     results = asyncio.run(evaluator.run_full_evaluation())
-    print("\n" + "="*85)
-    print("SCIENTIFIC BENCHMARK VERIFICATION REPORT (RIGOROUS 4-STAGE EVALUATOR)")
-    print("="*85)
+    print("\n" + "="*95)
+    print("SCIENTIFIC BENCHMARK VERIFICATION REPORT (GENUINE FILE-WORKSPACE EVALUATOR)")
+    print("="*95)
     for r in results:
         mut_str = f"{r.mutationsRejected}/{r.mutationsTotal} Killed" if r.mutationsTotal else "N/A"
-        print(f"[{'✓' if r.fullyVerified else '✗'}] {r.caseId:<35} | Pre-Fail: {r.preFailPassed} | Sig-Match: {r.signatureMatched} | Post-Pass: {r.postPassPassed} | Mutations: {mut_str:<12} | {r.durationMs}ms")
-    print("="*85)
+        print(f"[{'✓' if r.fullyVerified else '✗'}] {r.caseId:<32} | Pre-Fail: {r.preFailPassed} | Sig-Match: {r.signatureMatched} | Post-Pass: {r.postPassPassed} | Mutations: {mut_str:<12} | {r.durationMs}ms")
+    print("="*95)

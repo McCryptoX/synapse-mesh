@@ -9,8 +9,14 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install Node.js runtime for multi-ecosystem sandbox execution
-RUN apt-get update && apt-get install -y --no-install-recommends nodejs && rm -rf /var/lib/apt/lists/*
+# Install official Node.js 22 LTS & global test packages
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g express@5.0.1 supertest \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV NODE_PATH="/usr/lib/node_modules:/usr/local/lib/node_modules"
 
 # Create non-root user
 RUN groupadd -r synapse && useradd -r -g synapse synapse
