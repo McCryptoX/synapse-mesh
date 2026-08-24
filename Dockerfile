@@ -9,6 +9,9 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Install Node.js runtime for multi-ecosystem sandbox execution
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs && rm -rf /var/lib/apt/lists/*
+
 # Create non-root user
 RUN groupadd -r synapse && useradd -r -g synapse synapse
 

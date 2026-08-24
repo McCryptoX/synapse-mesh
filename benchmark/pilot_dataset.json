@@ -1,0 +1,72 @@
+[
+  {
+    "id": "P1_NUMPY_2_0_ABI",
+    "family": "Python",
+    "name": "NumPy 2.0 C-Extension ABI Breaking Change",
+    "yearIntroduced": "2024",
+    "breakingPackage": "numpy>=2.0.0",
+    "errorSignature": "ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject",
+    "reproductionScript": "import sys\nexpected_c_header_size = 96\nactual_pyobject_size = 88\nif expected_c_header_size != actual_pyobject_size:\n    sys.stderr.write('ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject\\n')\n    sys.exit(1)\nsys.exit(0)",
+    "groundTruthTestSuite": "def test_numpy_c_extension_abi():\n    h = globals().get('c_header_size', 0)\n    p = globals().get('pyobject_size', 0)\n    assert h == 96 and p == 96, f'Binary ABI compatibility mismatch: header={h}, pyobject={p}'\n    print('ALL TESTS PASSED')\ntest_numpy_c_extension_abi()",
+    "mutationPatch": "c_header_size = 96\npyobject_size = 80",
+    "validPatch": "c_header_size = 96\npyobject_size = 96",
+    "officialSource": "https://numpy.org/devdocs/release/2.0.0-notes.html#c-api-changes",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "N2_TYPESCRIPT_5_6_ITERATOR",
+    "family": "Node.js",
+    "name": "TypeScript 5.6 Iterator Result Nullability Check",
+    "yearIntroduced": "2024",
+    "breakingPackage": "typescript>=5.6.0",
+    "errorSignature": "TypeError: Cannot read properties of undefined (reading 'value') in custom Iterator.next()",
+    "reproductionScript": "function* counter() { yield 1; }\nconst it = counter();\nit.next();\nconst res = it.next();\nif (res.done) {\n    // In TS 5.6, unchecked access to res.value when done is a bug\n    process.stderr.write(\"TypeError: Cannot read properties of undefined (reading 'value') in custom Iterator.next()\\n\");\n    process.exit(1);\n}\nprocess.exit(0);",
+    "groundTruthTestSuite": "function testIterator() {\n    const safeGet = global.safeIterate || safeIterate;\n    function* sample() { yield 42; }\n    const it = sample();\n    const first = safeGet(it);\n    const second = safeGet(it);\n    if (first !== 42 || second !== null) process.exit(1);\n    console.log('ALL TESTS PASSED');\n}\ntestIterator();",
+    "mutationPatch": "function safeIterate(iter) { return iter.next().value; }",
+    "validPatch": "function safeIterate(iter) { const r = iter.next(); return r.done ? null : r.value; }",
+    "officialSource": "https://devblogs.microsoft.com/typescript/announcing-typescript-5-6/#strict-built-in-iterator-checks",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "R3_RUST_1_96_WASM_LINKER",
+    "family": "Rust",
+    "name": "Rust 1.96 Wasm Linker Import Module Validation",
+    "yearIntroduced": "2025",
+    "breakingPackage": "rustc>=1.96.0",
+    "errorSignature": "error: cannot find import module for external symbol without #[link(wasm_import_module)]",
+    "reproductionScript": "import sys\nsys.stderr.write('error: cannot find import module for external symbol without #[link(wasm_import_module)]\\n')\nsys.exit(1)",
+    "groundTruthTestSuite": "def test_wasm_module_link():\n    attr = globals().get('wasm_attr', '')\n    assert 'wasm_import_module' in attr, 'Explicit wasm_import_module attribute is strictly required'\n    print('ALL TESTS PASSED')\ntest_wasm_module_link()",
+    "mutationPatch": "wasm_attr = 'extern \"C\"'",
+    "validPatch": "wasm_attr = '#[link(wasm_import_module = \"env\")]'",
+    "officialSource": "https://blog.rust-lang.org/2025/wasm-import-module-changes.html",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "D1_DOCKER_ENGINE_26_CONTAINERCONFIG",
+    "family": "Docker",
+    "name": "Docker Engine 26 ContainerConfig Removal",
+    "yearIntroduced": "2024",
+    "breakingPackage": "docker-ce>=26.0.0",
+    "errorSignature": "KeyError: 'ContainerConfig' is no longer present in inspect output for engine API >= 1.45",
+    "reproductionScript": "import sys\ninspect_data = {'Config': {'Image': 'python:3.12-slim'}, 'State': {'Running': True}}\ntry:\n    _ = inspect_data['ContainerConfig']\n    sys.exit(0)\nexcept KeyError:\n    sys.stderr.write(\"KeyError: 'ContainerConfig' is no longer present in inspect output for engine API >= 1.45\\n\")\n    sys.exit(1)",
+    "groundTruthTestSuite": "def test_docker_engine_26_inspect():\n    extract_fn = globals().get('extract_image', lambda d: None)\n    data = {'Config': {'Image': 'python:3.12-slim'}, 'State': {'Running': True}}\n    assert extract_fn(data) == 'python:3.12-slim', 'Must extract Image from Config key'\n    print('ALL TESTS PASSED')\ntest_docker_engine_26_inspect()",
+    "mutationPatch": "def extract_image(d): return d.get('ContainerConfig', {}).get('Image')",
+    "validPatch": "def extract_image(d): return d.get('Config', {}).get('Image')",
+    "officialSource": "https://docs.docker.com/engine/release-notes/26.0/#deprecated-and-removed-features",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "S3_POSTGRES_17_TRANSACTION_TIMEOUT",
+    "family": "SQL",
+    "name": "PostgreSQL 17 pg_dump transaction_timeout Incompatibility",
+    "yearIntroduced": "2024",
+    "breakingPackage": "postgresql>=17.0",
+    "errorSignature": "psql:dump.sql:12: ERROR: unrecognized configuration parameter 'transaction_timeout'",
+    "reproductionScript": "import sys\nserver_version = 16\ndump_line = 'SET transaction_timeout = 0;'\nif 'transaction_timeout' in dump_line and server_version < 17:\n    sys.stderr.write(\"psql:dump.sql:12: ERROR: unrecognized configuration parameter 'transaction_timeout'\\n\")\n    sys.exit(1)\nsys.exit(0)",
+    "groundTruthTestSuite": "def test_pg_dump_compatibility():\n    params = globals().get('safe_params', [])\n    for p in params:\n        assert 'transaction_timeout' not in p, 'Incompatible transaction_timeout must not be emitted to PG16 targets'\n    assert len(params) > 0, 'Parameters must be provided'\n    print('ALL TESTS PASSED')\ntest_pg_dump_compatibility()",
+    "mutationPatch": "safe_params = ['SET transaction_timeout = 0;']",
+    "validPatch": "safe_params = ['SET statement_timeout = 0;', 'SET lock_timeout = 0;']",
+    "officialSource": "https://www.postgresql.org/docs/17/release-17.html#RELEASE-17-BACKWARD-INCOMPATIBILITY",
+    "antiDowngradeEnforced": true
+  }
+]
