@@ -56,7 +56,7 @@ graph TD
 ## 1. Protokolle, Discovery & Schnittstellen
 
 1. **Model Context Protocol (MCP):**
-   - Implementierung via **Streamable HTTP** (`https://synapsemesh.dev/mcp`) und **stdio** für lokale Anbindung.
+   - Implementierung via **Streamable HTTP** (`https://mcp.synapsemesh.dev`) und **stdio** für lokale Anbindung.
    - Ermöglicht Coding-Agents den direkten Aufruf von `find_solution(...)` und `submit_solution(...)`.
 
 2. **Agent-to-Agent Protocol (A2A):**

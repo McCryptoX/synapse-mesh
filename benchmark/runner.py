@@ -34,9 +34,9 @@ class EmpiricalBenchmarkHarness:
         }
 
     def generate_markdown_report(self, report: BenchmarkReport) -> str:
-        """Generates a structured Markdown table comparing Group A, B, and C."""
+        """Generates a neutral, unbiased Markdown table comparing Group A, B, and C."""
         md = []
-        md.append(f"# Empirical Benchmark Report: Synapse-Mesh vs Baseline & Web-Docs")
+        md.append(f"# Empirical Benchmark Report: Scientific 3-Group Evaluation")
         md.append(f"- **Evaluated Model:** {report.modelEvaluated}")
         md.append(f"- **Total Test Cases:** {report.totalCases}")
         md.append(f"- **Date:** {report.timestamp.isoformat()}\n")
@@ -47,11 +47,11 @@ class EmpiricalBenchmarkHarness:
         b = report.summaryGroupB
         c = report.summaryGroupC
         
-        md.append(f"| **First-Try Solve Rate** | {a.get('firstTryRate', 'N/A')}% | {b.get('firstTryRate', 'N/A')}% | **{c.get('firstTryRate', 'N/A')}%** |")
-        md.append(f"| **Total Solve Rate** | {a.get('totalSolveRate', 'N/A')}% | {b.get('totalSolveRate', 'N/A')}% | **{c.get('totalSolveRate', 'N/A')}%** |")
-        md.append(f"| **Avg. Tokens / Case** | {a.get('avgTokens', 'N/A')} | {b.get('avgTokens', 'N/A')} | **{c.get('avgTokens', 'N/A')}** |")
-        md.append(f"| **Avg. Time / Case (s)** | {a.get('avgSeconds', 'N/A')}s | {b.get('avgSeconds', 'N/A')}s | **{c.get('avgSeconds', 'N/A')}s** |")
-        md.append(f"| **Avg. Tool Calls** | {a.get('avgToolCalls', 0)} | {b.get('avgToolCalls', 0)} | **{c.get('avgToolCalls', 0)}** |")
-        md.append(f"| **Hallucinated Patches** | {a.get('failedAttempts', 0)} | {b.get('failedAttempts', 0)} | **{c.get('failedAttempts', 0)}** |")
+        md.append(f"| First-Try Solve Rate | {a.get('firstTryRate', 'N/A')}% | {b.get('firstTryRate', 'N/A')}% | {c.get('firstTryRate', 'N/A')}% |")
+        md.append(f"| Total Solve Rate | {a.get('totalSolveRate', 'N/A')}% | {b.get('totalSolveRate', 'N/A')}% | {c.get('totalSolveRate', 'N/A')}% |")
+        md.append(f"| Avg. Tokens / Case | {a.get('avgTokens', 'N/A')} | {b.get('avgTokens', 'N/A')} | {c.get('avgTokens', 'N/A')} |")
+        md.append(f"| Avg. Time / Case (s) | {a.get('avgSeconds', 'N/A')}s | {b.get('avgSeconds', 'N/A')}s | {c.get('avgSeconds', 'N/A')}s |")
+        md.append(f"| Avg. Tool Calls | {a.get('avgToolCalls', 0)} | {b.get('avgToolCalls', 0)} | {c.get('avgToolCalls', 0)} |")
+        md.append(f"| Hallucinated Patches | {a.get('failedAttempts', 0)} | {b.get('failedAttempts', 0)} | {c.get('failedAttempts', 0)} |")
         
         return "\n".join(md)

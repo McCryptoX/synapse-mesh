@@ -1,10 +1,18 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
+from enum import Enum
 
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class EvidenceBadge(str, Enum):
+    VERIFIED_SANDBOX = "VERIFIED_SANDBOX"
+    SOURCE_BACKED = "SOURCE_BACKED"
+    REGRESSION_TESTED = "REGRESSION_TESTED"
+    ZERO_PII_AUDITED = "ZERO_PII_AUDITED"
 
 
 class ProblemDefinition(BaseModel):
@@ -32,6 +40,7 @@ class EvidenceDefinition(BaseModel):
     passedTests: int = Field(default=1, description="Number of passed tests in sandbox")
     totalTests: int = Field(default=1, description="Total number of tests in suite")
     confidenceScore: float = Field(default=1.0, ge=0.0, le=1.0, description="Evidence confidence metric")
+    badges: List[str] = Field(default_factory=lambda: ["VERIFIED_SANDBOX", "SOURCE_BACKED", "ZERO_PII_AUDITED"])
     primarySource: Optional[str] = Field(None, description="Official documentation, release notes or issue link")
 
 

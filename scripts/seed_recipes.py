@@ -54,8 +54,8 @@ INITIAL_RECIPES = [
         problem=ProblemDefinition(
             errorSignature="ModuleNotFoundError: No module named 'cgi'",
             runtime="python",
-            packages={"python": ">=3.12.0"},
-            description="The legacy 'cgi' module (PEP 594) was deprecated in Python 3.11 and completely removed in Python 3.12."
+            packages={"python": ">=3.13.0"},
+            description="The legacy 'cgi' module (PEP 594) was deprecated in Python 3.11 and completely removed in Python 3.13 (PEP 594)."
         ),
         solution=SolutionDefinition(
             summary="Replace 'cgi.parse_header' or 'cgi.escape' with 'email.message' / 'html.escape' or modern multipart parsers.",
@@ -315,7 +315,7 @@ INITIAL_RECIPES = [
         problem=ProblemDefinition(
             errorSignature="DeprecationWarning: There is no current event loop, get_event_loop() is deprecated",
             runtime="python",
-            packages={"python": ">=3.12.0"},
+            packages={"python": ">=3.13.0"},
             description="In Python 3.12, calling asyncio.get_event_loop() without an active event loop emits a DeprecationWarning and will raise RuntimeError in future versions."
         ),
         solution=SolutionDefinition(
