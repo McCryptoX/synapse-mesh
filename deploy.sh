@@ -11,8 +11,9 @@ if ! command -v docker &> /dev/null; then
     rm get-docker.sh
 fi
 
-# 2. Create data directory
+# 2. Create data directory with write permissions
 mkdir -p data
+chmod -R 777 data
 
 # 3. Build and Start Services
 echo "Starting Docker Compose services..."
