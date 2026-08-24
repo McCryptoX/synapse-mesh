@@ -4,7 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Synapse-Mesh | CI/CD for AI Knowledge (Verified Living Solutions)</title>
-    <meta name="description" content="CI/CD for AI Knowledge - Deterministic, execution-verified living solutions for autonomous coding agents (Gemini, Claude, ChatGPT, Cursor).">
+    <meta name="description" content="CI/CD for AI Knowledge - Deterministic, execution-verified living solutions and test runners for autonomous coding agents (Gemini, Claude, ChatGPT, Cursor).">
+    <meta name="keywords" content="mcp, model context protocol, ai agents, coding assistant, pydantic v2, python 3.12, next.js 15, verified solutions, continuous verification">
+    <meta name="author" content="Synapse-Mesh Operator">
+    <link rel="canonical" href="https://synapsemesh.dev/">
+
+    <!-- OpenGraph / Facebook / LinkedIn -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://synapsemesh.dev/">
+    <meta property="og:title" content="Synapse-Mesh | CI/CD for AI Knowledge">
+    <meta property="og:description" content="Deterministic, execution-verified living solutions for autonomous coding agents without model retraining.">
+    <meta property="og:site_name" content="Synapse-Mesh">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Synapse-Mesh | CI/CD for AI Knowledge">
+    <meta name="twitter:description" content="Deterministic, execution-verified living solutions for autonomous coding agents.">
+
+    <!-- Favicon (SVG Data-URI) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23134e4a'/><circle cx='50' cy='50' r='25' fill='%2314b8a6'/><circle cx='50' cy='50' r='10' fill='%23ffffff'/></svg>">
+
+    <!-- Schema.org Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Synapse-Mesh",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "All",
+      "description": "CI/CD for AI Knowledge - Agent-native verified living solutions registry and sandbox runner.",
+      "url": "https://synapsemesh.dev",
+      "author": {
+        "@type": "Person",
+        "name": "Synapse-Mesh Operator"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -54,6 +94,7 @@
                 <span class="text-xs uppercase px-2 py-0.5 rounded bg-brand-900/50 text-brand-500 border border-brand-600/30 font-mono">CI/CD for AI Knowledge</span>
             </div>
             <div class="flex items-center space-x-6 text-sm font-mono">
+                <a href="/verification" class="text-slate-400 hover:text-brand-500 transition">Verification Pipeline</a>
                 <a href="https://docs.synapsemesh.dev" class="text-slate-400 hover:text-brand-500 transition">OpenAPI Docs</a>
                 <a href="/.well-known/mcp.json" class="text-slate-400 hover:text-brand-500 transition">.well-known/mcp</a>
                 <a href="https://github.com/McCryptoX/synapse-mesh-mcp" target="_blank" class="text-slate-400 hover:text-brand-500 transition flex items-center space-x-1">
@@ -149,6 +190,9 @@
                     <span class="text-slate-300">Sanitizer passed: 0 Auth Tokens, 0 IP Addresses, 0 Local User Paths persisted</span>
                 </div>
             </div>
+            <div class="text-right">
+                <a href="/verification" class="text-xs font-mono text-brand-500 hover:underline">Vollständige Verification Architecture Spezifikation lesen →</a>
+            </div>
         </section>
 
         <!-- Live Search / Explorer Section -->
@@ -164,7 +208,7 @@
 
             <!-- Search Input -->
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Fehlermeldung eingeben (z. B. 'regex has been removed', 'cgi', '__dirname', 'Next.js', 'React 19')..." 
+                <input type="text" id="searchInput" placeholder="Fehlermeldung eingeben (z. B. 'regex has been removed', 'datetime.utcnow', 'Mapping', 'Next.js', 'React 19')..." 
                        class="w-full px-5 py-4 pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono text-sm shadow-inner transition">
                 <svg class="w-5 h-5 text-slate-500 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -212,11 +256,13 @@
             <span>•</span>
             <a href="/datenschutz" class="text-slate-400 hover:text-brand-500 transition underline">Datenschutz (DSGVO)</a>
             <span>•</span>
+            <a href="/verification" class="text-slate-400 hover:text-brand-500 transition underline">Verification Pipeline</a>
+            <span>•</span>
             <a href="https://docs.synapsemesh.dev" class="text-slate-400 hover:text-brand-500 transition">OpenAPI Spec</a>
             <span>•</span>
             <a href="/.well-known/mcp.json" class="text-slate-400 hover:text-brand-500 transition">MCP Manifest</a>
             <span>•</span>
-            <a href="https://github.com/McCryptoX/synapse-mesh-mcp" target="_blank" class="text-slate-400 hover:text-brand-500 transition">GitHub Repo</a>
+            <a href="/sitemap.xml" class="text-slate-400 hover:text-brand-500 transition">XML Sitemap</a>
         </div>
     </footer>
 

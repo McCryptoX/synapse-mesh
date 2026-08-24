@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, Request, Response
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from pathlib import Path
 from app.config import settings
+from app.database import get_db_connection
 
 router = APIRouter()
 
@@ -10,6 +11,65 @@ INDEX_HTML_PATH = TEMPLATES_DIR / "index.html"
 IMPRESSUM_HTML_PATH = TEMPLATES_DIR / "impressum.html"
 DATENSCHUTZ_HTML_PATH = TEMPLATES_DIR / "datenschutz.html"
 VERIFICATION_HTML_PATH = TEMPLATES_DIR / "verification.html"
+
+
+@router.get("/robots.txt", tags=["SEO"], response_class=PlainTextResponse)
+async def robots_txt():
+    """Search Engine Crawler Directives."""
+    return f"""User-agent: *
+Allow: /
+
+Sitemap: {settings.base_url}/sitemap.xml
+"""
+
+
+@router.get("/sitemap.xml", tags=["SEO"])
+async def sitemap_xml():
+    """Dynamically generated XML Sitemap for Search Engines & AI Web Crawlers."""
+    db = await get_db_connection()
+    try:
+        cursor = await db.execute("SELECT id, updated_at FROM recipes WHERE verification_status = 'VERIFIED'")
+        recipes = await cursor.fetchall()
+    finally:
+        await db.close()
+
+    xml_entries = [
+        f"""  <url>
+    <loc>{settings.base_url}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>""",
+        f"""  <url>
+    <loc>{settings.base_url}/verification</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>""",
+        f"""  <url>
+    <loc>{settings.base_url}/impressum</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>""",
+        f"""  <url>
+    <loc>{settings.base_url}/datenschutz</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>"""
+    ]
+
+    for r in recipes:
+        xml_entries.append(f"""  <url>
+    <loc>{settings.base_url}/recipes/{r['id']}</loc>
+    <lastmod>{str(r['updated_at'])[:10]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>""")
+
+    sitemap_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{chr(10).join(xml_entries)}
+</urlset>"""
+
+    return Response(content=sitemap_content, media_type="application/xml")
 
 
 @router.get("/health", tags=["System"])
@@ -66,7 +126,9 @@ async def root(request: Request):
         "version": settings.app_version,
         "discovery": {
             "mcp": "/.well-known/mcp.json",
-            "agent": "/.well-known/agent.json"
+            "agent": "/.well-known/agent.json",
+            "sitemap": "/sitemap.xml",
+            "robots": "/robots.txt"
         },
         "endpoints": {
             "mcpCanonical": settings.canonical_mcp_url,
