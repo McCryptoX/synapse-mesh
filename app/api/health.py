@@ -13,6 +13,20 @@ IMPRESSUM_HTML_PATH = TEMPLATES_DIR / "impressum.html"
 DATENSCHUTZ_HTML_PATH = TEMPLATES_DIR / "datenschutz.html"
 VERIFICATION_HTML_PATH = TEMPLATES_DIR / "verification.html"
 FAVICON_SVG_PATH = STATIC_DIR / "favicon.svg"
+OG_IMAGE_PATH = STATIC_DIR / "og-image.png"
+
+
+@router.get("/og-image.png", tags=["Assets"])
+@router.get("/og-image.jpg", tags=["Assets"])
+async def og_image():
+    """Serves high-resolution 1200x630 OpenGraph Social Preview Banner."""
+    if OG_IMAGE_PATH.exists():
+        return FileResponse(
+            path=OG_IMAGE_PATH,
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"}
+        )
+    return Response(status_code=404)
 
 
 @router.get("/favicon.svg", tags=["Assets"])
@@ -144,7 +158,8 @@ async def root(request: Request):
             "agent": "/.well-known/agent.json",
             "sitemap": "/sitemap.xml",
             "robots": "/robots.txt",
-            "favicon": "/favicon.svg"
+            "favicon": "/favicon.svg",
+            "ogImage": "/og-image.png"
         },
         "endpoints": {
             "mcpCanonical": settings.canonical_mcp_url,
