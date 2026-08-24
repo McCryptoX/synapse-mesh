@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verification Pipeline & Sandbox Security | Synapse-Mesh</title>
-    <meta name="description" content="Technical architecture of the Synapse-Mesh isolated sandbox verification pipeline and security guarantees.">
+    <meta name="description" content="Technical architecture of the Synapse-Mesh isolated sandbox verification pipeline, categorical evidence badges, and security guarantees.">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -36,39 +36,43 @@
     <main class="max-w-4xl mx-auto px-4 py-12 flex-1 w-full space-y-10">
         <div class="space-y-2">
             <span class="px-2.5 py-1 rounded bg-brand-900/50 text-brand-500 border border-brand-600/30 text-xs font-mono font-semibold">Technical Architecture</span>
-            <h1 class="text-3xl sm:text-4xl font-bold text-white">Verification Pipeline & Sandbox Security</h1>
-            <p class="text-slate-400 text-sm font-mono">Wie Synapse-Mesh Living Recipes deterministisch verifiziert und isoliert ausführt.</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-white">Verification Pipeline & Evidence Architecture</h1>
+            <p class="text-slate-400 text-sm font-mono">Wie Synapse-Mesh Living Recipes deterministisch verifiziert, kategorisiert und isoliert ausführt.</p>
         </div>
 
         <!-- 1. Epistemic Hierarchy -->
         <section class="space-y-4 p-6 rounded-2xl border border-slate-800 bg-slate-900/40">
             <h2 class="text-xl font-bold text-brand-500">1. Evidence-First Hierarchie</h2>
             <p class="text-slate-300 text-sm leading-relaxed">
-                Modell-Konsens unter KIs ist kein Wahrheitsbeweis. Zwei oder mehr LLMs können auf dieselbe halluzinierte Lösung konvergieren. Synapse-Mesh folgt einer strikten epistemischen Beweishierarchie:
+                Modell-Konsens unter KIs ist kein Wahrheitsbeweis. Zwei oder mehr LLMs können auf dieselbe halluzinierte Lösung konvergieren. Synapse-Mesh kombiniert Ausführungsbeweise mit Primärquellen:
             </p>
             <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400">
-                Sandbox Execution (Exit Code 0) &gt; Primärquelle / Release Notes &gt; Externe Quellen &gt; Modell-Konsens
+                Reproduzierbarer Sandbox-Test (Exit 0) + Test-Assertions + Definierte Umgebung + Primärquellen-Abgleich &gt; Sekundärquellen &gt; Modell-Konsens
             </div>
         </section>
 
-        <!-- 2. The Verification Lifecycle -->
+        <!-- 2. Categorical Evidence Badges -->
         <section class="space-y-4 p-6 rounded-2xl border border-slate-800 bg-slate-900/40">
-            <h2 class="text-xl font-bold text-brand-500">2. Der 5-Stufen Recipe Lifecycle</h2>
-            <div class="space-y-3 font-mono text-xs">
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-indigo-400 font-bold">Stufe 1 (Sanitizing):</span> Automatische Bereinigung von IPs, User-Pfaden und API-Keys vor jeder Verarbeitung.
+            <h2 class="text-xl font-bold text-brand-500">2. Kategorische Evidence-Klassifikation</h2>
+            <p class="text-slate-300 text-sm leading-relaxed">
+                Statt abstrakter Pseudo-Wahrscheinlichkeiten klassifiziert Synapse-Mesh Lösungen anhand deterministischer Kriterien:
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                    <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">✓ VERIFIED_SANDBOX</span>
+                    <p class="text-slate-400 text-xs mt-1">Pre-Patch Repro schlug fehl (Proof of Bug), Post-Patch Testsuite lief fehlerfrei durch (Exit Code 0).</p>
                 </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-amber-400 font-bold">Stufe 2 (Pre-Patch Repro):</span> Das minimal reproduzierende Skript wird in der Sandbox ausgeführt und MUSS mit dem deklarierten Fehler fehlschlagen (Proof of Bug).
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                    <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold">✓ SOURCE_BACKED</span>
+                    <p class="text-slate-400 text-xs mt-1">Gegen offizielle Dokumentation, Release Notes oder Changelogs der Maintainer abgeglichen.</p>
                 </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-cyan-400 font-bold">Stufe 3 (Patch Application):</span> Der Unified Code-Diff wird auf den Workspace angewendet.
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                    <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800 font-bold">✓ REGRESSION_TESTED</span>
+                    <p class="text-slate-400 text-xs mt-1">In isolierter Umgebung gegen Nebenwirkungen und Edge-Cases geprüft.</p>
                 </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-emerald-400 font-bold">Stufe 4 (Post-Patch Test Suite):</span> Die automatisierte Testsuite wird ausgeführt. Nur bei <code>Exit Code 0</code> und erfüllten Assertions gilt der Test als bestanden.
-                </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-purple-400 font-bold">Stufe 5 (Evidence Signing):</span> Das Rezept erhält den Status <code>VERIFIED</code> mit Confidence-Score (0.95 - 0.99) und Zeitstempel.
+                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                    <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800 font-bold">✓ ZERO_PII_AUDITED</span>
+                    <p class="text-slate-400 text-xs mt-1">Vollständig bereinigt von API-Keys, Auth-Tokens, IP-Adressen und lokalen Dateipfaden.</p>
                 </div>
             </div>
         </section>
