@@ -1,0 +1,54 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: synapse_api
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    environment:
+      - ENVIRONMENT=production
+      - DOMAIN=synapsemesh.dev
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 384M
+        reservations:
+          memory: 128M
+    networks:
+      - synapse_net
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: synapse_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 128M
+        reservations:
+          memory: 64M
+    depends_on:
+      - api
+    networks:
+      - synapse_net
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  synapse_net:
+    driver: bridge
