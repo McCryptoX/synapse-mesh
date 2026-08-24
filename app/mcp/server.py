@@ -11,12 +11,12 @@ from app.models.recipe import (
     ReproductionDefinition
 )
 from app.api.recipes import search_recipes, submit_recipe, get_recipe_by_id, list_recipes
+from app.database import get_db_connection
 from app.config import settings
 
 logger = logging.getLogger("synapse_mesh.mcp")
 router = APIRouter(prefix="/mcp", tags=["Model Context Protocol (MCP)"])
 
-# MCP Tool Definitions
 MCP_TOOLS = [
     {
         "name": "find_solution",
@@ -61,9 +61,43 @@ MCP_TOOLS = [
 ]
 
 
+def summarize_user_agent(ua: str) -> str:
+    if not ua:
+        return "Unknown-Agent"
+    ua_lower = ua.lower()
+    if "claude" in ua_lower:
+        return "Claude-Client"
+    if "cursor" in ua_lower:
+        return "Cursor-IDE"
+    if "chatgpt" in ua_lower or "openai" in ua_lower:
+        return "ChatGPT-Action"
+    if "python" in ua_lower or "httpx" in ua_lower or "requests" in ua_lower:
+        return "Python-Agent"
+    if "curl" in ua_lower:
+        return "CLI-Curl"
+    if "mozilla" in ua_lower or "chrome" in ua_lower or "safari" in ua_lower:
+        return "Web-Browser"
+    return ua[:40]
+
+
+async def log_agent_access(source_type: str, action: str, query: str, request: Request):
+    try:
+        ua_summary = summarize_user_agent(request.headers.get("user-agent", ""))
+        db = await get_db_connection()
+        await db.execute(
+            "INSERT INTO access_logs (source_type, action, query_snippet, user_agent_summary) VALUES (?, ?, ?, ?)",
+            (source_type, action, (query or "")[:100], ua_summary)
+        )
+        await db.commit()
+        await db.close()
+    except Exception as e:
+        logger.warning(f"Failed to log agent access: {e}")
+
+
 @router.get("")
-async def mcp_get_info():
+async def mcp_get_info(request: Request):
     """Information endpoint for MCP Streamable HTTP."""
+    await log_agent_access("discovery", "mcp_info", "", request)
     return {
         "status": "ready",
         "protocol": "MCP/2026-Streamable-HTTP",
@@ -89,6 +123,7 @@ async def mcp_json_rpc(request: Request):
 
     # Method Dispatch
     if method == "initialize":
+        await log_agent_access("mcp_call", "initialize", "", request)
         return {
             "jsonrpc": "2.0",
             "id": msg_id,
@@ -112,6 +147,7 @@ async def mcp_json_rpc(request: Request):
         return {"jsonrpc": "2.0", "id": msg_id, "result": {}}
 
     elif method == "tools/list":
+        await log_agent_access("mcp_call", "tools_list", "", request)
         return {
             "jsonrpc": "2.0",
             "id": msg_id,
@@ -125,8 +161,11 @@ async def mcp_json_rpc(request: Request):
         arguments = params.get("arguments", {})
 
         if tool_name == "find_solution":
+            error_sig = arguments.get("errorSignature", "")
+            await log_agent_access("mcp_call", "find_solution", error_sig, request)
+
             search_req = RecipeSearchRequest(
-                errorSignature=arguments.get("errorSignature", ""),
+                errorSignature=error_sig,
                 runtime=arguments.get("runtime"),
                 packages=arguments.get("packages")
             )
@@ -159,9 +198,12 @@ async def mcp_json_rpc(request: Request):
             }
 
         elif tool_name == "submit_solution":
+            error_sig = arguments.get("errorSignature", "")
+            await log_agent_access("mcp_call", "submit_solution", error_sig, request)
+
             submit_req = RecipeSubmitRequest(
                 problem=ProblemDefinition(
-                    errorSignature=arguments.get("errorSignature", ""),
+                    errorSignature=error_sig,
                     runtime=arguments.get("runtime", "unknown"),
                     description=arguments.get("description", "")
                 ),

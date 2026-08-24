@@ -27,7 +27,7 @@ jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=
 
 @router.get("/api/v1/recipes/stats", tags=["System"])
 async def get_recipe_stats():
-    """Returns real-time statistics about verified recipes in Synapse-Mesh."""
+    """Returns real-time statistics and agent usage metrics (Zero-PII)."""
     db = await get_db_connection()
     try:
         cursor = await db.execute("SELECT COUNT(*) as total FROM recipes")
@@ -39,11 +39,35 @@ async def get_recipe_stats():
         cursor = await db.execute("SELECT runtime, COUNT(*) as count FROM recipes GROUP BY runtime")
         by_runtime = {row["runtime"]: row["count"] for row in await cursor.fetchall()}
 
+        # Access & Agent Activity Metrics
+        cursor = await db.execute("SELECT COUNT(*) as calls FROM access_logs WHERE source_type = 'mcp_call'")
+        total_mcp_calls = (await cursor.fetchone())["calls"]
+
+        cursor = await db.execute("SELECT user_agent_summary, COUNT(*) as count FROM access_logs GROUP BY user_agent_summary")
+        agent_breakdown = {row["user_agent_summary"]: row["count"] for row in await cursor.fetchall()}
+
+        cursor = await db.execute("SELECT source_type, action, query_snippet, user_agent_summary, created_at FROM access_logs ORDER BY id DESC LIMIT 10")
+        recent_activity = [
+            {
+                "type": r["source_type"],
+                "action": r["action"],
+                "query": r["query_snippet"],
+                "client": r["user_agent_summary"],
+                "timestamp": r["created_at"]
+            }
+            for r in await cursor.fetchall()
+        ]
+
         return {
             "totalRecipes": total,
             "verifiedRecipes": verified,
             "verifiedRatio": round(verified / total, 2) if total > 0 else 1.0,
-            "runtimes": by_runtime
+            "runtimes": by_runtime,
+            "agentUsage": {
+                "totalMcpCalls": total_mcp_calls,
+                "agentBreakdown": agent_breakdown,
+                "recentActivity": recent_activity
+            }
         }
     finally:
         await db.close()
@@ -166,7 +190,6 @@ async def verify_recipe_by_id(recipe_id: str):
         repro = json.loads(row["reproduction_json"])
         evi = json.loads(row["evidence_json"])
         
-        # Execute sandbox
         new_evidence = await SandboxRunner.verify_recipe(
             runtime=prob["runtime"],
             test_suite=repro["testSuite"],
