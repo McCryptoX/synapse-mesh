@@ -9,8 +9,6 @@ logger = logging.getLogger("synapse_mesh.database")
 async def get_db_connection() -> aiosqlite.Connection:
     db = await aiosqlite.connect(settings.db_path)
     db.row_factory = aiosqlite.Row
-    await db.execute("PRAGMA journal_mode=WAL;")
-    await db.execute("PRAGMA synchronous=NORMAL;")
     await db.execute("PRAGMA foreign_keys=ON;")
     return db
 
@@ -19,6 +17,7 @@ async def init_db():
     """Initializes SQLite database schema with indexes and privacy-preserving analytics."""
     async with aiosqlite.connect(settings.db_path) as db:
         await db.execute("PRAGMA journal_mode=WAL;")
+        await db.execute("PRAGMA synchronous=NORMAL;")
         
         # Recipes Table
         await db.execute("""

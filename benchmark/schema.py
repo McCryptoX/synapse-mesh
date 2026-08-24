@@ -1,43 +1,45 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Optional, Any
-from datetime import datetime
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timezone
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class BenchmarkTestCase(BaseModel):
-    id: str = Field(..., description="Unique case identifier e.g. case_py312_cgi_001")
-    title: str = Field(..., description="Short descriptive title of the breaking change")
-    runtime: str = Field(..., description="Language / Environment (python, nodejs, rust, etc.)")
-    packages: Dict[str, str] = Field(default_factory=dict, description="Locked dependency versions")
-    errorSignature: str = Field(..., description="The exact error signature presented to the agent")
-    problemDescription: str = Field(..., description="Context and minimal problem statement")
-    reproScript: str = Field(..., description="Script proving the issue fails before fix")
-    groundTruthTestSuite: str = Field(..., description="Automated unit test asserting whether fix actually works")
-    difficulty: str = Field(default="medium", description="easy | medium | hard | expert")
+    id: str = Field(..., description="Unique case identifier e.g. P2_HTTPX_0_28_STARLETTE")
+    family: str = Field(..., description="Python | Node.js | Rust | Docker | SQL")
+    name: str = Field(..., description="Human readable title of breaking change")
+    yearIntroduced: str = Field(..., description="Year the breaking change landed (2024-2026)")
+    breakingPackage: str = Field(..., description="Affected package version constraint e.g. httpx>=0.28.0")
+    errorSignature: str = Field(..., description="Representative error message")
+    errorSignatureRegex: Optional[str] = Field(None, description="Regex pattern matching target error in stderr")
+    reproductionScript: str = Field(..., description="Script reliably reproducing target breaking error")
+    groundTruthTestSuite: str = Field(..., description="Hermetic test validating that the patch cleanly fixes the bug")
+    validPatch: str = Field(..., description="The canonical, forward-compatible fix")
+    mutationPatches: List[str] = Field(default_factory=list, description="Top web/hallucinated bad fixes that MUST fail")
+    officialSource: str = Field(..., description="Official changelog or migration guide URL")
+    antiDowngradeEnforced: bool = Field(default=True, description="Strictly rejects package downgrades")
 
 
 class AgentExecutionTelemetry(BaseModel):
-    group: str = Field(..., description="GroupA_Baseline | GroupB_WebDocs | GroupC_SynapseMesh")
+    group: str = Field(..., description="Group_A_Baseline | Group_B_WebSearch | Group_C_SynapseMesh")
     caseId: str
-    solved: bool
-    firstTrySolved: bool
-    attemptsCount: int
-    promptTokens: int
-    completionTokens: int
-    totalTokens: int
-    wallClockSeconds: float
+    passed: bool
+    firstTry: bool
+    tokensUsed: int
+    durationSec: float
     toolCallsCount: int
-    usedSynapseRecipe: bool = False
-    hallucinatedPatchesCount: int = 0
-    rawAgentOutput: Optional[str] = None
+    appliedPatchDiff: Optional[str] = None
     errorMessage: Optional[str] = None
 
 
 class BenchmarkReport(BaseModel):
-    benchmarkVersion: str = "1.0.0"
-    modelEvaluated: str = "Gemini-2.0-Flash"
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=utc_now)
     totalCases: int
+    modelEvaluated: str = Field(default="Independent Benchmark Harness")
     summaryGroupA: Dict[str, Any]
     summaryGroupB: Dict[str, Any]
     summaryGroupC: Dict[str, Any]
-    telemetry: List[AgentExecutionTelemetry] = []
+    telemetry: List[AgentExecutionTelemetry] = Field(default_factory=list)

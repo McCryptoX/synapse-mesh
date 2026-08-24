@@ -3,23 +3,18 @@ set -e
 
 echo "=== Synapse-Mesh (Exocortex) Deployment ==="
 
-# 1. Check Docker
-if ! command -v docker &> /dev/null; then
-    echo "Docker not found. Installing Docker..."
-    curl -fsSL https://get.docker.com -o get-docker.sh
-    sh get-docker.sh
-    rm get-docker.sh
-fi
-
-# 2. Create data directory with write permissions
+# 1. Create data directory with permissive access for sqlite non-root container
 mkdir -p data
 chmod -R 777 data
 
-# 3. Build and Start Services
+# 2. Build and Start Services
 echo "Starting Docker Compose services..."
 docker compose up -d --build
 
-# 4. Seed initial recipes inside container
+# 3. Fix permissions post-start
+chmod -R 777 data
+
+# 4. Seed initial recipes inside container if needed
 echo "Seeding initial verified recipes in container..."
 docker compose exec -T api python scripts/seed_recipes.py || true
 
