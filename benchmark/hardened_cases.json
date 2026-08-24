@@ -1,0 +1,59 @@
+[
+  {
+    "id": "P2_HTTPX_0_28_STARLETTE",
+    "family": "Python",
+    "name": "HTTPX 0.28 Removal of Client(app=...) in Favor of ASGITransport",
+    "yearIntroduced": "2024",
+    "breakingPackage": "httpx>=0.28.0",
+    "errorSignature": "TypeError: Client.__init__() got an unexpected keyword argument 'app'",
+    "errorSignatureRegex": "TypeError:.*unexpected keyword argument ['\"]app['\"]",
+    "reproductionScript": "import sys\n# Simulating httpx 0.28 removal of Client(app=...)\nkwargs = {'app': 'dummy_starlette_app'}\nif 'app' in kwargs:\n    sys.stderr.write(\"TypeError: Client.__init__() got an unexpected keyword argument 'app'\\n\")\n    sys.exit(1)\nsys.exit(0)",
+    "validPatch": "# Canonical fix: AsyncClient with ASGITransport or Starlette TestClient >= 0.37.2\nimport httpx\nclass SafeAsyncTestClient:\n    def __init__(self, app):\n        self.app = app\n        self.transport = 'ASGITransport'\n    async def get(self, path):\n        return {'status_code': 200, 'text': 'ok', 'transport': self.transport}\nclient_factory = lambda app: SafeAsyncTestClient(app)",
+    "mutationPatches": [
+      "# Web-Fehlfix 1: WSGITransport on ASGI Starlette app\nclass SafeAsyncTestClient:\n    def __init__(self, app):\n        self.transport = 'WSGITransport'\n    async def get(self, path):\n        raise AttributeError(\"'WSGITransport' cannot handle ASGI application\")\nclient_factory = lambda app: SafeAsyncTestClient(app)",
+      "# Web-Fehlfix 2: Downgrade httpx to 0.27.2\nhttpx_version = '0.27.2'\nclient_factory = lambda app: None",
+      "# Web-Fehlfix 3: Wrong Recipe applying proxies argument\nclass SafeAsyncTestClient:\n    def __init__(self, app):\n        raise TypeError(\"Client.__init__() got an unexpected keyword argument 'proxies'\")\nclient_factory = lambda app: SafeAsyncTestClient(app)"
+    ],
+    "groundTruthTestSuite": "import asyncio\nasync def test_httpx_028_asgi():\n    # Anti-downgrade assertion\n    ver = globals().get('httpx_version', '0.28.1')\n    major, minor = [int(x) for x in ver.split('.')[:2]]\n    assert (major, minor) >= (0, 28), f'Anti-Downgrade Violation: httpx must remain >= 0.28.0, got {ver}'\n    \n    factory = globals().get('client_factory')\n    assert factory is not None, 'Client factory must be defined'\n    client = factory('app')\n    res = await client.get('/')\n    assert res['status_code'] == 200 and res['text'] == 'ok'\n    assert res['transport'] == 'ASGITransport', 'Must strictly use ASGITransport for ASGI apps'\n    print('ALL TESTS PASSED')\nasyncio.run(test_httpx_028_asgi())",
+    "officialSource": "https://www.encode.io/httpx/upgrading/#upgrading-to-0280",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "N1_NODE_22_IMPORT_ATTRIBUTES",
+    "family": "Node.js",
+    "name": "Node 22 Native Import Attributes (with { type: 'json' })",
+    "yearIntroduced": "2024",
+    "breakingPackage": "node>=22.0.0",
+    "errorSignature": "SyntaxError: Unexpected identifier 'assert'",
+    "errorSignatureRegex": "SyntaxError: Unexpected identifier.*assert",
+    "reproductionScript": "const code = \"import data from './package.json' assert { type: 'json' };\";\nprocess.stderr.write(\"SyntaxError: Unexpected identifier 'assert'\\n\");\nprocess.exit(1);",
+    "validPatch": "// Canonical Node 22 with syntax\nconst sourceCode = \"import data from './package.json' with { type: 'json' };\\nexport const pkgName = data.name;\";\nfunction evaluateModule() { return { pkgName: 'synapse-mesh' }; }",
+    "mutationPatches": [
+      "// Web-Fehlfix 1: Simply delete assert clause (fails in ESM under Node 22)\nconst sourceCode = \"import data from './package.json';\";\nfunction evaluateModule() { throw new Error('ERR_IMPORT_ATTRIBUTE_MISSING'); }",
+      "// Web-Fehlfix 2: Bypass via readFileSync + JSON.parse\nconst sourceCode = \"import { readFileSync } from 'node:fs';\\nexport const pkgName = JSON.parse(readFileSync('./package.json', 'utf8')).name;\";\nfunction evaluateModule() { return { pkgName: 'synapse-mesh' }; }",
+      "// Web-Fehlfix 3: CommonJS require fallback\nconst sourceCode = \"const data = require('./package.json');\";\nfunction evaluateModule() { return { pkgName: 'synapse-mesh' }; }"
+    ],
+    "groundTruthTestSuite": "function testImportAttributes() {\n    const src = global.sourceCode || sourceCode;\n    const evalFn = global.evaluateModule || evaluateModule;\n    \n    // 1. Source Gate: MUST use with { type: 'json' }\n    const hasWith = /with\\s*\\{\\s*type:\\s*['\"]json['\"]\\s*\\}/.test(src);\n    const hasAssert = /\\bassert\\s*\\{/.test(src);\n    const hasReadFileSync = /readFileSync/.test(src);\n    const hasRequire = /\\brequire\\(/.test(src);\n    \n    if (!hasWith) { console.error('Syntax Migration Violation: must contain \"with { type: \\'json\\' }\"'); process.exit(1); }\n    if (hasAssert) { console.error('Syntax Violation: must not contain legacy assert keyword'); process.exit(1); }\n    if (hasReadFileSync || hasRequire) { console.error('Bypass Violation: workaround via readFileSync/require rejected'); process.exit(1); }\n    \n    // 2. Runtime Execution Gate\n    const mod = evalFn();\n    if (mod.pkgName !== 'synapse-mesh') { console.error('Value mismatch'); process.exit(1); }\n    console.log('ALL TESTS PASSED');\n}\ntestImportAttributes();",
+    "officialSource": "https://nodejs.org/en/blog/release/v22.0.0#v8-124",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "N3_EXPRESS_5_1_WILDCARD",
+    "family": "Node.js",
+    "name": "Express 5.1 / path-to-regexp v8 Brace Wildcard Migration",
+    "yearIntroduced": "2024",
+    "breakingPackage": "express>=5.1.0",
+    "errorSignature": "TypeError: Missing parameter name at 2: https://git.new/pathToRegexpError",
+    "errorSignatureRegex": "TypeError: Missing parameter name at \\d+: https://git\\.new/pathToRegexpError",
+    "reproductionScript": "process.stderr.write(\"TypeError: Missing parameter name at 2: https://git.new/pathToRegexpError\\n\");\nprocess.exit(1);",
+    "validPatch": "// Canonical Express 5.1 routing with brace wildcard and array splat\nconst app = {\n    routes: {},\n    get(path, handler) { this.routes[path] = handler; },\n    handle(url) {\n        if (url === '/health' && this.routes['/health']) return { status: 200, text: 'healthy' };\n        if (this.routes['/{*splat}']) {\n            const parts = url === '/' ? [] : url.replace(/^\\//, '').split('/');\n            return { status: 200, body: { splat: parts } };\n        }\n        return { status: 404, text: 'Not Found' };\n    }\n};\napp.get('/health', (req, res) => res.send('healthy'));\napp.get('/{*splat}', (req, res) => res.json({ splat: req.params.splat }));",
+    "mutationPatches": [
+      "// Web-Fehlfix 1: /*splat syntax (fails on root /)\nconst app = {\n    routes: {},\n    get(path, handler) { this.routes[path] = handler; },\n    handle(url) {\n        if (url === '/health' && this.routes['/health']) return { status: 200, text: 'healthy' };\n        if (url !== '/' && this.routes['/*splat']) return { status: 200, body: { splat: url.split('/') } };\n        return { status: 404, text: 'Not Found on /' };\n    }\n};\napp.get('/health', (req, res) => res.send('healthy'));\napp.get('/*splat', (req, res) => res.send('catchall'));",
+      "// Web-Fehlfix 2: Splat string assumption (fails array check)\nconst app = {\n    routes: {},\n    get(path, handler) { this.routes[path] = handler; },\n    handle(url) {\n        if (url === '/health') return { status: 200, text: 'healthy' };\n        return { status: 200, body: { splat: 'a/b' } }; // String instead of Array\n    }\n};\napp.get('/health', (req, res) => res.send('healthy'));\napp.get('/{*splat}', (req, res) => res.send('catchall'));",
+      "// Web-Fehlfix 3: Catch-all registered BEFORE /health route (overrides /health)\nconst app = {\n    routes: {},\n    get(path, handler) { this.routes[path] = handler; },\n    handle(url) {\n        return { status: 200, body: { splat: url.split('/') } }; // Overrides /health!\n    }\n};\napp.get('/{*splat}', (req, res) => res.send('catchall'));\napp.get('/health', (req, res) => res.send('healthy'));"
+    ],
+    "groundTruthTestSuite": "function testExpress5Wildcard() {\n    const server = global.app || app;\n    \n    // 1. Root route match\n    const resRoot = server.handle('/');\n    if (resRoot.status !== 200) { console.error('Root / must return 200'); process.exit(1); }\n    \n    // 2. Nested route match & splat array verification\n    const resNested = server.handle('/a/b');\n    if (resNested.status !== 200) { console.error('/a/b must return 200'); process.exit(1); }\n    if (!Array.isArray(resNested.body.splat) || resNested.body.splat.length !== 2 || resNested.body.splat[0] !== 'a' || resNested.body.splat[1] !== 'b') {\n        console.error('Splat array mismatch: must return [\\'a\\', \\'b\\']');\n        process.exit(1);\n    }\n    \n    // 3. /health route isolation\n    const resHealth = server.handle('/health');\n    if (resHealth.text !== 'healthy') { console.error('/health was overridden by wildcard'); process.exit(1); }\n    \n    console.log('ALL TESTS PASSED');\n}\ntestExpress5Wildcard();",
+    "officialSource": "https://expressjs.com/en/guide/migrating-5.html#routing",
+    "antiDowngradeEnforced": true
+  }
+]
