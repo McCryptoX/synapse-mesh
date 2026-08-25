@@ -419,6 +419,86 @@ Pin: fastapi>=0.100.0, pydantic-settings>=2.0.0
 Do Not: Do not import BaseSettings from root pydantic module.
 """,
                 "url": "https://fastapi.tiangolo.com/advanced/settings/"
+            },
+            {
+                "package": "pip",
+                "version": "24.0.0",
+                "ecosystem": "pypi",
+                "runtime": "python",
+                "release_notes": """
+# Pip 24.0.0 / PEP 668 Externally Managed Environment
+### Breaking Changes
+- Installing packages directly into the system python without a virtual environment raises `error: externally-managed-environment. This environment is externally managed. See PEP 668.`.
+### Migration
+Before:
+```python
+import sys
+class MockPip:
+    def install(self, pkg):
+        raise SystemExit("error: externally-managed-environment. This environment is externally managed. See PEP 668.")
+pip = MockPip()
+try:
+    pip.install("requests")
+except SystemExit as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockVenvPip:
+    def install(self, pkg):
+        return {"installed": pkg, "status": "OK"}
+pip = MockVenvPip()
+result = pip.install("requests")
+assert result["status"] == "OK"
+```
+Pin: pip>=24.0.0
+Do Not: Do not run pip install with --break-system-packages in production Linux environments.
+""",
+                "url": "https://peps.python.org/pep-0668/"
+            },
+            {
+                "package": "litellm",
+                "version": "1.40.0",
+                "ecosystem": "pypi",
+                "runtime": "python",
+                "release_notes": """
+# LiteLLM 1.40.0 Router Migration
+### Breaking Changes
+- Passing model lists directly to `litellm.completion()` raises `LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().`.
+### Migration
+Before:
+```python
+import sys
+class MockLiteLLM:
+    def completion(self, *args, **kwargs):
+        if "model_list" in kwargs:
+            raise ValueError("LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().")
+        return {}
+lit = MockLiteLLM()
+try:
+    lit.completion(model_list=[{"model_name": "gpt-4"}])
+except ValueError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockRouter:
+    def __init__(self, model_list=None):
+        self.model_list = model_list or []
+    def completion(self, **kwargs):
+        return {"response": "OK", "model": self.model_list[0]["model_name"]}
+router = MockRouter(model_list=[{"model_name": "gpt-4"}])
+result = router.completion()
+assert result["response"] == "OK"
+```
+Pin: litellm>=1.40.0
+Do Not: Do not pass raw model_list arrays into top-level litellm.completion functions.
+""",
+                "url": "https://docs.litellm.ai/docs/routing"
             }
         ]
 
@@ -429,7 +509,7 @@ class BreakingChangeExtractor:
     @classmethod
     def extract_error_signature(cls, text: str) -> Optional[str]:
         """Extracts exact error signature pattern from changelog text."""
-        match = re.search(r'(?:raise|raises|raising|throw|throws|threw|causes)?\s*`?([A-Za-z0-9_.]*(?:Exception|Error|Warning|APIRemoved\w*)[\w\s:()\'".,`\-]+)`?', text, re.IGNORECASE)
+        match = re.search(r'(?:raise|raises|raising|throw|throws|threw|causes)?\s*`?([A-Za-z0-9_.]*(?:Exception|Error|Warning|APIRemoved\w*|SyntaxError|TypeError)[\w\s:()\'".,`\-]+)`?', text, re.IGNORECASE)
         if match:
             sig = match.group(1).strip("`\"' .")
             if len(sig) > 8:
@@ -524,9 +604,11 @@ class BundleSynthesizer:
         if not before_after:
             return None
 
+        target_file = "client.js" if rt in ("nodejs", "javascript", "typescript") else "client.py"
+
         before_code = before_after["before"]
         after_code = before_after["after"]
-        unified_diff = BreakingChangeExtractor.generate_unified_diff(before_code, after_code, "client.py")
+        unified_diff = BreakingChangeExtractor.generate_unified_diff(before_code, after_code, target_file)
         pins = BreakingChangeExtractor.extract_pins(notes, pkg)
         do_not = BreakingChangeExtractor.extract_do_not(notes)
 
@@ -540,7 +622,7 @@ runpy.run_path("client.py", run_name="__main__")
 """
         test_suite = """import runpy
 mod = runpy.run_path("client.py", run_name="__main__")
-assert any(k in mod for k in ("result", "val", "res", "con", "session", "form", "chain")), "Target execution failed to produce valid output state"
+assert any(k in mod for k in ("result", "val", "res", "con", "session", "form", "chain", "router")), "Target execution failed to produce valid output state"
 print("VERIFICATION_PASSED_STAGE_3")
 """
 
@@ -548,12 +630,12 @@ print("VERIFICATION_PASSED_STAGE_3")
             BundleMutation(
                 id="mutant_pass_silence",
                 description="Hallucinated empty pass mutant",
-                unifiedDiff=f"--- a/client.py\n+++ b/client.py\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + "\n+pass\n"
+                unifiedDiff=f"--- a/{target_file}\n+++ b/{target_file}\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + "\n+pass\n"
             ),
             BundleMutation(
                 id="mutant_empty_return",
                 description="Hallucinated empty return mutant",
-                unifiedDiff=f"--- a/client.py\n+++ b/client.py\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + "\n+# empty bypass\n"
+                unifiedDiff=f"--- a/{target_file}\n+++ b/{target_file}\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + "\n+# empty bypass\n"
             )
         ]
 
@@ -576,14 +658,14 @@ print("VERIFICATION_PASSED_STAGE_3")
                 matchStream="stderr"
             ),
             patch=BundlePatch(
-                targetFile="client.py",
+                targetFile=target_file,
                 unifiedDiff=unified_diff,
                 pinnedDependencies=pins,
                 doNot=do_not
             ),
             verification=BundleVerification(
                 scriptLanguage=rt,
-                workspaceFiles={"client.py": before_code},
+                workspaceFiles={target_file: before_code},
                 reproductionScript=repro_script,
                 testSuite=test_suite,
                 mutations=mutations,
