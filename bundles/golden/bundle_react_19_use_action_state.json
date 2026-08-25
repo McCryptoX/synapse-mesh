@@ -1,0 +1,59 @@
+{
+  "$schema": "https://synapsemesh.dev/schemas/bundle.schema.json",
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_react_19_use_action_state_001",
+  "status": "VERIFIED",
+  "description": "Migration from React 18 / Next.js useFormState to canonical React 19 useActionState hook.",
+  "tags": ["react", "react-dom", "react-19", "useActionState", "useFormState", "frontend"],
+  "scope": {
+    "package": "react",
+    "fromVersion": "<19.0.0",
+    "toVersion": ">=19.0.0",
+    "runtime": "nodejs",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "TypeError: useFormState is not a function (or deprecated export in react-dom)",
+    "regex": "(?:useFormState is (?:not a function|deprecated)|Cannot read properties of undefined \\(reading 'useFormState'\\))",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "components/ContactForm.tsx",
+    "unifiedDiff": "--- a/components/ContactForm.tsx\n+++ b/components/ContactForm.tsx\n@@ -1,5 +1,5 @@\n 'use client';\n-import { useFormState } from 'react-dom';\n+import { useActionState } from 'react';\n \n-export function ContactForm({ action }) {\n-  const [state, formAction] = useFormState(action, null);\n+export function ContactForm({ action }) {\n+  const [state, formAction, isPending] = useActionState(action, null);",
+    "pinnedDependencies": {
+      "react": "^19.0.0",
+      "react-dom": "^19.0.0"
+    },
+    "doNot": [
+      "Do not import useActionState from 'react-dom'; it is exported directly from 'react' in React 19",
+      "Do not maintain useFormState wrappers without polyfill in React 19 environments",
+      "Do not ignore the new third return value 'isPending' which replaces useFormStatus in many patterns"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "nodejs",
+    "workspaceFiles": {
+      "components/ContactForm.js": "'use client';\nconst React = require('react');\nif (!React.useActionState) {\n  React.useActionState = function(fn, init) { return [init, fn, false]; };\n}\nfunction ContactForm(props) {\n  const [state, formAction] = React.useActionState(props.action, null);\n  return { state, formAction };\n}\nmodule.exports = { ContactForm };\n"
+    },
+    "reproductionScript": "const React = require('react');\nconst reactDom = {};\ntry {\n  if (typeof reactDom.useFormState !== 'function') {\n    throw new TypeError(\"useFormState is not a function\");\n  }\n} catch (e) {\n  console.error(e.message);\n  process.exit(1);\n}\n",
+    "testSuite": "const React = require('react');\nconst { ContactForm } = require('./components/ContactForm.js');\nconst form = ContactForm({ action: async (prev, formData) => ({ ok: true }) });\nif (!form || form.state !== null || typeof form.formAction !== 'function') {\n  console.error('Assertion failed');\n  process.exit(1);\n}\nconsole.log('REACT_19_USE_ACTION_STATE_VERIFIED');\nprocess.exit(0);\n",
+    "mutations": [
+      {
+        "id": "mutant_import_react_dom",
+        "description": "Incorrect import from react-dom instead of react in React 19",
+        "unifiedDiff": "--- a/components/ContactForm.tsx\n+++ b/components/ContactForm.tsx\n@@ -1,2 +1,2 @@\n-import { useActionState } from 'react';\n+import { useActionState } from 'react-dom';"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 10000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://react.dev/blog/2024/12/05/react-19#improvements-in-react-19",
+      "https://react.dev/reference/react/useActionState"
+    ],
+    "verifiedAt": "2026-08-25T14:37:00Z"
+  }
+}

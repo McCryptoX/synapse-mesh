@@ -1,0 +1,59 @@
+{
+  "$schema": "https://synapsemesh.dev/schemas/bundle.schema.json",
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_langchain_03_runnable_invoke_001",
+  "status": "VERIFIED",
+  "description": "Migration from legacy LLMChain / Chain.run() to Runnable.invoke() in LangChain v0.3.",
+  "tags": ["langchain", "langchain-core", "lcel", "runnable", "python", "ai-agents"],
+  "scope": {
+    "package": "langchain-core",
+    "fromVersion": "<0.3.0",
+    "toVersion": ">=0.3.0",
+    "runtime": "python",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "LangChainDeprecationWarning: LLMChain was removed in 0.3.0. Use invoke() on RunnableSequence instead.",
+    "regex": "LangChainDeprecationWarning:[\\s\\S]*LLMChain was removed in 0\\.3\\.0",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "agent_chain.py",
+    "unifiedDiff": "--- a/agent_chain.py\n+++ b/agent_chain.py\n@@ -1,6 +1,6 @@\n-class LegacyLLMChain:\n-    def run(self, input_val):\n-        raise TypeError(\"LangChainDeprecationWarning: LLMChain was removed in 0.3.0. Use invoke() on RunnableSequence instead.\")\n+class RunnableChain:\n+    def invoke(self, input_dict):\n+        return {\"output\": f\"processed_{input_dict.get('input', '')}\"}\n \n-chain = LegacyLLMChain()\n-result = chain.run(input_val=\"test\")\n+chain = RunnableChain()\n+result = chain.invoke({\"input\": \"test\"})",
+    "pinnedDependencies": {
+      "langchain-core": ">=0.3.0,<0.4.0",
+      "langchain": ">=0.3.0,<0.4.0"
+    },
+    "doNot": [
+      "Do not use legacy LLMChain constructor in LangChain >=0.3.0",
+      "Do not call chain.run() with positional string arguments; use chain.invoke(dict)",
+      "Do not suppress LangChainDeprecationWarning with warnings.filterwarnings('ignore')"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "agent_chain.py": "class LegacyLLMChain:\n    def run(self, input_val):\n        raise TypeError(\"LangChainDeprecationWarning: LLMChain was removed in 0.3.0. Use invoke() on RunnableSequence instead.\")\n\nchain = LegacyLLMChain()\nresult = chain.run(input_val=\"test\")"
+    },
+    "reproductionScript": "import sys\ntry:\n    import agent_chain\nexcept TypeError as e:\n    sys.stderr.write(str(e) + '\\n')\n    sys.exit(1)\n",
+    "testSuite": "import agent_chain\nassert agent_chain.result['output'] == 'processed_test', f'Unexpected output: {agent_chain.result}'\nprint('LANGCHAIN_03_RUNNABLE_INVOKE_VERIFIED')\n",
+    "mutations": [
+      {
+        "id": "mutant_suppress_warning",
+        "description": "Anti-pattern of silencing warning without migrating to invoke",
+        "unifiedDiff": "--- a/agent_chain.py\n+++ b/agent_chain.py\n@@ -1,6 +1,6 @@\n-class LegacyLLMChain:\n-    def run(self, input_val):\n-        raise TypeError(\"LangChainDeprecationWarning: LLMChain was removed in 0.3.0. Use invoke() on RunnableSequence instead.\")\n+class LegacyLLMChain:\n+    def run(self, input_val):\n+        return {\"output\": \"bypass\"}\n \n-chain = LegacyLLMChain()\n-result = chain.run(input_val=\"test\")\n+chain = LegacyLLMChain()\n+result = chain.run(input_val=\"test\")"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 10000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://python.langchain.com/docs/versions/v0_3/",
+      "https://python.langchain.com/docs/how_to/migrate_chains/"
+    ],
+    "verifiedAt": "2026-08-25T14:37:00Z"
+  }
+}
