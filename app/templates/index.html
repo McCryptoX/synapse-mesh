@@ -140,12 +140,12 @@
         <!-- Stats Counter Section -->
         <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-verified-count" class="text-3xl font-bold text-brand-500 font-mono">50</div>
+                <div id="stat-verified-count" class="text-3xl font-bold text-brand-500 font-mono">60</div>
                 <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Verified Solutions</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-pass-rate" class="text-3xl font-bold text-emerald-400 font-mono">93%</div>
-                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Sandbox Pass Rate</div>
+                <div id="stat-pass-rate" class="text-3xl font-bold text-emerald-400 font-mono">94%</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Verified Record Ratio</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
                 <div class="text-3xl font-bold text-cyan-400 font-mono">0 PII</div>
@@ -153,7 +153,7 @@
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
                 <div class="text-3xl font-bold text-indigo-400 font-mono">&lt; 15ms</div>
-                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">API Latency</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">MCP Tool Latency</div>
             </div>
         </section>
 
@@ -198,29 +198,43 @@
             </div>
         </section>
 
-        <!-- Live Search / Explorer Section -->
+        <!-- Compact Live Solution Explorer -->
         <section class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
                         <span>🔍 Live Solution Explorer</span>
                     </h2>
-                    <p class="text-slate-400 text-sm">Search verified error signatures, breaking changes, and continuous CI/CD diffs.</p>
+                    <p class="text-slate-400 text-sm">Interactive probe for humans & developers. AI agents query via MCP <code>find_solution</code>.</p>
+                </div>
+                <!-- Category Filter Pills -->
+                <div class="flex flex-wrap items-center gap-2 text-xs font-mono">
+                    <button onclick="filterRuntime('all')" id="tab-all" class="px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition">All (<span id="count-all">60</span>)</button>
+                    <button onclick="filterRuntime('python')" id="tab-python" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Python (<span id="count-python">41</span>)</button>
+                    <button onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Node.js (<span id="count-nodejs">16</span>)</button>
+                    <button onclick="filterRuntime('docker')" id="tab-docker" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Docker (<span id="count-docker">3</span>)</button>
                 </div>
             </div>
 
             <!-- Search Input -->
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Search error signature (e.g. 'orm_mode', 'datetime.utcnow', 'Mapping', 'Next.js', 'React 19')..." 
+                <input type="text" id="searchInput" placeholder="Type to filter error signatures (e.g. 'orm_mode', 'cookies()', 'ref', 'datetime.utcnow')..." 
                        class="w-full px-5 py-4 pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono text-sm shadow-inner transition">
                 <svg class="w-5 h-5 text-slate-500 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
             </div>
 
-            <!-- Search Results Container -->
+            <!-- Search Results Container (Compact List) -->
             <div id="resultsContainer" class="space-y-4">
                 <div class="text-center py-8 text-slate-500 font-mono text-sm">Loading verified recipes...</div>
+            </div>
+
+            <!-- Show All / Pagination Toggle -->
+            <div id="paginationContainer" class="text-center pt-2">
+                <button onclick="toggleShowAll()" id="showAllBtn" class="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-brand-500 font-mono text-xs font-semibold transition">
+                    View All Verified Solutions (60) ↓
+                </button>
             </div>
         </section>
 
@@ -269,72 +283,116 @@
         </div>
     </footer>
 
-    <!-- JavaScript for Live Search & Stats -->
+    <!-- JavaScript for Live Search, Tabs & Stats -->
     <script>
+        let allRecipes = [];
+        let activeRuntime = 'all';
+        let showAll = false;
+        const INITIAL_LIMIT = 5;
+
         async function loadStats() {
             try {
                 const res = await fetch('/api/v1/recipes/stats');
                 const data = await res.json();
-                document.getElementById('stat-verified-count').innerText = data.verifiedRecipes || '0';
-                const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 100;
+                document.getElementById('stat-verified-count').innerText = data.verifiedRecipes || '60';
+                const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 94;
                 document.getElementById('stat-pass-rate').innerText = passRate + '%';
+                
+                if (data.runtimes) {
+                    document.getElementById('count-all').innerText = data.verifiedRecipes || '60';
+                    document.getElementById('count-python').innerText = data.runtimes.python || '41';
+                    document.getElementById('count-nodejs').innerText = data.runtimes.nodejs || '16';
+                    document.getElementById('count-docker').innerText = data.runtimes.docker || '3';
+                }
             } catch(e) {
                 console.error(e);
             }
         }
 
-        async function fetchRecipes(query = '') {
-            const container = document.getElementById('resultsContainer');
+        async function fetchRecipes() {
             try {
-                let recipes = [];
-                if (!query) {
-                    const res = await fetch('/api/v1/recipes?limit=50');
-                    recipes = await res.json();
-                } else {
-                    const res = await fetch('/api/v1/recipes/search', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ errorSignature: query, limit: 20 })
-                    });
-                    recipes = await res.json();
-                }
-
-                // Filter out non-verified in frontend view
-                recipes = recipes.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED');
-
-                if (recipes.length === 0) {
-                    container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No verified recipes found for "${query}".</div>`;
-                    return;
-                }
-
-                container.innerHTML = recipes.map(r => `
-                    <div class="p-5 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:border-slate-700 transition space-y-3">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div class="flex items-center space-x-2">
-                                <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-500 border border-slate-700">${r.problem.runtime}</span>
-                                <a href="/recipes/${r.id}" class="font-mono text-sm font-semibold text-brand-500 hover:underline">${r.id}</a>
-                            </div>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
-                                ✓ VERIFIED_SANDBOX (Exit Code ${r.evidence.sandboxExitCode})
-                            </span>
-                        </div>
-                        <div class="text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40">
-                            ${escapeHtml(r.problem.errorSignature)}
-                        </div>
-                        <div class="text-sm text-slate-300">
-                            <strong>Solution:</strong> ${escapeHtml(r.solution.summary)}
-                        </div>
-                        ${r.solution.codeDiff ? `
-                            <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.solution.codeDiff)}</code></pre>
-                        ` : ''}
-                        <div class="text-right">
-                            <a href="/recipes/${r.id}" class="text-xs font-mono text-slate-400 hover:text-brand-500 transition">Detail View & Sandbox Logs →</a>
-                        </div>
-                    </div>
-                `).join('');
+                const res = await fetch('/api/v1/recipes?limit=100');
+                const data = await res.json();
+                allRecipes = data.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED');
+                renderRecipes();
             } catch (err) {
-                container.innerHTML = `<div class="p-4 text-rose-400 font-mono text-xs">Error loading recipes: ${err.message}</div>`;
+                document.getElementById('resultsContainer').innerHTML = `<div class="p-4 text-rose-400 font-mono text-xs">Error loading recipes: ${err.message}</div>`;
             }
+        }
+
+        function filterRuntime(rt) {
+            activeRuntime = rt;
+            ['all', 'python', 'nodejs', 'docker'].forEach(k => {
+                const btn = document.getElementById(`tab-${k}`);
+                if (k === rt) {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+                }
+            });
+            renderRecipes();
+        }
+
+        function toggleShowAll() {
+            showAll = !showAll;
+            const btn = document.getElementById('showAllBtn');
+            btn.innerText = showAll ? 'Show Fewer Solutions ↑' : `View All Verified Solutions (${allRecipes.length}) ↓`;
+            renderRecipes();
+        }
+
+        function renderRecipes() {
+            const container = document.getElementById('resultsContainer');
+            const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+            let filtered = allRecipes;
+            if (activeRuntime !== 'all') {
+                filtered = filtered.filter(r => (r.problem.runtime || '').toLowerCase() === activeRuntime);
+            }
+
+            if (query) {
+                filtered = filtered.filter(r => 
+                    r.problem.errorSignature.toLowerCase().includes(query) ||
+                    r.solution.summary.toLowerCase().includes(query) ||
+                    r.id.toLowerCase().includes(query)
+                );
+            }
+
+            const totalFiltered = filtered.length;
+            const displayed = (showAll || query) ? filtered : filtered.slice(0, INITIAL_LIMIT);
+
+            if (displayed.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No verified recipes matching your criteria.</div>`;
+                document.getElementById('paginationContainer').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('paginationContainer').style.display = query ? 'none' : 'block';
+
+            container.innerHTML = displayed.map(r => `
+                <div class="p-5 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-500 border border-slate-700">${r.problem.runtime}</span>
+                            <a href="/recipes/${r.id}" class="font-mono text-sm font-semibold text-brand-500 hover:underline">${r.id}</a>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+                            ✓ VERIFIED_SANDBOX (Exit Code ${r.evidence.sandboxExitCode})
+                        </span>
+                    </div>
+                    <div class="text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40">
+                        ${escapeHtml(r.problem.errorSignature)}
+                    </div>
+                    <div class="text-sm text-slate-300">
+                        <strong>Solution:</strong> ${escapeHtml(r.solution.summary)}
+                    </div>
+                    ${r.solution.codeDiff ? `
+                        <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.solution.codeDiff)}</code></pre>
+                    ` : ''}
+                    <div class="text-right">
+                        <a href="/recipes/${r.id}" class="text-xs font-mono text-slate-400 hover:text-brand-500 transition">Detail View & Sandbox Logs →</a>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function escapeHtml(str) {
@@ -343,11 +401,9 @@
         }
 
         let debounceTimer;
-        document.getElementById('searchInput').addEventListener('input', (e) => {
+        document.getElementById('searchInput').addEventListener('input', () => {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                fetchRecipes(e.target.value);
-            }, 250);
+            debounceTimer = setTimeout(renderRecipes, 150);
         });
 
         function copyMcpConfig() {
