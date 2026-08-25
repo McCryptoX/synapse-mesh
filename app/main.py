@@ -7,7 +7,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
 from app.database import init_db
-from app.api import health_router, discovery_router, recipes_router, bundles_router, miner_router
+from app.api import health_router, discovery_router, recipes_router, bundles_router, miner_router, ops_router
 from app.mcp import mcp_router
 from app.core.upstream_miner import UpstreamMiningEngine
 
@@ -108,6 +108,7 @@ app.include_router(recipes_router)
 app.include_router(bundles_router)
 app.include_router(miner_router)
 app.include_router(mcp_router)
+app.include_router(ops_router)
 
 
 if __name__ == "__main__":
