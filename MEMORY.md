@@ -48,6 +48,7 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 ---
 
 ## 3. Die Neue Positionierung: Verified Compatibility Layer
+- **Strict llmstxt.org Standard:** `/llms.txt` strikt nach Markdown-Link-Spezifikation (`- [Titel](url): Beschreibung`) formatiert, damit Google Lighthouse Agentic Browsing und autonome LLM-Crawler die Schnittstellen fehlerfrei erfassen.
 - **Google Agentic Browsing & WebMCP Standards:** `/llms.txt` und `/llms-full.txt` nach llmstxt.org-Standard implementiert; WebMCP-Formular-Annotationen (`data-mcp-tool`), `window.__mcp_tools__`-Registry und Schema.org `potentialAction` für autonome Browser-Agenten live.
 - **Zero Forced Synchronous Layout (0 ms Reflow):** Alle `element.innerText`-Aufrufe wurden durch layout-neutrale `element.textContent`-Zuweisungen ersetzt; die Top-4-Golden-Bundles sind nun direkt im ausgelieferten HTML statisch vorgerendert (0 ms Reflow auf Initial-Paint).
 - **Zero Critical Request Chains (On-Demand Data Delivery):** Die initiale Startseite führt 0 HTTP-Fetch-Requests aus (Baseline ist 100% im HTML eingebettet). Die 25 KB große Recipe-Liste wird erst on-demand geladen, wenn der User die Suche nutzt oder auf 'View All Verified Bundles' klickt. Die PageSpeed-Kettenwarnung ist auf Tiefe 1 (13.78 KiB) minimiert.
