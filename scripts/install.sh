@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Synapse-Mesh One-Liner Agent Installer
-# Auto-detects Cursor, Claude Desktop, Claude Code, and Antigravity MCP configs.
+# Synapse-Mesh Agent MCP Configurator
+# Safely registers Synapse-Mesh MCP server in Cursor, Claude Desktop, Claude Code.
 # ==============================================================================
 
 set -e
@@ -18,7 +18,7 @@ echo " \__ \ || | ' \/ _\` | '_ \(_-</ -_)___| |\/| / -_|_-< ' \ ' \  "
 echo " |___/\_, |_||_\__,_| .__/__/\___|     |_|  |_\___/__/_||_||_| "
 echo "      |__/          |_|                                        "
 echo -e "${NC}"
-echo "Agent-Native Living Solutions & Verification Infrastructure (MCP Spezifikation 2026-07-28)"
+echo "Verified Compatibility Layer for AI Coding Agents (MCP Spec 2026-07-28)"
 echo "--------------------------------------------------------------------------------"
 
 # 1. Health Verification
@@ -32,14 +32,13 @@ fi
 
 CONFIG_FOUND=0
 
-# Helper function to inject MCP entry safely with Python
 inject_mcp() {
     local target_file="$1"
     local app_name="$2"
     mkdir -p "$(dirname "$target_file")"
     
     python3 -c "
-import json, os
+import json, os, sys
 
 path = '$target_file'
 data = {}
@@ -47,8 +46,9 @@ if os.path.exists(path):
     try:
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-    except Exception:
-        data = {}
+    except Exception as e:
+        print(f'Warning: Preserving existing unparseable config at {path}', file=sys.stderr)
+        sys.exit(0)
 
 if 'mcpServers' not in data:
     data['mcpServers'] = {}
@@ -61,30 +61,28 @@ data['mcpServers']['synapse-mesh'] = {
 with open(path, 'w', encoding='utf-8') as f:
     json.dump(data, f, indent=2)
 "
-    echo -e "${GREEN}[✓] Successfully registered Synapse-Mesh MCP in ${app_name}:${NC} ${target_file}"
+    echo -e "${GREEN}[✓] Registered Synapse-Mesh MCP in ${app_name}:${NC} ${target_file}"
     CONFIG_FOUND=1
 }
 
-# 2. Detect Claude Desktop (macOS / Linux)
+# 2. Claude Desktop (Only if application directory actually exists)
 CLAUDE_MAC="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 CLAUDE_LINUX="$HOME/.config/Claude/claude_desktop_config.json"
 
-if [ -d "$HOME/Library/Application Support/Claude" ] || [ "$(uname)" == "Darwin" ]; then
+if [ -d "$HOME/Library/Application Support/Claude" ]; then
     inject_mcp "$CLAUDE_MAC" "Claude Desktop (macOS)"
 elif [ -d "$HOME/.config/Claude" ]; then
     inject_mcp "$CLAUDE_LINUX" "Claude Desktop (Linux)"
 fi
 
-# 3. Detect Cursor (.cursor or global)
-CURSOR_DIR="$HOME/.cursor"
-if [ -d "$CURSOR_DIR" ]; then
+# 3. Cursor
+if [ -d "$HOME/.cursor" ]; then
     inject_mcp "$HOME/.cursor/mcp.json" "Cursor Editor"
 fi
 
-# 4. Detect Antigravity CLI
-ANTIGRAVITY_DIR="$HOME/.gemini/antigravity-cli"
-if [ -d "$ANTIGRAVITY_DIR" ]; then
-    inject_mcp "$ANTIGRAVITY_DIR/mcp_config.json" "Google Antigravity"
+# 4. Antigravity CLI
+if [ -d "$HOME/.gemini/antigravity-cli" ]; then
+    inject_mcp "$HOME/.gemini/antigravity-cli/mcp_config.json" "Google Antigravity"
 fi
 
 # 5. Fallback local config
@@ -94,6 +92,6 @@ if [ "$CONFIG_FOUND" -eq 0 ]; then
 fi
 
 echo "--------------------------------------------------------------------------------"
-echo -e "${GREEN}Installation Complete!${NC}"
-echo "Synapse-Mesh is ready. Your AI coding agents can now query verified recipes via 'find_solution'."
+echo -e "${GREEN}Configuration Complete!${NC}"
+echo "AI coding agents can now query verified compatibility bundles via 'find_solution'."
 echo "Endpoint: https://mcp.synapsemesh.dev/mcp"

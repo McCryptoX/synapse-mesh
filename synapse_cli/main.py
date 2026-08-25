@@ -155,12 +155,12 @@ def cmd_install_mcp():
         configs_written += 1
 
     home = Path.home()
-    # Claude Desktop macOS
+    # Claude Desktop macOS (only if application directory exists)
     claude_mac = home / "Library/Application Support/Claude/claude_desktop_config.json"
-    if claude_mac.parent.exists() or platform.system() == "Darwin":
+    if claude_mac.parent.exists():
         inject(claude_mac, "Claude Desktop (macOS)")
 
-    # Claude Desktop Linux
+    # Claude Desktop Linux (only if application directory exists)
     claude_linux = home / ".config/Claude/claude_desktop_config.json"
     if claude_linux.parent.exists():
         inject(claude_linux, "Claude Desktop (Linux)")
