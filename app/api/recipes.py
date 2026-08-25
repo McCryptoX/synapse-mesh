@@ -37,10 +37,21 @@ async def get_recipe_stats():
         verified_db = (await cursor.fetchone())["verified"]
 
         cursor = await db.execute("SELECT runtime, COUNT(*) as count FROM recipes WHERE verification_status = 'VERIFIED' GROUP BY runtime")
-        by_runtime = {row["runtime"]: row["count"] for row in await cursor.fetchall()}
+        by_runtime = {row["runtime"].lower(): row["count"] for row in await cursor.fetchall()}
 
         golden_dir = Path(__file__).resolve().parent.parent.parent / "bundles" / "golden"
-        golden_count = len(list(golden_dir.glob("*.json"))) if golden_dir.exists() else 12
+        golden_count = 0
+        if golden_dir.exists():
+            for f in golden_dir.glob("*.json"):
+                try:
+                    data = json.loads(f.read_text(encoding="utf-8"))
+                    rt = data.get("scope", {}).get("runtime", "python").lower()
+                    by_runtime[rt] = by_runtime.get(rt, 0) + 1
+                    golden_count += 1
+                except Exception:
+                    pass
+        if golden_count == 0:
+            golden_count = 12
 
         total_verified = verified_db + golden_count
         total_all = total_db + golden_count

@@ -544,6 +544,21 @@
             if (elAll && allItems.length > 0) {
                 elAll.textContent = allItems.length;
             }
+            const elPy = document.getElementById('count-python');
+            if (elPy) {
+                const pyCount = allItems.filter(r => (r.runtime || '').toLowerCase() === 'python').length;
+                if (pyCount > 0) elPy.textContent = pyCount;
+            }
+            const elNode = document.getElementById('count-nodejs');
+            if (elNode) {
+                const nodeCount = allItems.filter(r => (r.runtime || '').toLowerCase() === 'nodejs').length;
+                if (nodeCount > 0) elNode.textContent = nodeCount;
+            }
+            const elDock = document.getElementById('count-docker');
+            if (elDock) {
+                const dockCount = allItems.filter(r => (r.runtime || '').toLowerCase() === 'docker').length;
+                if (dockCount > 0) elDock.textContent = dockCount;
+            }
             renderItems();
         }
 
@@ -568,11 +583,11 @@
                     const elAll = document.getElementById('count-all');
                     if (elAll && data.verifiedRecipes) elAll.textContent = data.verifiedRecipes;
                     const elPy = document.getElementById('count-python');
-                    if (elPy) elPy.textContent = (data.runtimes.python || 48) + 6;
+                    if (elPy && data.runtimes.python) elPy.textContent = data.runtimes.python;
                     const elNode = document.getElementById('count-nodejs');
-                    if (elNode) elNode.textContent = (data.runtimes.nodejs || 26) + 4;
+                    if (elNode && data.runtimes.nodejs) elNode.textContent = data.runtimes.nodejs;
                     const elDock = document.getElementById('count-docker');
-                    if (elDock) elDock.textContent = (data.runtimes.docker || 3) + 2;
+                    if (elDock && data.runtimes.docker) elDock.textContent = data.runtimes.docker;
                 }
             } catch(e) {}
         }

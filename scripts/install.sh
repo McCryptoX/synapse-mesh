@@ -23,7 +23,7 @@ echo "--------------------------------------------------------------------------
 
 # 1. Health Verification
 echo -n "Checking connection to Synapse-Mesh live node... "
-HEALTH=$(curl -s https://api.synapsemesh.dev/health || echo "FAIL")
+HEALTH=$(curl -s https://synapsemesh.dev/health || echo "FAIL")
 if [[ "$HEALTH" =~ "healthy" ]]; then
     echo -e "${GREEN}[OK]${NC}"
 else

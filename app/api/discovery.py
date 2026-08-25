@@ -52,7 +52,7 @@ Synapse-Mesh delivers portable, execution-verified compatibility bundles: exact 
 
 ## Optional
 - [Full Context Documentation](https://synapsemesh.dev/llms-full.txt): Complete uncompressed documentation stream for LLMs.
-- [GitHub Repository](https://github.com/McCryptoX/synapse-mesh-mcp): Open source source code, CLI tooling, and test suites.
+- [GitHub Repository](https://github.com/McCryptoX/synapse-mesh): Open source source code, CLI tooling, and test suites.
 """
 
 

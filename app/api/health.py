@@ -126,6 +126,7 @@ async def sitemap_xml():
 
 
 @router.get("/health", tags=["System"])
+@router.head("/health", tags=["System"])
 async def health_check():
     return {
         "status": "healthy",
@@ -170,6 +171,7 @@ async def privacy_page():
 
 
 @router.get("/", tags=["System"])
+@router.head("/", tags=["System"])
 async def root(request: Request, format: Optional[str] = Query(None)):
     accept = request.headers.get("accept", "").lower()
     
