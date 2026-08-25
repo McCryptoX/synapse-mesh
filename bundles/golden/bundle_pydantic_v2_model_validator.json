@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_pydantic_v2_model_validator_001",
+  "status": "CANDIDATE",
+  "description": "Pydantic v2 replaces a pre root_validator migration hook with a before model_validator that accepts and returns raw input.",
+  "tags": [
+    "python",
+    "pydantic",
+    "validation",
+    "migration"
+  ],
+  "scope": {
+    "package": "pydantic",
+    "fromVersion": "1.10.21",
+    "toVersion": "2.10.6",
+    "runtime": "python",
+    "runtimeVersion": "3.11.9",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "PydanticDeprecatedSince20: Pydantic V1 style @root_validator validators are deprecated.",
+    "regex": "PydanticDeprecatedSince20: Pydantic V1 style @root_validator validators are deprecated",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "user_model.py",
+    "unifiedDiff": "--- a/user_model.py\n+++ b/user_model.py\n@@ -1,18 +1,16 @@\n-import warnings\n from typing import Any\n \n-from pydantic import BaseModel, PydanticDeprecatedSince20, root_validator\n-\n-warnings.simplefilter(\"error\", PydanticDeprecatedSince20)\n+from pydantic import BaseModel, model_validator\n \n \n class UserPayload(BaseModel):\n     name: str\n     age: int\n \n-    @root_validator(pre=True)\n-    def migrate_full_name(cls, values: dict[str, Any]) -> dict[str, Any]:\n-        if \"name\" not in values and \"full_name\" in values:\n-            values = dict(values)\n-            values[\"name\"] = values.pop(\"full_name\")\n-        return values\n+    @model_validator(mode=\"before\")\n+    @classmethod\n+    def migrate_full_name(cls, data: Any) -> Any:\n+        if isinstance(data, dict) and \"name\" not in data and \"full_name\" in data:\n+            data = dict(data)\n+            data[\"name\"] = data.pop(\"full_name\")\n+        return data\n",
+    "pinnedDependencies": {
+      "pydantic": "2.10.6",
+      "pydantic-core": "2.27.2",
+      "annotated-types": "0.7.0",
+      "typing-extensions": "4.12.2"
+    },
+    "doNot": [
+      "Do not silence PydanticDeprecatedSince20 while retaining root_validator.",
+      "Do not use mode after for normalization that must run before required-field validation.",
+      "Do not assume the raw before-validator input is always a dict.",
+      "Do not mutate the caller's input mapping in place.",
+      "Do not forget to return the transformed input from the validator."
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "user_model.py": "import warnings\nfrom typing import Any\n\nfrom pydantic import BaseModel, PydanticDeprecatedSince20, root_validator\n\nwarnings.simplefilter(\"error\", PydanticDeprecatedSince20)\n\n\nclass UserPayload(BaseModel):\n    name: str\n    age: int\n\n    @root_validator(pre=True)\n    def migrate_full_name(cls, values: dict[str, Any]) -> dict[str, Any]:\n        if \"name\" not in values and \"full_name\" in values:\n            values = dict(values)\n            values[\"name\"] = values.pop(\"full_name\")\n        return values\n"
+    },
+    "reproductionScript": "from importlib.metadata import version\nimport runpy\nimport sys\n\ninstalled = version(\"pydantic\")\nif installed != \"2.10.6\":\n    print(f\"PREREQUISITE_VERSION_MISMATCH: expected pydantic 2.10.6, got {installed}\", file=sys.stderr)\n    raise SystemExit(126)\nrunpy.run_path(\"user_model.py\", run_name=\"__main__\")\n",
+    "testSuite": "from importlib.metadata import version\n\nfrom pydantic import ValidationError\nfrom user_model import UserPayload\n\nassert version(\"pydantic\") == \"2.10.6\", \"exact Pydantic 2.10.6 is required\"\nlegacy = {\"full_name\": \"Ada Lovelace\", \"age\": \"37\"}\nuser = UserPayload.model_validate(legacy)\nassert user.name == \"Ada Lovelace\"\nassert user.age == 37\nassert legacy == {\"full_name\": \"Ada Lovelace\", \"age\": \"37\"}, \"validator mutated caller input\"\ndirect = UserPayload(name=\"Grace Hopper\", age=85)\nassert direct.model_dump() == {\"name\": \"Grace Hopper\", \"age\": 85}\ntry:\n    UserPayload.model_validate(\"not-a-mapping\")\nexcept ValidationError:\n    pass\nelse:\n    raise AssertionError(\"non-mapping raw input must still be rejected by model validation\")\n",
+    "mutations": [
+      {
+        "id": "pydantic_model_validator_after",
+        "description": "Moves legacy-key normalization after required-field validation, so the hook never repairs the missing name.",
+        "unifiedDiff": "--- a/user_model.py\n+++ b/user_model.py\n@@ -1,18 +1,16 @@\n-import warnings\n from typing import Any\n \n-from pydantic import BaseModel, PydanticDeprecatedSince20, root_validator\n-\n-warnings.simplefilter(\"error\", PydanticDeprecatedSince20)\n+from pydantic import BaseModel, model_validator\n \n \n class UserPayload(BaseModel):\n     name: str\n     age: int\n \n-    @root_validator(pre=True)\n-    def migrate_full_name(cls, values: dict[str, Any]) -> dict[str, Any]:\n-        if \"name\" not in values and \"full_name\" in values:\n-            values = dict(values)\n-            values[\"name\"] = values.pop(\"full_name\")\n-        return values\n+    @model_validator(mode=\"after\")\n+    @classmethod\n+    def migrate_full_name(cls, data: Any) -> Any:\n+        if isinstance(data, dict) and \"name\" not in data and \"full_name\" in data:\n+            data = dict(data)\n+            data[\"name\"] = data.pop(\"full_name\")\n+        return data\n"
+      },
+      {
+        "id": "pydantic_before_validator_returns_none",
+        "description": "Uses the correct before mode but drops the transformed input instead of returning it.",
+        "unifiedDiff": "--- a/user_model.py\n+++ b/user_model.py\n@@ -1,18 +1,16 @@\n-import warnings\n from typing import Any\n \n-from pydantic import BaseModel, PydanticDeprecatedSince20, root_validator\n-\n-warnings.simplefilter(\"error\", PydanticDeprecatedSince20)\n+from pydantic import BaseModel, model_validator\n \n \n class UserPayload(BaseModel):\n     name: str\n     age: int\n \n-    @root_validator(pre=True)\n-    def migrate_full_name(cls, values: dict[str, Any]) -> dict[str, Any]:\n-        if \"name\" not in values and \"full_name\" in values:\n-            values = dict(values)\n-            values[\"name\"] = values.pop(\"full_name\")\n-        return values\n+    @model_validator(mode=\"before\")\n+    @classmethod\n+    def migrate_full_name(cls, data: Any) -> Any:\n+        if isinstance(data, dict) and \"name\" not in data and \"full_name\" in data:\n+            data = dict(data)\n+            data[\"name\"] = data.pop(\"full_name\")\n+        return None\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 30000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://docs.pydantic.dev/2.10/migration/#validator-and-root-validator-are-deprecated",
+      "https://docs.pydantic.dev/2.10/concepts/validators/#model-validators"
+    ],
+    "verifiedAt": "2026-08-25T05:27:23Z"
+  }
+}

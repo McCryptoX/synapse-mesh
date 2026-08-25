@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_httpx_028_asgi_transport_001",
+  "status": "CANDIDATE",
+  "description": "HTTPX 0.28 removes the Client and AsyncClient app shortcut; explicit ASGITransport is required for in-process ASGI requests.",
+  "tags": [
+    "python",
+    "httpx",
+    "asgi",
+    "transport"
+  ],
+  "scope": {
+    "package": "httpx",
+    "fromVersion": "0.27.2",
+    "toVersion": "0.28.1",
+    "runtime": "python",
+    "runtimeVersion": "3.11.9",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",
+    "regex": "TypeError: AsyncClient\\.__init__\\(\\) got an unexpected keyword argument ['\"]app['\"]",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "client.py",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -16,7 +16,8 @@\n \n \n async def fetch_health() -> httpx.Response:\n-    async with httpx.AsyncClient(app=app, base_url=\"http://testserver\") as client:\n+    transport = httpx.ASGITransport(app=app)\n+    async with httpx.AsyncClient(transport=transport, base_url=\"http://testserver\") as client:\n         return await client.get(\"/health\")\n \n \n",
+    "pinnedDependencies": {
+      "httpx": "0.28.1"
+    },
+    "doNot": [
+      "Do not downgrade HTTPX to restore the removed app shortcut.",
+      "Do not pass the ASGI application itself as the transport object.",
+      "Do not use synchronous Client with ASGITransport.",
+      "Do not omit base_url when the test sends a relative request URL."
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "client.py": "import asyncio\n\nimport httpx\n\n\nasync def app(scope, receive, send):\n    assert scope[\"type\"] == \"http\"\n    await send(\n        {\n            \"type\": \"http.response.start\",\n            \"status\": 200,\n            \"headers\": [(b\"content-type\", b\"text/plain; charset=utf-8\")],\n        }\n    )\n    await send({\"type\": \"http.response.body\", \"body\": b\"healthy\"})\n\n\nasync def fetch_health() -> httpx.Response:\n    async with httpx.AsyncClient(app=app, base_url=\"http://testserver\") as client:\n        return await client.get(\"/health\")\n\n\nif __name__ == \"__main__\":\n    response = asyncio.run(fetch_health())\n    print(response.status_code, response.text)\n"
+    },
+    "reproductionScript": "from importlib.metadata import version\nimport runpy\nimport sys\n\ninstalled = version(\"httpx\")\nif installed != \"0.28.1\":\n    print(f\"PREREQUISITE_VERSION_MISMATCH: expected httpx 0.28.1, got {installed}\", file=sys.stderr)\n    raise SystemExit(126)\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
+    "testSuite": "import asyncio\nfrom importlib.metadata import version\n\nfrom client import fetch_health\n\nassert version(\"httpx\") == \"0.28.1\", \"exact HTTPX 0.28.1 is required\"\nresponse = asyncio.run(fetch_health())\nassert response.status_code == 200\nassert response.headers[\"content-type\"] == \"text/plain; charset=utf-8\"\nassert response.text == \"healthy\"\nassert response.request.url == \"http://testserver/health\"\n",
+    "mutations": [
+      {
+        "id": "httpx_pass_asgi_app_as_transport",
+        "description": "Renames the argument but passes the raw ASGI callable instead of an ASGITransport instance.",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -16,7 +16,7 @@\n \n \n async def fetch_health() -> httpx.Response:\n-    async with httpx.AsyncClient(app=app, base_url=\"http://testserver\") as client:\n+    async with httpx.AsyncClient(transport=app, base_url=\"http://testserver\") as client:\n         return await client.get(\"/health\")\n \n \n"
+      },
+      {
+        "id": "httpx_asgi_transport_without_base_url",
+        "description": "Creates the correct ASGI transport but drops base_url while retaining a relative request URL.",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -16,7 +16,7 @@\n \n \n async def fetch_health() -> httpx.Response:\n-    async with httpx.AsyncClient(app=app, base_url=\"http://testserver\") as client:\n+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app)) as client:\n         return await client.get(\"/health\")\n \n \n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 30000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://github.com/encode/httpx/releases/tag/0.28.0",
+      "https://www.python-httpx.org/advanced/transports/#asgi-transport"
+    ],
+    "verifiedAt": "2026-08-25T05:27:23Z"
+  }
+}

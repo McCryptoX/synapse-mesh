@@ -5,7 +5,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from synapse_cli.main import cmd_doctor
-from scripts.synapse_reverify import reverify_recipe
+from scripts.synapse_reverify import reverify_recipe, verify_bundle_data
 
 
 def test_cli_doctor_runs_cleanly(capsys):
@@ -16,7 +16,71 @@ def test_cli_doctor_runs_cleanly(capsys):
     assert "Connecting to Synapse-Mesh Node" in captured.out
 
 
-def test_reverify_rejects_missing_repro(capsys):
-    # Testing that a recipe missing reproduction fails cleanly as UNVERIFIED
-    res = reverify_recipe("rec_missing_repro_nonexistent", api_base="http://127.0.0.1:9999")
-    assert res is False
+def test_reverify_4stage_pipeline_success():
+    """Tests that a valid 4-stage bundle executes Pre-Fail, Diff Apply, Post-Pass, and Mutation Kill."""
+    bundle = {
+        "id": "bundle_test_valid_001",
+        "problem": {
+            "runtime": "python",
+            "errorSignature": "TypeError: unsupported operand type(s) for +: 'int' and 'str'"
+        },
+        "solution": {
+            "targetFile": "calc.py",
+            "summary": "Convert integer to string",
+            "patchDiff": "--- calc.py\n+++ calc.py\n@@ -1,1 +1,1 @@\n-result = 5 + 'test'\n+result = str(5) + 'test'\n",
+            "mutations": [
+                "# Mutant 1: Still adding int and str\nresult = 5 + 'test'"
+            ]
+        },
+        "reproduction": {
+            "script": "result = 5 + 'test'",
+            "testSuite": "import calc\nassert calc.result == '5test'\nprint('ALL TESTS PASSED')"
+        }
+    }
+    
+    assert verify_bundle_data(bundle) is True
+
+
+def test_reverify_rejects_missing_repro():
+    """Testing that a bundle missing reproduction fails cleanly as UNVERIFIED."""
+    bundle = {
+        "id": "bundle_test_missing_repro",
+        "problem": {"runtime": "python", "errorSignature": "SomeError"},
+        "solution": {"targetFile": "calc.py", "patchDiff": "fix"},
+        "reproduction": {"script": "", "testSuite": "assert True"}
+    }
+    assert verify_bundle_data(bundle) is False
+
+
+def test_reverify_rejects_non_failing_repro():
+    """Testing that a bundle whose repro script exits 0 is rejected at Stage 1."""
+    bundle = {
+        "id": "bundle_test_non_failing",
+        "problem": {"runtime": "python", "errorSignature": "SomeError"},
+        "solution": {"targetFile": "calc.py", "patchDiff": "fix"},
+        "reproduction": {"script": "x = 10", "testSuite": "assert True"}
+    }
+    assert verify_bundle_data(bundle) is False
+
+
+def test_reverify_rejects_escaping_mutant():
+    """Testing that if a mutant passes the test suite, the bundle is rejected at Stage 4."""
+    bundle = {
+        "id": "bundle_test_escaping_mutant",
+        "problem": {
+            "runtime": "python",
+            "errorSignature": "TypeError: unsupported operand type"
+        },
+        "solution": {
+            "targetFile": "calc.py",
+            "patchDiff": "--- calc.py\n+++ calc.py\n@@ -1,1 +1,1 @@\n-result = 5 + 'test'\n+result = str(5) + 'test'\n",
+            "mutations": [
+                "# Escaping mutant that happens to set valid result\nresult = '5test'"
+            ]
+        },
+        "reproduction": {
+            "script": "result = 5 + 'test'",
+            "testSuite": "import calc\nassert calc.result == '5test'"
+        }
+    }
+    assert verify_bundle_data(bundle) is False

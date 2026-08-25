@@ -141,8 +141,9 @@ def cmd_install_mcp():
         if file_path.exists():
             try:
                 data = json.loads(file_path.read_text(encoding="utf-8"))
-            except Exception:
-                data = {}
+            except Exception as e:
+                print(f"[WARN] Preserving existing unparseable config in {app_name} at {file_path}: {e}", file=sys.stderr)
+                return
         if "mcpServers" not in data:
             data["mcpServers"] = {}
         data["mcpServers"]["synapse-mesh"] = {

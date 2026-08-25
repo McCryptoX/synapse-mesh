@@ -1,0 +1,493 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://synapsemesh.dev/schemas/compatibility_bundle_v1.json",
+  "title": "Synapse-Mesh Verified Compatibility Bundle v1.0.0",
+  "description": "A self-contained, deterministic compatibility fix with a failing reproduction, a valid patch, a passing test, negative mutations, and primary-source provenance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "bundleId",
+    "status",
+    "scope",
+    "fingerprint",
+    "patch",
+    "verification",
+    "provenance"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "The Compatibility Bundle specification version, not the affected package version."
+    },
+    "bundleId": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]{1,126}[a-z0-9])?$",
+      "description": "A stable, globally publishable identifier. Lowercase identifiers are required for deterministic lookup."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "CANDIDATE",
+        "VERIFIED",
+        "STALE",
+        "REVOKED"
+      ],
+      "description": "Lifecycle state. Schema validity alone never upgrades a bundle to VERIFIED."
+    },
+    "statusReason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 64,
+        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+      }
+    },
+    "scope": {
+      "$ref": "#/$defs/scope"
+    },
+    "fingerprint": {
+      "$ref": "#/$defs/fingerprint"
+    },
+    "patch": {
+      "$ref": "#/$defs/patch"
+    },
+    "verification": {
+      "$ref": "#/$defs/verification"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "integrity": {
+      "$ref": "#/$defs/integrity"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "STALE",
+              "REVOKED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "statusReason"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "packageName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 214,
+      "pattern": "^(?:@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*$",
+      "description": "A normalized npm, PyPI, or crates.io package name."
+    },
+    "versionSelector": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[0-9A-Za-z*<>=!~^][0-9A-Za-z.*+<>=!~^|, _-]*$",
+      "description": "An ecosystem version or range. Shell metacharacters other than version-range operators are forbidden."
+    },
+    "exactVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[0-9][0-9A-Za-z]*(?:[.!_+-][0-9A-Za-z]+)*$",
+      "description": "A concrete package version. Wildcards, aliases, URLs, tags, comparators, caret ranges, and tilde ranges are forbidden."
+    },
+    "runtimeVersion": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:[-+][0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$",
+      "description": "An exact major.minor.patch runtime version, optionally with a prerelease or build suffix."
+    },
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!\\.git(?:/|$))(?!\\.synapse(?:/|$))(?!node_modules(?:/|$))(?!.*\\\\)(?!.*//)(?!.*[\\u0000-\\u001F\\u007F])(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9_@+,.~\\-\\[\\](){}]+(?:/[A-Za-z0-9_@+,.~\\-\\[\\](){}]+)*$",
+      "description": "A normalized POSIX-relative regular-file path. Absolute paths, drive paths, backslashes, dot segments, control characters, reserved verifier paths, .git, and node_modules are forbidden."
+    },
+    "httpsUri": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 2048,
+      "format": "uri",
+      "pattern": "^https://",
+      "description": "An HTTPS URI. Consumers must still apply their own SSRF and trust policies before dereferencing it."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "unifiedDiff": {
+      "type": "string",
+      "minLength": 25,
+      "maxLength": 1048576,
+      "pattern": "^(?:diff --git a/[^\\r\\n]+ b/[^\\r\\n]+\\n(?:[^\\r\\n]*\\n)*?)?--- a/[^\\r\\n]+\\n\\+\\+\\+ b/[^\\r\\n]+\\n@@[^\\r\\n]*@@[^\\r\\n]*(?:\\n|$)[\\s\\S]*$",
+      "description": "A normalized LF-only git-compatible unified diff for an existing file."
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "package",
+        "fromVersion",
+        "toVersion",
+        "runtime",
+        "runtimeVersion",
+        "platform"
+      ],
+      "properties": {
+        "package": {
+          "$ref": "#/$defs/packageName"
+        },
+        "fromVersion": {
+          "$ref": "#/$defs/versionSelector"
+        },
+        "toVersion": {
+          "$ref": "#/$defs/versionSelector"
+        },
+        "runtime": {
+          "type": "string",
+          "enum": [
+            "python",
+            "nodejs",
+            "rust"
+          ]
+        },
+        "runtimeVersion": {
+          "$ref": "#/$defs/runtimeVersion"
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 65,
+          "pattern": "^(?:all|[a-z0-9][a-z0-9._-]{0,31}-[a-z0-9][a-z0-9._-]{0,31})$",
+          "description": "all or a normalized operating-system/architecture pair such as linux-x86_64 or darwin-arm64."
+        },
+        "packageManager": {
+          "type": "string",
+          "enum": [
+            "npm",
+            "pnpm",
+            "yarn",
+            "pip",
+            "uv",
+            "poetry",
+            "cargo"
+          ]
+        },
+        "packageManagerVersion": {
+          "$ref": "#/$defs/exactVersion"
+        }
+      },
+      "dependentRequired": {
+        "packageManager": [
+          "packageManagerVersion"
+        ],
+        "packageManagerVersion": [
+          "packageManager"
+        ]
+      }
+    },
+    "fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "errorSignature",
+        "regex"
+      ],
+      "properties": {
+        "errorSignature": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16384,
+          "description": "The stable, non-PII error text expected from the failing reproduction."
+        },
+        "regex": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "description": "An ECMAScript-compatible regular expression matched against the selected pre-fail output stream."
+        },
+        "regexFlags": {
+          "type": "string",
+          "enum": [
+            "",
+            "i",
+            "m",
+            "s",
+            "u",
+            "im",
+            "is",
+            "iu",
+            "ms",
+            "mu",
+            "su",
+            "ims",
+            "imu",
+            "isu",
+            "msu",
+            "imsu"
+          ],
+          "default": ""
+        },
+        "matchStream": {
+          "type": "string",
+          "enum": [
+            "stdout",
+            "stderr",
+            "combined"
+          ],
+          "default": "combined"
+        }
+      }
+    },
+    "patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unifiedDiff",
+        "targetFile",
+        "pinnedDependencies",
+        "doNot"
+      ],
+      "properties": {
+        "unifiedDiff": {
+          "$ref": "#/$defs/unifiedDiff"
+        },
+        "targetFile": {
+          "$ref": "#/$defs/safeRelativePath"
+        },
+        "pinnedDependencies": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 256,
+          "propertyNames": {
+            "$ref": "#/$defs/packageName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/exactVersion"
+          },
+          "description": "The complete package-version pins required by the fixture. Values are concrete versions, never ranges or mutable tags."
+        },
+        "doNot": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "description": "Explicitly rejected workarounds, unsafe downgrades, or known web-derived false fixes."
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Optional SHA-256 digest of the UTF-8 bytes of unifiedDiff exactly as stored."
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scriptLanguage",
+        "workspaceFiles",
+        "reproductionScript",
+        "testSuite",
+        "mutations",
+        "expectedPreExit",
+        "expectedPostExit",
+        "timeoutMs"
+      ],
+      "properties": {
+        "scriptLanguage": {
+          "type": "string",
+          "enum": [
+            "javascript",
+            "python"
+          ],
+          "description": "Language of reproductionScript and testSuite. It is independent of the affected package runtime."
+        },
+        "workspaceFiles": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/safeRelativePath"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 262144
+          },
+          "description": "A path-to-UTF-8-source map materialized into a fresh workspace before each verification phase. Symlinks and non-text files are not representable."
+        },
+        "reproductionScript": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 262144,
+          "description": "Source executed against the pristine workspace. It must exit with expectedPreExit and emit the declared fingerprint."
+        },
+        "testSuite": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 262144,
+          "description": "Source executed against the valid-patch and mutation workspaces."
+        },
+        "mutations": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/mutation"
+          },
+          "description": "At least two independent false-fix patches. Every mutation must cause testSuite to exit non-zero."
+        },
+        "expectedPreExit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255
+        },
+        "expectedPostExit": {
+          "type": "integer",
+          "const": 0
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000,
+          "description": "Per-process wall-clock timeout in milliseconds."
+        }
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "unifiedDiff"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "unifiedDiff": {
+          "$ref": "#/$defs/unifiedDiff"
+        },
+        "expectedErrorRegex": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "description": "Optional ECMAScript regex for the expected mutation failure. A non-zero exit remains mandatory."
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spdxLicense",
+        "primarySources",
+        "verifiedAt"
+      ],
+      "properties": {
+        "spdxLicense": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9.+-]*(?: (?:AND|OR|WITH) [A-Za-z0-9][A-Za-z0-9.+-]*)*$",
+          "description": "An SPDX license identifier or a simple SPDX expression without parentheses. Consumers must resolve it against the SPDX license list."
+        },
+        "primarySources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/httpsUri"
+          },
+          "description": "Official release notes, migration guides, source commits, issues, or package documentation."
+        },
+        "verifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+        },
+        "sourceRepository": {
+          "$ref": "#/$defs/httpsUri"
+        },
+        "upstreamCommit": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$",
+          "description": "Optional immutable upstream Git commit identifier."
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "patchSha256"
+      ],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "const": "sha256"
+        },
+        "patchSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "workspaceSha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the RFC 8785 canonicalized workspaceFiles object."
+        },
+        "bundleSha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "SHA-256 of the RFC 8785 canonicalized bundle after omitting integrity.bundleSha256."
+        }
+      }
+    }
+  }
+}
