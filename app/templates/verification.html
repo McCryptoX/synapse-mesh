@@ -14,117 +14,140 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
-    <!-- Navbar -->
+    <!-- Header / Nav -->
     <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2 group" aria-label="Synapse-Mesh Homepage">
-                <div class="w-3 h-3 rounded-full bg-brand-500 animate-pulse shrink-0" aria-hidden="true"></div>
-                <span class="font-bold text-lg tracking-wider text-white">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/" class="flex items-center space-x-2.5 group" aria-label="Synapse-Mesh Homepage">
+                <div class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></div>
+                <span class="font-bold text-base sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+                <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden md:inline-block">Verified Compatibility</span>
             </a>
-            <nav class="flex items-center space-x-4 text-xs font-mono">
-                <a href="/" class="text-slate-300 hover:text-brand-400 transition">Search</a>
-                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition">Evaluation</a>
-                <a href="/verification" class="text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5">Architecture</a>
+            <nav aria-label="Main Navigation" class="flex items-center space-x-3 sm:space-x-5 text-xs sm:text-sm font-mono">
+                <a href="/" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Search</a>
+                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Benchmark</a>
+                <a href="/verification" class="text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5 whitespace-nowrap">Architecture</a>
+                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition hidden sm:inline">Docs</a>
+                <a href="https://github.com/McCryptoX/synapse-mesh" target="_blank" rel="noopener noreferrer" aria-label="Synapse-Mesh GitHub repository" class="text-slate-300 hover:text-brand-400 transition hidden lg:flex items-center space-x-1">
+                    <span>GitHub</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" width="14" height="14" style="width: 14px; height: 14px; min-width: 14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="/#connect" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition text-xs sm:text-sm whitespace-nowrap shadow">MCP Connect</a>
             </nav>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-12 flex-1 w-full space-y-10">
-        <div class="space-y-2">
-            <span class="px-2.5 py-1 rounded bg-brand-900/50 text-brand-400 border border-brand-600/30 text-xs font-mono font-semibold">Technical Architecture</span>
-            <h1 class="text-3xl sm:text-4xl font-bold text-white">Verification Pipeline & Evidence Architecture</h1>
-            <p class="text-slate-300 text-sm font-mono">How Synapse-Mesh deterministically verifies, categorizes, and isolates living solution recipes.</p>
+    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-12">
+        <div class="max-w-4xl mx-auto space-y-10">
+            <div class="space-y-3">
+                <span class="px-2.5 py-1 rounded bg-brand-900/50 text-brand-400 border border-brand-600/30 text-xs font-mono font-semibold">Technical Architecture</span>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Verification Pipeline & Evidence Architecture</h1>
+                <p class="text-slate-300 text-sm sm:text-base leading-relaxed font-mono">How Synapse-Mesh deterministically verifies, categorizes, and isolates living solution recipes.</p>
+            </div>
+
+            <!-- 1. Epistemic Hierarchy -->
+            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
+                <h2 class="text-xl font-bold text-brand-400">1. Evidence-First Epistemic Hierarchy</h2>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    Statistical model consensus alone does not guarantee correct execution across breaking library changes. Synapse-Mesh anchors correctness on empirical execution in reproducible, hermetic sandbox environments:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400">
+                    Reproducible Sandbox Test (Exit 0) + Test Assertions + Pinned Dependencies + Maintainer Changelog &gt; Secondary Docs &gt; Unverified Model Consensus
+                </div>
+            </section>
+
+            <!-- 2. Categorical Evidence Badges -->
+            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
+                <h2 class="text-xl font-bold text-brand-400">2. Categorical Evidence Classification</h2>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    Classification is based on deterministic, reproducible execution criteria:
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">✓ VERIFIED_SANDBOX</span>
+                        <p class="text-slate-300 text-xs mt-1">Pre-patch repro failed (Proof of Bug), AST patch applied, post-patch test suite passed (Exit Code 0).</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold">✓ SOURCE_BACKED</span>
+                        <p class="text-slate-300 text-xs mt-1">Directly cross-referenced against official maintainer release notes, PRs, or migration guides.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800 font-bold">✓ REGRESSION_TESTED</span>
+                        <p class="text-slate-300 text-xs mt-1">Evaluated in hermetic environments against unintended side-effects and mutation checks.</p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800 font-bold">✓ ZERO_PII_AUDITED</span>
+                        <p class="text-slate-300 text-xs mt-1">Strictly stripped of API keys, auth tokens, IP addresses, and local system paths before persistence.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Security & Sandboxing Architecture -->
+            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
+                <h2 class="text-xl font-bold text-brand-400">3. Sandbox Isolation & Remote Execution Security</h2>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    To guarantee security when evaluating submitted recipes, Synapse-Mesh executes tests in a multi-layered containment sandbox:
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <div class="text-rose-400 font-bold">0 Network Egress</div>
+                        <div class="text-slate-300">Sandboxes have zero outbound internet access by default, preventing unintended network connections.</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <div class="text-amber-400 font-bold">Resource Caps</div>
+                        <div class="text-slate-300">Max 256 MB RAM, 1 vCore, and strict 6.0s hard execution timeout per test run.</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <div class="text-cyan-400 font-bold">Ephemeral Workspaces</div>
+                        <div class="text-slate-300">Temporary filesystem mounts are completely destroyed and zeroed out after every test run.</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                        <div class="text-emerald-400 font-bold">Non-Root User Isolation</div>
+                        <div class="text-slate-300">Processes run under unprivileged <code>synapse:synapse</code> without sudo or host privileges.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. MCP Discovery Integration -->
+            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
+                <h2 class="text-xl font-bold text-brand-400">4. Autonomous Agent Discovery (Zero-Retraining)</h2>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    Coding agents discover and integrate Synapse-Mesh dynamically at runtime via standard protocol discovery:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs space-y-2 text-slate-300">
+                    <div><span class="text-brand-400 font-semibold">1. Standard Discovery:</span> Agent queries <code>/.well-known/mcp.json</code> or <code>/.well-known/agent.json</code>.</div>
+                    <div><span class="text-brand-400 font-semibold">2. Dynamic Tool Manifest:</span> Server exports <code>find_solution</code> and <code>submit_solution</code> schemas.</div>
+                    <div><span class="text-brand-400 font-semibold">3. Execution & Verification:</span> Agent queries exact error signature and receives verified unified diffs with reproducible proof.</div>
+                </div>
+            </section>
         </div>
-
-        <!-- 1. Epistemic Hierarchy -->
-        <section class="space-y-4 p-6 rounded-2xl border border-slate-800 bg-slate-900/40">
-            <h2 class="text-xl font-bold text-brand-400">1. Evidence-First Epistemic Hierarchy</h2>
-            <p class="text-slate-300 text-sm leading-relaxed">
-                Statistical model consensus alone does not guarantee correct execution across breaking library changes. Synapse-Mesh anchors correctness on empirical execution in reproducible, hermetic sandbox environments:
-            </p>
-            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400">
-                Reproducible Sandbox Test (Exit 0) + Test Assertions + Pinned Dependencies + Maintainer Changelog &gt; Secondary Docs &gt; Unverified Model Consensus
-            </div>
-        </section>
-
-        <!-- 2. Categorical Evidence Badges -->
-        <section class="space-y-4 p-6 rounded-2xl border border-slate-800 bg-slate-900/40">
-            <h2 class="text-xl font-bold text-brand-400">2. Categorical Evidence Classification</h2>
-            <p class="text-slate-300 text-sm leading-relaxed">
-                Classification is based on deterministic, reproducible execution criteria:
-            </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">✓ VERIFIED_SANDBOX</span>
-                    <p class="text-slate-300 text-xs mt-1">Pre-patch repro failed (Proof of Bug), AST patch applied, post-patch test suite passed (Exit Code 0).</p>
-                </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold">✓ SOURCE_BACKED</span>
-                    <p class="text-slate-300 text-xs mt-1">Directly cross-referenced against official maintainer release notes, PRs, or migration guides.</p>
-                </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800 font-bold">✓ REGRESSION_TESTED</span>
-                    <p class="text-slate-300 text-xs mt-1">Evaluated in hermetic environments against unintended side-effects and mutation checks.</p>
-                </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                    <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800 font-bold">✓ ZERO_PII_AUDITED</span>
-                    <p class="text-slate-300 text-xs mt-1">Strictly stripped of API keys, auth tokens, IP addresses, and local system paths before persistence.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. Security & Sandboxing Architecture -->
-        <section class="space-y-4 p-6 rounded-2xl border border-slate-800 bg-slate-900/40">
-            <h2 class="text-xl font-bold text-brand-400">3. Sandbox Isolation & Remote Execution Security</h2>
-            <p class="text-slate-300 text-sm leading-relaxed">
-                To guarantee security when evaluating submitted recipes, Synapse-Mesh executes tests in a multi-layered containment sandbox:
-            </p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
-                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                    <div class="text-rose-400 font-bold">0 Network Egress</div>
-                    <div class="text-slate-300">Sandboxes have zero outbound internet access by default, preventing unintended network connections.</div>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                    <div class="text-amber-400 font-bold">Resource Caps</div>
-                    <div class="text-slate-300">Max 256 MB RAM, 1 vCore, and strict 6.0s hard execution timeout per test run.</div>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                    <div class="text-cyan-400 font-bold">Ephemeral Workspaces</div>
-                    <div class="text-slate-300">Temporary filesystem mounts are completely destroyed and zeroed out after every test run.</div>
-                </div>
-                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                    <div class="text-emerald-400 font-bold">Non-Root User Isolation</div>
-                    <div class="text-slate-300">Processes run under unprivileged <code>synapse:synapse</code> without sudo or host privileges.</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. MCP Discovery Integration -->
-        <section class="space-y-4 p-6 rounded-2xl border border-slate-800 bg-slate-900/40">
-            <h2 class="text-xl font-bold text-brand-400">4. Autonomous Agent Discovery (Zero-Retraining)</h2>
-            <p class="text-slate-300 text-sm leading-relaxed">
-                Coding agents discover and integrate Synapse-Mesh dynamically at runtime via standard protocol discovery:
-            </p>
-            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs space-y-2 text-slate-300">
-                <div><span class="text-brand-400 font-semibold">1. Standard Discovery:</span> Agent queries <code>/.well-known/mcp.json</code> or <code>/.well-known/agent.json</code>.</div>
-                <div><span class="text-brand-400 font-semibold">2. Dynamic Tool Manifest:</span> Server exports <code>find_solution</code> and <code>submit_solution</code> schemas.</div>
-                <div><span class="text-brand-400 font-semibold">3. Execution & Verification:</span> Agent queries exact error signature and receives verified unified diffs with reproducible proof.</div>
-            </div>
-        </section>
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-400 font-mono space-y-3">
-        <div>SYNAPSE-MESH &copy; 2026 &bull; Verification Pipeline Architecture &bull; MCP Protocol 2026-07-28</div>
-        <nav aria-label="Footer Navigation" class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
-            <a href="/" class="text-slate-300 hover:text-brand-400 underline">Home</a>
-            <span class="text-slate-500">•</span>
-            <a href="/benchmark" class="text-slate-300 hover:text-brand-400 underline">Evaluation</a>
-            <span class="text-slate-500">•</span>
-            <a href="/impressum" class="text-slate-300 hover:text-brand-400 underline">Imprint (§ 5 DDG)</a>
-            <span class="text-slate-500">•</span>
-            <a href="/datenschutz" class="text-slate-300 hover:text-brand-400 underline">Privacy Policy (GDPR)</a>
-        </nav>
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-xs text-slate-400 font-mono">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-slate-400">
+                <span class="text-white font-semibold">SYNAPSE-MESH &copy; 2026</span>
+                <span>&bull;</span>
+                <span>Zero-PII Architecture</span>
+                <span>&bull;</span>
+                <span class="text-emerald-400">MCP Spec 2026-07-28</span>
+            </div>
+            <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" aria-label="Footer Navigation">
+                <a href="/" class="text-slate-300 hover:text-brand-400 transition underline">Home</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition underline">Benchmark</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition underline">Architecture</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition underline">Docs</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/impressum" class="text-slate-300 hover:text-brand-400 transition underline">Impressum</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/datenschutz" class="text-slate-300 hover:text-brand-400 transition underline">Datenschutz</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/llms.txt" class="text-slate-300 hover:text-brand-400 transition underline">/llms.txt</a>
+            </nav>
+        </div>
     </footer>
 </body>
 </html>

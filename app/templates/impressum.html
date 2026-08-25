@@ -13,82 +13,119 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
-    <!-- Navbar -->
+    <!-- Header / Nav -->
     <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2 group" aria-label="Synapse-Mesh Homepage">
-                <div class="w-3 h-3 rounded-full bg-brand-500 animate-pulse shrink-0" aria-hidden="true"></div>
-                <span class="font-bold text-lg tracking-wider text-white">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/" class="flex items-center space-x-2.5 group" aria-label="Synapse-Mesh Homepage">
+                <div class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></div>
+                <span class="font-bold text-base sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+                <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden md:inline-block">Verified Compatibility</span>
             </a>
-            <a href="/" class="text-xs font-mono text-slate-300 hover:text-brand-400 transition">← Back to Overview</a>
+            <nav aria-label="Main Navigation" class="flex items-center space-x-3 sm:space-x-5 text-xs sm:text-sm font-mono">
+                <a href="/" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Search</a>
+                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Benchmark</a>
+                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Architecture</a>
+                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition hidden sm:inline">Docs</a>
+                <a href="https://github.com/McCryptoX/synapse-mesh" target="_blank" rel="noopener noreferrer" aria-label="Synapse-Mesh GitHub repository" class="text-slate-300 hover:text-brand-400 transition hidden lg:flex items-center space-x-1">
+                    <span>GitHub</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" width="14" height="14" style="width: 14px; height: 14px; min-width: 14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="/#connect" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition text-xs sm:text-sm whitespace-nowrap shadow">MCP Connect</a>
+            </nav>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-12 flex-1 w-full space-y-8">
-        <div>
-            <span class="px-2.5 py-1 rounded bg-brand-900/50 text-brand-400 border border-brand-600/30 text-xs font-mono font-semibold">Legal Information</span>
-            <h1 class="text-3xl font-bold text-white mt-2">Imprint (Impressum)</h1>
-            <p class="text-xs font-mono text-slate-400 mt-1">Information pursuant to § 5 Digitale-Dienste-Gesetz (DDG) & § 18 Abs. 2 Medienstaatsvertrag (MStV)</p>
-        </div>
-
-        <!-- 1. Service Provider -->
-        <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40">
-            <h2 class="text-xl font-semibold text-brand-400">1. Service Provider / Website Operator</h2>
-            <div class="text-slate-300 space-y-1 text-sm">
-                <p class="font-bold text-white">Synapse-Mesh Operator</p>
-                
-                <p>Germany</p>
-            </div>
-
-            <h3 class="text-lg font-semibold text-brand-400 pt-3">Contact</h3>
-            <div class="text-slate-300 space-y-1 text-sm">
-                <p><strong>Email:</strong> <a href="mailto:contact@synapsemesh.dev" class="text-brand-400 hover:underline">contact@synapsemesh.dev</a></p>
-                <p class="text-xs text-slate-400">Direct electronic communication pursuant to § 5 Abs. 1 Nr. 2 DDG.</p>
-            </div>
-
-            <h3 class="text-lg font-semibold text-brand-400 pt-3">Responsible for Editorial Content (§ 18 Abs. 2 MStV)</h3>
-            <div class="text-slate-300 space-y-1 text-sm">
-                <p>Synapse-Mesh Operator, Germany</p>
-            </div>
-        </section>
-
-        <!-- 2. Disclaimer & Liability -->
-        <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
-            <h2 class="text-xl font-semibold text-brand-400">2. Disclaimer & Liability Notice (Haftungsausschluss)</h2>
+    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-12">
+        <div class="max-w-4xl mx-auto space-y-8">
             <div class="space-y-2">
-                <h3 class="font-bold text-white">Liability for Content (§ 7 Abs. 1 DDG)</h3>
-                <p>As a service provider, we are responsible for our own content on these pages in accordance with general legislation. However, we are not obligated to monitor transmitted or stored third-party information or to investigate circumstances that indicate illegal activity (§§ 8 to 10 DDG). Obligations to remove or block the use of information under general laws remain unaffected.</p>
+                <span class="px-2.5 py-1 rounded bg-brand-900/50 text-brand-400 border border-brand-600/30 text-xs font-mono font-semibold">Legal Information</span>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Imprint (Impressum)</h1>
+                <p class="text-xs font-mono text-slate-400 mt-1">Information pursuant to § 5 Digitale-Dienste-Gesetz (DDG) & § 18 Abs. 2 Medienstaatsvertrag (MStV)</p>
             </div>
-            <div class="space-y-2 pt-2">
-                <h3 class="font-bold text-white">Automated Test Suites & Open Source Software</h3>
-                <p>All compatibility bundles, unified diffs, and verification artifacts provided on Synapse-Mesh are generated and tested via automated, hermetic test suites under the open-source MIT License. They are provided "AS IS", without warranty of any kind, express or implied. Developers and agents are responsible for verifying changes in their own testing environments before deployment.</p>
-            </div>
-            <div class="space-y-2 pt-2">
-                <h3 class="font-bold text-white">Liability for Links</h3>
-                <p>Our website contains links to external third-party websites over whose content we have no control. Therefore, we cannot accept any liability for this external content. The respective provider or operator of the pages is always responsible for the content of the linked pages.</p>
-            </div>
-        </section>
 
-        <!-- 3. Trademarks & Fair Use -->
-        <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
-            <h2 class="text-xl font-semibold text-brand-400">3. Trademarks & Brand References (Markenhinweis)</h2>
-            <p>
-                All brand names, product names, logos, and trademarks mentioned on this website (including but not limited to Python, Node.js, Next.js, FastAPI, Pydantic, SQLAlchemy, NumPy, DuckDB, Express, TypeScript, Docker, Claude, Cursor, OpenAI, ChatGPT, Grok, and Anthropic) are the property of their respective trademark holders.
-            </p>
-            <p>
-                Any reference to these names or trademarks is purely for descriptive, technical identification, and compatibility purposes in accordance with standard fair use principles (§ 23 MarkenG / EU Directive 2015/2436). It does not imply any affiliation with, sponsorship by, or endorsement from the respective trademark holders.
-            </p>
-        </section>
+            <!-- 1. Service Provider -->
+            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
+                <h2 class="text-xl font-semibold text-brand-400">1. Service Provider / Website Operator</h2>
+                <div class="text-slate-300 space-y-1 text-sm">
+                    <p class="font-bold text-white text-base">Synapse-Mesh Operator</p>
+                    
+                    <p>Germany</p>
+                </div>
 
-        <!-- 4. Dispute Resolution -->
-        <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
-            <h2 class="text-xl font-semibold text-brand-400">4. EU Dispute Resolution</h2>
-            <p>The European Commission provides a platform for online dispute resolution (ODR): <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" class="text-brand-400 hover:underline">https://ec.europa.eu/consumers/odr</a>. We are neither obligated nor willing to participate in dispute settlement proceedings before a consumer arbitration board.</p>
-        </section>
+                <h3 class="text-lg font-semibold text-brand-400 pt-3">Contact</h3>
+                <div class="text-slate-300 space-y-1 text-sm">
+                    <p><strong>Email:</strong> <a href="mailto:contact@synapsemesh.dev" class="text-brand-400 hover:underline">contact@synapsemesh.dev</a></p>
+                    <p class="text-xs text-slate-400 font-mono">Direct electronic communication pursuant to § 5 Abs. 1 Nr. 2 DDG.</p>
+                </div>
+
+                <h3 class="text-lg font-semibold text-brand-400 pt-3">Responsible for Editorial Content (§ 18 Abs. 2 MStV)</h3>
+                <div class="text-slate-300 space-y-1 text-sm">
+                    <p>Synapse-Mesh Operator, Germany</p>
+                </div>
+            </section>
+
+            <!-- 2. Disclaimer & Liability -->
+            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
+                <h2 class="text-xl font-semibold text-brand-400">2. Disclaimer & Liability Notice (Haftungsausschluss)</h2>
+                <div class="space-y-2">
+                    <h3 class="font-bold text-white">Liability for Content (§ 7 Abs. 1 DDG)</h3>
+                    <p>As a service provider, we are responsible for our own content on these pages in accordance with general legislation. However, we are not obligated to monitor transmitted or stored third-party information or to investigate circumstances that indicate illegal activity (§§ 8 to 10 DDG). Obligations to remove or block the use of information under general laws remain unaffected.</p>
+                </div>
+                <div class="space-y-2 pt-2">
+                    <h3 class="font-bold text-white">Automated Test Suites & Open Source Software</h3>
+                    <p>All compatibility bundles, unified diffs, and verification artifacts provided on Synapse-Mesh are generated and tested via automated, hermetic test suites under the open-source MIT License. They are provided "AS IS", without warranty of any kind, express or implied. Developers and agents are responsible for verifying changes in their own testing environments before deployment.</p>
+                </div>
+                <div class="space-y-2 pt-2">
+                    <h3 class="font-bold text-white">Liability for Links</h3>
+                    <p>Our website contains links to external third-party websites over whose content we have no control. Therefore, we cannot accept any liability for this external content. The respective provider or operator of the pages is always responsible for the content of the linked pages.</p>
+                </div>
+            </section>
+
+            <!-- 3. Trademarks & Fair Use -->
+            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
+                <h2 class="text-xl font-semibold text-brand-400">3. Trademarks & Brand References (Markenhinweis)</h2>
+                <p>
+                    All brand names, product names, logos, and trademarks mentioned on this website (including but not limited to Python, Node.js, Next.js, FastAPI, Pydantic, SQLAlchemy, NumPy, DuckDB, Express, TypeScript, Docker, Claude, Cursor, OpenAI, ChatGPT, Grok, and Anthropic) are the property of their respective trademark holders.
+                </p>
+                <p>
+                    Any reference to these names or trademarks is purely for descriptive, technical identification, and compatibility purposes in accordance with standard fair use principles (§ 23 MarkenG / EU Directive 2015/2436). It does not imply any affiliation with, sponsorship by, or endorsement from the respective trademark holders.
+                </p>
+            </section>
+
+            <!-- 4. Dispute Resolution -->
+            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
+                <h2 class="text-xl font-semibold text-brand-400">4. EU Dispute Resolution</h2>
+                <p>The European Commission provides a platform for online dispute resolution (ODR): <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer" class="text-brand-400 hover:underline">https://ec.europa.eu/consumers/odr</a>. We are neither obligated nor willing to participate in dispute settlement proceedings before a consumer arbitration board.</p>
+            </section>
+        </div>
     </main>
 
-    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-400 font-mono space-y-2">
-        <div>SYNAPSE-MESH &copy; 2026 &bull; <a href="/impressum" class="text-slate-300 hover:text-brand-400 underline">Imprint</a> &bull; <a href="/datenschutz" class="text-slate-300 hover:text-brand-400 underline">Privacy Policy</a></div>
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-xs text-slate-400 font-mono">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-slate-400">
+                <span class="text-white font-semibold">SYNAPSE-MESH &copy; 2026</span>
+                <span>&bull;</span>
+                <span>Zero-PII Architecture</span>
+                <span>&bull;</span>
+                <span class="text-emerald-400">MCP Spec 2026-07-28</span>
+            </div>
+            <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" aria-label="Footer Navigation">
+                <a href="/" class="text-slate-300 hover:text-brand-400 transition underline">Home</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition underline">Benchmark</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition underline">Architecture</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition underline">Docs</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/impressum" class="text-slate-300 hover:text-brand-400 transition underline">Impressum</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/datenschutz" class="text-slate-300 hover:text-brand-400 transition underline">Datenschutz</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/llms.txt" class="text-slate-300 hover:text-brand-400 transition underline">/llms.txt</a>
+            </nav>
+        </div>
     </footer>
 </body>
 </html>

@@ -33,136 +33,162 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
+    <!-- Header / Nav -->
     <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2 group" aria-label="Synapse-Mesh Homepage">
-                <div class="w-3 h-3 rounded-full bg-brand-500 animate-pulse shrink-0" aria-hidden="true"></div>
-                <span class="font-bold text-lg tracking-wider text-white">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/" class="flex items-center space-x-2.5 group" aria-label="Synapse-Mesh Homepage">
+                <div class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></div>
+                <span class="font-bold text-base sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+                <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden md:inline-block">Verified Compatibility</span>
             </a>
-            <a href="/" class="text-xs font-mono text-slate-300 hover:text-brand-400 transition">← All Recipes</a>
+            <nav aria-label="Main Navigation" class="flex items-center space-x-3 sm:space-x-5 text-xs sm:text-sm font-mono">
+                <a href="/" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Search</a>
+                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Benchmark</a>
+                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Architecture</a>
+                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition hidden sm:inline">Docs</a>
+                <a href="https://github.com/McCryptoX/synapse-mesh" target="_blank" rel="noopener noreferrer" aria-label="Synapse-Mesh GitHub repository" class="text-slate-300 hover:text-brand-400 transition hidden lg:flex items-center space-x-1">
+                    <span>GitHub</span>
+                    <svg class="w-3.5 h-3.5 shrink-0" width="14" height="14" style="width: 14px; height: 14px; min-width: 14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="/#connect" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition text-xs sm:text-sm whitespace-nowrap shadow">MCP Connect</a>
+            </nav>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-12 flex-1 w-full space-y-8">
-        
-        <!-- Breadcrumb & Badges -->
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center space-x-2 text-xs font-mono text-slate-400">
-                <a href="/" class="hover:text-brand-400">Synapse</a>
-                <span>/</span>
-                <span>Recipes</span>
-                <span>/</span>
-                <span class="text-brand-400">{{ recipe.id }}</span>
-            </div>
-            <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
-                ✓ SANDBOX VERIFIED ({{ confidence_percent }}% Confidence)
-            </span>
-        </div>
-
-        <!-- Problem Header -->
-        <div class="space-y-3">
-            <div class="flex items-center space-x-2">
-                <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">{{ recipe.problem.runtime }}</span>
-                <span class="text-xs font-mono text-slate-400">ID: {{ recipe.id }}</span>
-            </div>
-            <h1 class="text-2xl sm:text-3xl font-mono font-bold text-rose-400 bg-slate-950/80 p-4 rounded-xl border border-rose-950/50 break-words">
-                {{ recipe.problem.errorSignature }}
-            </h1>
-            <p class="text-slate-300 text-base leading-relaxed">
-                {{ recipe.solution.summary }}
-            </p>
-        </div>
-
-        <!-- Solution & Code Diff -->
-        <div class="space-y-4">
-            <h2 class="text-lg font-semibold text-white flex items-center space-x-2">
-                <span>🔧 Verified Patch / Diff</span>
-            </h2>
-            <div class="rounded-xl border border-slate-800 bg-slate-950 overflow-hidden font-mono text-xs shadow-inner">
-                <div class="bg-slate-900/80 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
-                    <span class="text-slate-400">Unified Diff</span>
-                    <button type="button" aria-label="Copy diff code" onclick="navigator.clipboard.writeText(document.getElementById('codeDiff').innerText); this.textContent='✓ Copied';" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-xs cursor-pointer">Copy</button>
+    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-12">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <!-- Breadcrumb & Badges -->
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-2 text-xs font-mono text-slate-400">
+                    <a href="/" class="hover:text-brand-400">Synapse</a>
+                    <span>/</span>
+                    <span>Recipes</span>
+                    <span>/</span>
+                    <span class="text-brand-400">{{ recipe.id }}</span>
                 </div>
-                <pre class="p-4 overflow-x-auto text-emerald-300 leading-relaxed"><code id="codeDiff">{{ recipe.solution.codeDiff or recipe.solution.patchDiff }}</code></pre>
+                <span class="px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+                    ✓ SANDBOX VERIFIED ({{ confidence_percent }}% Confidence)
+                </span>
             </div>
-        </div>
 
-        <!-- Pinned Dependencies & Anti-Patterns -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-                <h3 class="font-semibold text-white text-sm">📌 Pinned Dependencies</h3>
-                <div class="font-mono text-xs space-y-1.5">
-                    {% for pkg, ver in (recipe.solution.pinnedDependencies or recipe.problem.packages or {}).items() %}
-                    <div class="flex justify-between py-1 border-b border-slate-800/50">
-                        <span class="text-slate-400">{{ pkg }}</span>
-                        <span class="text-brand-400 font-bold">{{ ver }}</span>
+            <!-- Problem Header -->
+            <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">{{ recipe.problem.runtime }}</span>
+                    <span class="text-xs font-mono text-slate-400">ID: {{ recipe.id }}</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-mono font-bold text-rose-400 bg-slate-950/80 p-4 rounded-xl border border-rose-950/50 break-words">
+                    {{ recipe.problem.errorSignature }}
+                </h1>
+                <p class="text-slate-300 text-base leading-relaxed">
+                    {{ recipe.solution.summary }}
+                </p>
+            </div>
+
+            <!-- Solution & Code Diff -->
+            <div class="space-y-4">
+                <h2 class="text-lg font-semibold text-white flex items-center space-x-2">
+                    <span>🔧 Verified Patch / Diff</span>
+                </h2>
+                <div class="rounded-xl border border-slate-800 bg-slate-950 overflow-hidden font-mono text-xs shadow-inner">
+                    <div class="bg-slate-900/80 px-4 py-2 border-b border-slate-800 flex items-center justify-between">
+                        <span class="text-slate-400">Unified Diff</span>
+                        <button type="button" aria-label="Copy diff code" onclick="navigator.clipboard.writeText(document.getElementById('codeDiff').innerText); this.textContent='✓ Copied';" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-xs cursor-pointer">Copy</button>
                     </div>
-                    {% else %}
-                    <span class="text-slate-500">None specified</span>
-                    {% endfor %}
+                    <pre class="p-4 overflow-x-auto text-emerald-300 leading-relaxed"><code id="codeDiff">{{ recipe.solution.codeDiff or recipe.solution.patchDiff }}</code></pre>
                 </div>
             </div>
 
-            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-                <h3 class="font-semibold text-rose-400 text-sm">⚠️ Known Anti-Patterns (doNot)</h3>
-                <ul class="font-mono text-xs space-y-1.5 list-disc pl-4 text-slate-300">
-                    {% for item in (recipe.solution.doNot or []) %}
-                    <li class="text-slate-300">{{ item }}</li>
-                    {% else %}
-                    <li class="text-slate-500 list-none -ml-4">None specified</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+            <!-- Pinned Dependencies & Anti-Patterns -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
+                    <h3 class="font-semibold text-white text-sm">📌 Pinned Dependencies</h3>
+                    <div class="font-mono text-xs space-y-1.5">
+                        {% for pkg, ver in (recipe.solution.pinnedDependencies or recipe.problem.packages or {}).items() %}
+                        <div class="flex justify-between py-1 border-b border-slate-800/50">
+                            <span class="text-slate-400">{{ pkg }}</span>
+                            <span class="text-brand-400 font-bold">{{ ver }}</span>
+                        </div>
+                        {% else %}
+                        <span class="text-slate-500">None specified</span>
+                        {% endfor %}
+                    </div>
+                </div>
 
-        <!-- Evidence & Verification Audit -->
-        <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-4">
-            <h2 class="text-lg font-semibold text-white">🛡️ Sandbox Execution Evidence</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono text-xs">
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-slate-400 block">Status</span>
-                    <span class="text-emerald-400 font-bold mt-1 block">{{ recipe.evidence.verificationStatus }}</span>
-                </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-slate-400 block">Exit Code</span>
-                    <span class="text-emerald-400 font-bold mt-1 block">{{ recipe.evidence.exitCode }}</span>
-                </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-slate-400 block">Pass / Total</span>
-                    <span class="text-cyan-400 font-bold mt-1 block">{{ recipe.evidence.passedRuns }} / {{ recipe.evidence.totalRuns }}</span>
-                </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                    <span class="text-slate-400 block">Last Run</span>
-                    <span class="text-slate-300 font-bold mt-1 block truncate">{{ (recipe.evidence.lastTestedAt|string)[:10] if recipe.evidence.lastTestedAt else '2026-08' }}</span>
+                <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
+                    <h3 class="font-semibold text-rose-400 text-sm">⚠️ Known Anti-Patterns (doNot)</h3>
+                    <ul class="font-mono text-xs space-y-1.5 list-disc pl-4 text-slate-300">
+                        {% for item in (recipe.solution.doNot or []) %}
+                        <li class="text-slate-300">{{ item }}</li>
+                        {% else %}
+                        <li class="text-slate-500 list-none -ml-4">None specified</li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
-        </div>
 
-        <!-- MCP Tool Call Prompt for AI -->
-        <div class="p-6 rounded-2xl border border-brand-500/40 bg-brand-950/20 space-y-3 font-mono text-xs">
-            <div class="flex items-center justify-between">
-                <span class="font-bold text-brand-400">🤖 Agent Tool Call (MCP / A2A)</span>
-                <span class="text-slate-400">Spec 2026-07-28</span>
+            <!-- Evidence & Verification Audit -->
+            <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-4">
+                <h2 class="text-lg font-semibold text-white">🛡️ Sandbox Execution Evidence</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono text-xs">
+                    <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+                        <span class="text-slate-400 block">Status</span>
+                        <span class="text-emerald-400 font-bold mt-1 block">{{ recipe.evidence.verificationStatus }}</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+                        <span class="text-slate-400 block">Exit Code</span>
+                        <span class="text-emerald-400 font-bold mt-1 block">{{ recipe.evidence.exitCode }}</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+                        <span class="text-slate-400 block">Pass / Total</span>
+                        <span class="text-cyan-400 font-bold mt-1 block">{{ recipe.evidence.passedRuns }} / {{ recipe.evidence.totalRuns }}</span>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+                        <span class="text-slate-400 block">Last Run</span>
+                        <span class="text-slate-300 font-bold mt-1 block truncate">{{ (recipe.evidence.lastTestedAt|string)[:10] if recipe.evidence.lastTestedAt else '2026-08' }}</span>
+                    </div>
+                </div>
             </div>
-            <p class="text-slate-300">
-                Connect the canonical endpoint <code class="text-brand-400">https://mcp.synapsemesh.dev</code> to query this recipe via standard tool integration.
-            </p>
+
+            <!-- MCP Tool Call Prompt for AI -->
+            <div class="p-6 rounded-2xl border border-brand-500/40 bg-brand-950/20 space-y-3 font-mono text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-brand-400">🤖 Agent Tool Call (MCP / A2A)</span>
+                    <span class="text-slate-400">Spec 2026-07-28</span>
+                </div>
+                <p class="text-slate-300">
+                    Connect the canonical endpoint <code class="text-brand-400">https://mcp.synapsemesh.dev</code> to query this recipe via standard tool integration.
+                </p>
+            </div>
         </div>
     </main>
 
-    <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-400 font-mono space-y-3">
-        <div>SYNAPSE-MESH &copy; 2026 &bull; Verified Living Solutions Infrastructure</div>
-        <nav aria-label="Footer Navigation" class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
-            <a href="/" class="text-slate-300 hover:text-brand-400 underline">Home</a>
-            <span class="text-slate-500">•</span>
-            <a href="/benchmark" class="text-slate-300 hover:text-brand-400 underline">Evaluation</a>
-            <span class="text-slate-500">•</span>
-            <a href="/verification" class="text-slate-300 hover:text-brand-400 underline">Architecture</a>
-            <span class="text-slate-500">•</span>
-            <a href="/impressum" class="text-slate-300 hover:text-brand-400 underline">Imprint (§ 5 DDG)</a>
-            <span class="text-slate-500">•</span>
-            <a href="/datenschutz" class="text-slate-300 hover:text-brand-400 underline">Privacy Policy (GDPR)</a>
-        </nav>
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-xs text-slate-400 font-mono">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-slate-400">
+                <span class="text-white font-semibold">SYNAPSE-MESH &copy; 2026</span>
+                <span>&bull;</span>
+                <span>Zero-PII Architecture</span>
+                <span>&bull;</span>
+                <span class="text-emerald-400">MCP Spec 2026-07-28</span>
+            </div>
+            <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" aria-label="Footer Navigation">
+                <a href="/" class="text-slate-300 hover:text-brand-400 transition underline">Home</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition underline">Benchmark</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition underline">Architecture</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition underline">Docs</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/impressum" class="text-slate-300 hover:text-brand-400 transition underline">Impressum</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/datenschutz" class="text-slate-300 hover:text-brand-400 transition underline">Datenschutz</a>
+                <span class="text-slate-600">&bull;</span>
+                <a href="/llms.txt" class="text-slate-300 hover:text-brand-400 transition underline">/llms.txt</a>
+            </nav>
+        </div>
     </footer>
 </body>
 </html>
