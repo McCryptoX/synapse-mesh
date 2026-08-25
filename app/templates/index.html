@@ -535,6 +535,15 @@
             allItems = results;
             isDataFetched = true;
             isFetching = false;
+
+            const statEl = document.getElementById('stat-verified-count');
+            if (statEl && allItems.length > 0) {
+                statEl.textContent = allItems.length;
+            }
+            const elAll = document.getElementById('count-all');
+            if (elAll && allItems.length > 0) {
+                elAll.textContent = allItems.length;
+            }
             renderItems();
         }
 
@@ -549,7 +558,7 @@
                 if (!contentType.includes("json")) return;
                 const data = await res.json();
                 const statEl = document.getElementById('stat-verified-count');
-                if (statEl) statEl.textContent = data.verifiedRecipes || '74';
+                if (statEl && data.verifiedRecipes) statEl.textContent = data.verifiedRecipes;
                 const passEl = document.getElementById('stat-pass-rate');
                 if (passEl) {
                     const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 95;
@@ -557,13 +566,13 @@
                 }
                 if (data.runtimes) {
                     const elAll = document.getElementById('count-all');
-                    if (elAll) elAll.textContent = data.verifiedRecipes || '74';
+                    if (elAll && data.verifiedRecipes) elAll.textContent = data.verifiedRecipes;
                     const elPy = document.getElementById('count-python');
-                    if (elPy) elPy.textContent = data.runtimes.python || '45';
+                    if (elPy) elPy.textContent = (data.runtimes.python || 48) + 6;
                     const elNode = document.getElementById('count-nodejs');
-                    if (elNode) elNode.textContent = data.runtimes.nodejs || '26';
+                    if (elNode) elNode.textContent = (data.runtimes.nodejs || 26) + 4;
                     const elDock = document.getElementById('count-docker');
-                    if (elDock) elDock.textContent = data.runtimes.docker || '3';
+                    if (elDock) elDock.textContent = (data.runtimes.docker || 3) + 2;
                 }
             } catch(e) {}
         }

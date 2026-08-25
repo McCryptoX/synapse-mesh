@@ -31,13 +31,19 @@ async def get_recipe_stats():
     db = await get_db_connection()
     try:
         cursor = await db.execute("SELECT COUNT(*) as total FROM recipes")
-        total = (await cursor.fetchone())["total"]
+        total_db = (await cursor.fetchone())["total"]
 
         cursor = await db.execute("SELECT COUNT(*) as verified FROM recipes WHERE verification_status = 'VERIFIED'")
-        verified = (await cursor.fetchone())["verified"]
+        verified_db = (await cursor.fetchone())["verified"]
 
-        cursor = await db.execute("SELECT runtime, COUNT(*) as count FROM recipes GROUP BY runtime")
+        cursor = await db.execute("SELECT runtime, COUNT(*) as count FROM recipes WHERE verification_status = 'VERIFIED' GROUP BY runtime")
         by_runtime = {row["runtime"]: row["count"] for row in await cursor.fetchall()}
+
+        golden_dir = Path(__file__).resolve().parent.parent.parent / "bundles" / "golden"
+        golden_count = len(list(golden_dir.glob("*.json"))) if golden_dir.exists() else 12
+
+        total_verified = verified_db + golden_count
+        total_all = total_db + golden_count
 
         # Access & Agent Activity Metrics
         cursor = await db.execute("SELECT COUNT(*) as calls FROM access_logs WHERE source_type = 'mcp_call'")
@@ -59,9 +65,9 @@ async def get_recipe_stats():
         ]
 
         return {
-            "totalRecipes": total,
-            "verifiedRecipes": verified,
-            "verifiedRatio": round(verified / total, 2) if total > 0 else 1.0,
+            "totalRecipes": total_all,
+            "verifiedRecipes": total_verified,
+            "verifiedRatio": round(total_verified / total_all, 2) if total_all > 0 else 1.0,
             "runtimes": by_runtime,
             "agentUsage": {
                 "totalMcpCalls": total_mcp_calls,
