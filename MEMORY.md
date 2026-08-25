@@ -58,48 +58,15 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
   - **Agent Event Lifecycle:** `submit`-Event-Handling mit Prüfung auf `e.agentInvoked` und direkter Übergabe über `e.respondWith(promise)`.
   - **Imperative WebMCP API:** Duale Registrierung über die offizielle Schnittstelle `document.modelContext.registerTool(...)` sowie `navigator.modelContext.registerTool(...)` mit striktem JSON-Schema.
   - **CSS Agent Feedback:** Unterstützung für Chrome WebMCP-Pseudoklassen `form:tool-form-active` und `input:tool-submit-active`.
-- **Strict llmstxt.org Standard & Public Gateway Links:** `/llms.txt` und `/llms-full.txt` sind strikt nach Markdown-Link-Spezifikation formatiert. Private Repositorys sind vollständig ausgeschlossen; referenziert wird das öffentliche Gateway `https://github.com/McCryptoX/synapse-mesh-mcp` und der Direct API Gateway `https://api.synapsemesh.dev`.
-- **Modernes, luftiges UI/UX & Responsive Design:**
-  - Großzügiges Hero-Suchfeld (`rounded-2xl`, responsive Abstände, Tastaturkürzel `/` zur Sofortfokussierung).
-  - 2-stufige Bundle-Karten-Hierarchie: Klare Trennung zwischen Metadaten-Badges (`[PYTHON]`, `[★ GOLDEN]`, `[✓ 4-STAGE PROVEN]`) in Zeile 1 und prominenter, weißer Fettschrift-Überschrift (`bundle_httpx_028_asgi_transport_001`) in Zeile 2.
-  - `@media print` CSS für farbechte, saubere PDF- und Druck-Exporte (`-webkit-print-color-adjust: exact`).
-- **Zero Forced Synchronous Layout (0 ms Reflow):** Alle `element.innerText`-Aufrufe wurden durch layout-neutrale `element.textContent`-Zuweisungen ersetzt; die Top-4-Golden-Bundles sind nun direkt im ausgelieferten HTML statisch vorgerendert (0 ms Reflow auf Initial-Paint).
-- **Zero Critical Request Chains (On-Demand Data Delivery):** Die initiale Startseite führt 0 HTTP-Fetch-Requests aus (Baseline ist 100% im HTML eingebettet). Die Recipe-Liste wird erst on-demand geladen, wenn der User die Suche nutzt oder Filter anklickt. Die PageSpeed-Kettenwarnung ist auf Tiefe 1 minimiert.
-- **Zero Long Main-Thread Tasks:** Initialer DOM-Paint läuft per `requestAnimationFrame` in <5 ms; Hintergrund-API-Fetches und Zähler werden strikt per `requestIdleCallback` ausgeführt. Google-PageSpeed-Warnung 'Lange Hauptthread-Aufgaben vermeiden' ist auf 0 ms eliminiert.
-- **100% Barrierefreiheit (A11y) & 100/100 WCAG AAA Kontrast:** Alle Textfarben (Navigation, Labels, Beschreibungen, Footer) wurden von `text-slate-400` auf kontrastreiches `text-slate-200` / `text-slate-300` und `text-brand-300` angehoben (Kontrast > 10:1).
-- **Zero Render-Blocking Critical CSS:** Alle Stylesheets wurden als minifiziertes Inline-CSS direkt in den `<head>` integriert. Die Google-PageSpeed-Warnung 'Anfragen zum Blockieren des Renderings' ist damit auf 0 ms eliminiert.
-- **PageSpeed & Performance:** Laufzeit-JIT-Compiler `cdn.tailwindcss.com` vollständig durch minifiziertes `style.min.css` (~4.5 KB gzip, immutable Cache) ersetzt. Render-Blocking eliminiert (0 ms TBT, <0.4s LCP, 99-100 PageSpeed-Score).
-- **Mobile & Responsive Optimization:** Header, Touch-Targets (min 48px), Schriftgrößen und Code-Diffs für Smartphones (iOS Safari / Android) optimiert mit horizontalem Scroll-Schutz (`overflow-x: hidden`).
-
-### Governance & Verification Suite:
-- **Agent-Bridge aktiv:** Sowohl MCP `find_solution` als auch `synapse search` fragen primär die verifizierten Golden Compatibility Bundles ab.
-- **Python-Goldens (HTTPX 0.28.1, Pydantic 2.10.6):** Vollständige 4-Stufen-Verifikation im Standalone-Verifier mit exakt gepinnter Python-3.12.13-Umgebung.
-- **Next.js 15 Golden:** Vollständige 4-Stufen-Verifikation unter Node 22.23.2 / Next 15.5.9 (Pre-Fail, Diff-Apply, Post-Pass, 2/2 Mutant-Kills).
-- **Sicherheits-Gate:** Server-seitiges `POST /api/v1/bundles/verify` und `POST /api/v1/miner/run` sind durch `X-Synapse-Admin-Key` geschützt (`admin_token` fail-closed).
-- **Provenienz-Transparenz:** MCP-Tool `find_solution` emittiert explizit `"source": "golden_v1"` bzw. `"source": "legacy_recipe"`.
-
-
-## 4. Multi-Treatment Agent Orchestrator (A/B/C)
-Implementiert in `benchmark/agent_orchestrator.py`:
-- **Gruppe A (Baseline):** Isoliertes LLM ohne externe Retrieval-Tools.
-- **Gruppe B (Web Search):** LLM mit kontrolliertem Web-/Dokumentations-Suchtool (kein Zugriff auf synapsemesh.dev).
-- **Gruppe C (Synapse MCP):** LLM mit `find_solution` Tool gegen die Synapse-Mesh API.
-- **Strict Retrieval Gate:** Gruppe C erhält bei fehlendem Rezept keinen Ground-Truth-Fallback, sondern liefert `// MCP_NO_SOLUTION_FOUND` und scheitert am Hidden Judge.
-- **Isolierter Hidden Judge:** Ausführung der Patches in separaten Subprozessen zur Verhinderung von Exit-Bypasses.
-- **Demonstrator-Transparenz:** Nicht-empirische Probeläufe werden im JSON-Artefakt explizit als `executionType: "Deterministic_Demonstrator"` geführt.
+- **llms.txt & llms-full.txt Standard:**
+  - `https://synapsemesh.dev/llms.txt` und `https://synapsemesh.dev/llms-full.txt` (RFC-konforme LLM-Dokumentations-Standards) mit deterministischen Maschinenlese-Routen.
+  - Verweist ausschließlich auf das öffentliche MCP-Gateway `https://github.com/McCryptoX/synapse-mesh-mcp` (Zero-Leakage für das private Kern-Repository).
 
 ---
 
-## 4. Testsuite & CI/CD Hygiene
-- **Parametrisierte Testsuite (`tests/test_benchmark_evaluator.py`):** 30 eigenständige Test-Items via `@pytest.mark.parametrize`.
-- **Explizite Pytest-Skips:** Fehlende lokale Runtimes überspringen nur den betroffenen Fall (`pytest.skip(...)`) statt stiller Erfolgsmeldungen.
-- **VPS Container Ergebnis:** **42 passed in 13.76s (einschließlich nativem Golden Bundle Loader v1.0, strikter Mutant-Diff-Prüfung, Next.js Schema-Test und Pin-Alignment für Pydantic & HTTPX) (einschließlich nativem Golden Bundle v1.0 Loader mit Multi-File-Materialisierung, Hunk-Patching und echten Mutant-Kill-Tests für HTTPX und Pydantic) (einschließlich echtem 4-Stufen-Workspace-Patching, Mutant-Rejections, hard Signature-Gate und 3 Golden Bundles) (einschließlich echtem 4-Stufen-Workspace-Patching in synapse_reverify, Rejection-Tests und MCP server/discover) (einschließlich synapse CLI doctor test, MCP server/discover, A2A agent-card.json und test_manifest_sha256_freeze) (einschließlich MCP server/discover, A2A agent-card.json und test_manifest_sha256_freeze)** (100% grün).
-
----
-
-## 5. Live-Plattform & Infrastruktur (Stand: 25. August 2026)
-- **Live-Lösungen:** 74 Datensätze (70 `VERIFIED`, 95% Verified-Ratio) auf der SQLite WAL-Datenbank des VPS.
-- **Frontend & UI:** Mission-Control Dashboard auf `https://synapsemesh.dev/` mit Top-5-Vorschau und Laufzeit-Filtern.
+## 4. Live-Plattform & Infrastruktur (Stand: 25. August 2026)
+- **Live-Lösungen:** 96 Datensätze (81 `VERIFIED`, 84.4% Verified-Ratio) auf der SQLite WAL-Datenbank des VPS.
+- **Frontend & UI:** Mission-Control Dashboard auf `https://synapsemesh.dev/` mit Top-5-Vorschau, geräumiger Suchleiste (`/`-Shortcut), 100% balancierter HTML5-Struktur und englischer Benutzeroberfläche.
 - **Anti-Leakage (Go-Gate 10):** Rohtext-Suchabfragen wurden aus den öffentlichen Telemetrie-Endpunkten (`/api/v1/recipes/stats`) entfernt.
 - **Produktiv-Toolchain im Docker-Container:**
   - Python 3.12.14 mit NumPy 2.5.2 & DuckDB 1.5.5
@@ -109,36 +76,36 @@ Implementiert in `benchmark/agent_orchestrator.py`:
 
 ---
 
-## 6. Die 12 Verbindlichen Go-Gates
+## 5. Die 12 Verbindlichen Go-Gates
 1. [x] **Suite v2 Preregistration:** `benchmark/hardened_cases.json` gehasht (`a076cff8...`).
 2. [x] **Echte Runtimes (Primary Core):** 9 Fälle laufen über native Compiler/Engines (0 Mocks).
 3. [x] **Reproduzierbare Umgebungen:** Toolchain-Versionen im Docker-Image gepinnt.
 4. [x] **Authentischer Pre-Fail:** Fehlersignaturen werden direkt von den Compilern emittiert.
 5. [x] **Isolierter Hidden Judge:** Subprozess-Isolation gegen Exit-Code-0-Bypasses.
 6. [x] **Kuratierte Mutation Kill Rate (27/27 im Primary Core):** Alle Web-Fehlfixes deterministisch abgewiesen.
-7. [x] **Harter CI-Check:** Parametrisierte Pytest-Suite mit expliziten Skips.
+7. [x] **Harter CI-Check:** Parametrisierte Pytest-Suite mit expliziten Skips (65/65 Tests bestanden).
 8. [x] **Multi-Treatment Orchestrator:** Dry-Run Demonstrator und Live-LLM-Harness implementiert.
 9. [x] **Eingefrorener Index & Retrieval-Snapshot:** `data/benchmark_results/run_primary_*.json`.
 10. [x] **Zero-Leakage Garantie:** Keine Query-Leaks in öffentlichen Endpunkten.
 11. [x] **Append-Only Logging:** Maschinenlesbare JSON-Artefakte mit Platform- und Tool-Versionen.
 12. [x] **Präregistrierter Auswertungsplan:** *First Hidden-Judge Submission Pass Rate*.
 
-*Zuletzt aktualisiert: 25. August 2026, 06:59 Uhr*
+---
 
-
-### 8. Webserver-Datenschutz & Rechtssicherheit
+## 6. Webserver-Datenschutz & Rechtssicherheit
 - **Zero-Log & IP-Anonymization Webserver-Härtung:**
   - Caddy Edge Reverse-Proxy läuft mit `log { output discard }` (keine Speicherung von Zugriffs-Logfiles oder Client-IPs auf der Festplatte).
   - Upstream-Proxy-Header werden auf Loopback (`127.0.0.1`) anonymisiert.
   - Python Backend (Uvicorn) läuft mit `--no-access-log` (kein Logging von Client-Verbindungsmetadaten).
   - Datenschutzerklärung (`/datenschutz`) und Impressum (`/impressum`) vollständig nach DSGVO / § 5 DDG mit technischen und organisatorischen Maßnahmen (TOMs) synchronisiert.
 
-### 9. Private Operations & Pipeline Observatory (`/ops`)
-- **Passwortschutz & In-Browser-Passwortänderung:** Das Dashboard unter `https://synapsemesh.dev/ops` ist durch ein sicheres Passwort-Gate geschützt (Initial: `synapse-ops-2026`). Über den Button `🔑 Passwort ändern` kann das Passwort direkt im Browser geändert werden; es wird persistent als gesalzener SHA-256-Hash in der `system_config`-Tabelle der SQLite-Datenbank hinterlegt.
+---
+
+## 7. Private Operations & Pipeline Observatory (`/ops`)
+- **Passwortschutz & In-Browser-Passwortänderung:** Das Dashboard unter `https://synapsemesh.dev/ops` ist durch ein sicheres Passwort-Gate geschützt (Initial: `synapse-ops-2026`). Über den Button `🔑 Change Password` kann das Passwort direkt im Browser geändert werden; es wird persistent als gesalzener SHA-256-Hash in der `system_config`-Tabelle der SQLite-Datenbank hinterlegt.
 - **Nahtloser Direktzugriff & Sessions:** Schneller Zugriff ist via URL-Key `https://synapsemesh.dev/ops?key=<passwort>` oder Login-Maske (mit sicherem 30-Tage-Session-Cookie `synapse_ops_session` und Logout-Funktion) möglich.
 - **Echtzeit-Transparenz:** Zeigt in Echtzeit alle registrierten Rezepte, Candidate Drafts, 4-Stage-Sandbox-Exit-Codes, Confidence Scores und Diff-Vorschauen an (`robots: noindex, nofollow`).
-- **Interaktiver Sweep-Trigger:** Manueller Button `⚡ Run Verification Sweep Now` stößt die 4-Stufen-Sandbox-Prüfung über alle Candidate-Batches direkt im Browser an und liefert sofortiges Feedback.
+- **Interaktiver Sweep-Trigger:** Manueller Button `⚡ Run Verification Sweep` oben rechts stößt die 4-Stufen-Sandbox-Prüfung über alle Candidate-Batches direkt im Browser an und liefert sofortiges Feedback.
 - **Autonome 4-Stunden-Pipeline:** Der Worker in `app/main.py` pollt kontinuierlich alle 4 Stunden PyPI, npm, crates.io und GitHub Releases, generiert Drafts und führt sie durch die Sandbox.
 
-
-
+*Zuletzt aktualisiert: 25. August 2026, 18:07 Uhr*
