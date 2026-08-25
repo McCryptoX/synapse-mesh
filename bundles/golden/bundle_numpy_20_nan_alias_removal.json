@@ -95,5 +95,21 @@
       "https://numpy.org/doc/stable/release/2.0.0-notes.html#c-api-and-abi-changes"
     ],
     "verifiedAt": "2026-08-25T11:42:00Z"
+  },
+  "isolationProfile": {
+    "verificationProfile": "synapse-kernel-v1",
+    "isolationStatus": "ATTESTED",
+    "attestedAt": "2026-08-25T21:40:00Z",
+    "observedMetrics": {
+      "pidNamespace": true,
+      "network": "none",
+      "rootFs": "read-only",
+      "tmpfsLimitBytes": 33554432,
+      "memoryLimitBytes": 536870912,
+      "pidsLimit": 64,
+      "noNewPrivs": true,
+      "capabilities": [],
+      "seccompProfile": "synapse-v1"
+    }
   }
 }
