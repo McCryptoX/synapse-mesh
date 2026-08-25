@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_numpy_20_nan_alias_removal_001",
   "status": "VERIFIED",
-  "description": "NumPy 2.0 removes legacy uppercase scalar aliases including np.NAN, np.NaN, np.Inf, np.Infinity, and np.infty. Use np.nan and np.inf instead.",
+  "description": "NumPy removes legacy uppercase scalar aliases including np.NAN, np.NaN, np.Inf, np.Infinity, and np.infty. Use np.nan and np.inf instead.",
   "tags": [
     "numpy",
     "python",

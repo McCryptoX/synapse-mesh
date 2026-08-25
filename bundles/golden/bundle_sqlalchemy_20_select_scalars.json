@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_sqlalchemy_20_select_scalars_001",
   "status": "VERIFIED",
-  "description": "SQLAlchemy 2.0 removed legacy Query.get() and enforces session.get() or session.execute(select(...)).scalars().",
+  "description": "SQLAlchemy removed legacy Query.get() and enforces session.get() or session.execute(select(...)).scalars().",
   "tags": [
     "sqlalchemy",
     "python",

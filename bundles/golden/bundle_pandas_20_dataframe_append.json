@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_pandas_20_dataframe_append_001",
   "status": "VERIFIED",
-  "description": "pandas 2.0 completely removed DataFrame.append() and Series.append(). Use pandas.concat([df1, df2], ignore_index=True) instead.",
+  "description": "pandas completely removed DataFrame.append() and Series.append(). Use pandas.concat([df1, df2], ignore_index=True) instead.",
   "tags": [
     "pandas",
     "python",

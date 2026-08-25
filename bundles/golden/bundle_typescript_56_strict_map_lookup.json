@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_typescript_56_strict_map_lookup_001",
   "status": "VERIFIED",
-  "description": "TypeScript 5.6+ with --noUncheckedIndexedAccess flags Map.get() as possibly undefined. Explicit nullish coalescing or undefined guarding is required.",
+  "description": "TypeScript with --noUncheckedIndexedAccess flags Map.get() as potentially undefined.",
   "tags": [
     "typescript",
     "nodejs",

@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_langchain_03_runnable_invoke_001",
   "status": "VERIFIED",
-  "description": "Migration from legacy LLMChain / Chain.run() to Runnable.invoke() in LangChain v0.3.",
+  "description": "Migration from legacy LLMChain / Chain.run() to Runnable.invoke() with explicit schema validation.",
   "tags": [
     "langchain",
     "langchain-core",

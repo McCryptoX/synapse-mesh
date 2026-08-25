@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_express_50_path_to_regexp_001",
   "status": "VERIFIED",
-  "description": "Express 5.0 updates path-to-regexp from v0.1 to v8.0, requiring wildcard routes to use named parameter syntax (/{*splat}) instead of raw asterisks (*).",
+  "description": "Express updates path-to-regexp, requiring explicit parameter syntax and rejecting legacy wildcard asterisk captures.",
   "tags": [
     "express",
     "nodejs",

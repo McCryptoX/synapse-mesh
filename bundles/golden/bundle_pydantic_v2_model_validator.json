@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_pydantic_v2_model_validator_001",
   "status": "VERIFIED",
-  "description": "Pydantic v2 replaces a pre root_validator migration hook with a before model_validator that accepts and returns raw input.",
+  "description": "Pydantic replaces a pre root_validator migration hook with @model_validator(mode='before').",
   "tags": [
     "python",
     "pydantic",

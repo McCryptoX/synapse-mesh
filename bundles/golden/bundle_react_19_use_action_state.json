@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_react_19_use_action_state_001",
   "status": "VERIFIED",
-  "description": "Migration from React 18 / Next.js useFormState to canonical React 19 useActionState hook.",
+  "description": "Migration from legacy useFormState to canonical useActionState.",
   "tags": [
     "react",
     "react-dom",

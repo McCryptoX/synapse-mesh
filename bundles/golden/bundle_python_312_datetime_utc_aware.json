@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_python_312_datetime_utc_aware_001",
   "status": "VERIFIED",
-  "description": "Python 3.12 deprecates datetime.datetime.utcnow() and utcfromtimestamp() in favor of timezone-aware datetime.now(datetime.timezone.utc).",
+  "description": "Python deprecates datetime.datetime.utcnow() and utcfromtimestamp() in favor of timezone-aware datetime.now(datetime.timezone.utc).",
   "tags": [
     "python",
     "datetime",

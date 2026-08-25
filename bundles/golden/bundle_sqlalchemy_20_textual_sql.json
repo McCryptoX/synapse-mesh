@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_sqlalchemy_20_textual_sql_001",
   "status": "VERIFIED",
-  "description": "SQLAlchemy 2.0 requires textual SQL expressions passed to execute() to be explicitly declared with text().",
+  "description": "SQLAlchemy requires textual SQL expressions passed to execute() to be explicitly declared with text().",
   "tags": [
     "sqlalchemy",
     "python",
