@@ -108,4 +108,11 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 - **Interaktiver Sweep-Trigger:** Manueller Button `⚡ Run Verification Sweep` oben rechts stößt die 4-Stufen-Sandbox-Prüfung über alle Candidate-Batches direkt im Browser an und liefert sofortiges Feedback.
 - **Autonome 4-Stunden-Pipeline:** Der Worker in `app/main.py` pollt kontinuierlich alle 4 Stunden PyPI, npm, crates.io und GitHub Releases, generiert Drafts und führt sie durch die Sandbox.
 
-*Zuletzt aktualisiert: 25. August 2026, 18:07 Uhr*
+---
+
+## 8. OpenAI / ChatGPT Remote MCP Connector Kompatibilität
+- **Modern Stateless Discovery Probe (`server/discover`):** Implementiert das offizielle MCP-Discovery-Schema mit `supportedVersions: ["2024-11-05", "2024-10-07", "2026-07-28"]`, `capabilities`, `serverInfo` und `_meta["io.modelcontextprotocol/serverInfo"]`.
+- **Legacy & Modern Handshake (`initialize` + `tools/list`):** Automatische Protokoll-Aushandlung für ChatGPT, Claude und Cursor.
+- **Dual-Transport:** Volle Unterstützung für Direct Streamable HTTP JSON-RPC 2.0 sowie Server-Sent Events (SSE) unter `https://mcp.synapsemesh.dev/mcp` und `https://synapsemesh.dev/mcp`.
+
+*Zuletzt aktualisiert: 25. August 2026, 18:52 Uhr*
