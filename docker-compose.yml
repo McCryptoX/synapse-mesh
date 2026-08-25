@@ -14,6 +14,8 @@ services:
       - ./bundles:/app/bundles
       - ./benchmark:/app/benchmark:ro
       - ./tests:/app/tests:ro
+      - ./schemas:/app/schemas:ro
+      - ./packages:/app/packages:ro
     environment:
       - ENVIRONMENT=production
       - DOMAIN=synapsemesh.dev
