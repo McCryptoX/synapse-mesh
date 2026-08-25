@@ -43,7 +43,7 @@
     "workspaceFiles": {
       "server.py": "import warnings\nfrom fastapi import FastAPI\n\nwarnings.simplefilter(\"error\", DeprecationWarning)\n\napp = FastAPI()\n\n@app.on_event(\"startup\")\ndef startup_event():\n    app.state.ready = True\n\n@app.on_event(\"shutdown\")\ndef shutdown_event():\n    app.state.ready = False\n\n@app.get(\"/status\")\ndef get_status():\n    return {\"ready\": getattr(app.state, \"ready\", False)}\n"
     },
-    "reproductionScript": "import runpy\nimport sys\n\nrunpy.run_path(\"server.py\", run_name=\"__main__\")\n",
+    "reproductionScript": "from importlib.metadata import version\nimport runpy\nimport sys\n\ninstalled = version(\"fastapi\")\n# on_event emits DeprecationWarning in FastAPI >= 0.100.0\nv_parts = [int(p) for p in installed.split(\".\")[:2] if p.isdigit()]\nif len(v_parts) >= 2 and (v_parts[0] == 0 and v_parts[1] < 100):\n    print(f\"PREREQUISITE_VERSION_MISMATCH: expected fastapi >= 0.100.0, got {installed}\", file=sys.stderr)\n    raise SystemExit(126)\n\nrunpy.run_path(\"server.py\", run_name=\"__main__\")\n",
     "testSuite": "import asyncio\nfrom server import app\n\nasync def run_test():\n    async with app.router.lifespan_context(app):\n        assert app.state.ready is True, \"Startup lifespan side-effect failed to set ready=True\"\n    assert app.state.ready is False, \"Shutdown lifespan side-effect failed to set ready=False\"\n    print(\"ALL TESTS PASSED\")\n\nasyncio.run(run_test())\n",
     "mutations": [
       {
