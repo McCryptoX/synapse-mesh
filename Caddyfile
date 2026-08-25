@@ -28,8 +28,8 @@
     }
 }
 
-# Explicit drop for direct IP access and scanner bots
-http://217.160.170.209, https://217.160.170.209 {
+# Explicit drop for direct IP access and scanner bots (IPv4 & IPv6)
+http://217.160.170.209, https://217.160.170.209, http://[2a02:2479:106:c700::1], https://[2a02:2479:106:c700::1] {
     import zero_log
     respond "Access Denied: Use official domain name" 403 {
         close
