@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: synapse_api
     restart: unless-stopped
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--no-access-log"]
     volumes:
       - ./data:/app/data
       - ./app:/app/app:ro
@@ -16,7 +17,7 @@ services:
     environment:
       - ENVIRONMENT=production
       - DOMAIN=synapsemesh.dev
-      - LOG_LEVEL=INFO
+      - LOG_LEVEL=WARNING
       - PYTHONPATH=/app
     deploy:
       resources:
@@ -25,6 +26,11 @@ services:
           memory: 1024M
         reservations:
           memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "1"
     networks:
       - synapse_net
 
@@ -47,6 +53,11 @@ services:
           memory: 128M
         reservations:
           memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "1"
     depends_on:
       - api
     networks:

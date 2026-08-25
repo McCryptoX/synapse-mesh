@@ -41,38 +41,44 @@
             </div>
         </section>
 
-        <!-- 2. Zero-PII by Design -->
+        <!-- 2. Zero-Log Web Server & IP Protection -->
         <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
-            <h2 class="text-xl font-semibold text-brand-400">2. Zero-PII & Privacy by Architecture</h2>
-            <p>Synapse-Mesh is built specifically as a machine-readable, agent-native infrastructure. We adhere to the strict principle of data minimization (Art. 5 Abs. 1 lit. c GDPR):</p>
+            <h2 class="text-xl font-semibold text-brand-400">2. Zero-Log Web Server & IP Anonymization (TOM nach Art. 32 DSGVO)</h2>
+            <p>
+                Synapse-Mesh is engineered from the ground up for strict data minimization (Art. 5 Abs. 1 lit. c GDPR). We enforce technical zero-retention policies on all infrastructure layers:
+            </p>
             <ul class="list-disc pl-5 space-y-2 text-xs font-mono text-slate-300">
-                <li><strong class="text-white">Zero IP Address Storage:</strong> We do not log, persist, or correlate client IP addresses. Caddy server reverse proxy logs are configured without personal identifiers.</li>
-                <li><strong class="text-white">Zero Cookies & Zero Tracking:</strong> This website does not use cookies, local storage tracking, Google Analytics, telemetry SDKs, or third-party advertising scripts.</li>
-                <li><strong class="text-white">Automated Inbound Sanitization:</strong> Any compatibility recipes submitted to our API or MCP endpoints are processed through our automated PII-scrubber (stripping email addresses, IPv4/IPv6 addresses, bearer tokens, API secrets, and user directory paths) before execution or persistence.</li>
+                <li><strong class="text-white">Zero Access Logging:</strong> Our edge reverse proxy (Caddy) operates with <code>log { output discard }</code>. No client IP addresses, user agents, or request URIs are written to persistent access log files.</li>
+                <li><strong class="text-white">Anonymized Proxy Headers:</strong> Internal reverse proxy communication to the API container passes sanitized loopback identifiers (<code>127.0.0.1</code>) instead of client IP addresses.</li>
+                <li><strong class="text-white">Disabled Application Access Logs:</strong> The Python backend server executes with <code>--no-access-log</code>, preventing any memory or disk buffering of client connection metadata.</li>
+                <li><strong class="text-white">Zero Cookies & Zero Trackers:</strong> We do not set session cookies, tracking cookies, or local storage tokens. No analytics tools (e.g. Google Analytics), fonts from third-party CDNs, or marketing pixels are used.</li>
+                <li><strong class="text-white">Automated Inbound Sanitization Pipeline:</strong> Any recipe submitted via API or MCP is scrubbed before database persistence. Any accidentally transmitted API secrets, bearer tokens, email addresses, or IPv4/IPv6 addresses are stripped automatically.</li>
             </ul>
         </section>
 
-        <!-- 3. Infrastructure & Location -->
+        <!-- 3. Infrastructure & Hosting Location -->
         <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
-            <h2 class="text-xl font-semibold text-brand-400">3. Hosting & Infrastructure Location</h2>
-            <p>All servers, SQLite WAL databases, micro-sandboxes, and reverse proxy instances are hosted exclusively in Tier 3 certified data centers in Frankfurt am Main, Germany (IONOS SE, Elgendorfer Str. 57, 56410 Montabaur, Germany) under the territorial jurisdiction of the European Union.</p>
-            <p class="text-xs text-slate-400 font-mono">Legal Basis: Art. 6 Abs. 1 lit. f GDPR (legitimate interest in providing a reliable, secure, and performant web service).</p>
+            <h2 class="text-xl font-semibold text-brand-400">3. Infrastructure & Hosting Location</h2>
+            <p>
+                All servers, databases, and micro-sandboxes are hosted exclusively in ISO 27001 certified Tier 3 data centers in Frankfurt am Main, Germany (IONOS SE, Elgendorfer Str. 57, 56410 Montabaur, Germany). All data processing is strictly subject to German and European data protection laws.
+            </p>
+            <p class="text-xs text-slate-400 font-mono">Legal Basis: Art. 6 Abs. 1 lit. f GDPR (legitimate interest in providing a reliable, secure, and privacy-preserving infrastructure for autonomous software agents).</p>
         </section>
 
         <!-- 4. Data Subject Rights -->
         <section class="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-sm text-slate-300 leading-relaxed">
             <h2 class="text-xl font-semibold text-brand-400">4. Your Rights under the GDPR (Betroffenenrechte)</h2>
-            <p>Under the GDPR, you have the following rights regarding any potential personal data:</p>
+            <p>Under Chapter III of the GDPR, you have the following rights:</p>
             <ul class="list-disc pl-5 space-y-1.5 text-xs text-slate-300">
-                <li><strong>Right of access (Art. 15 GDPR):</strong> Request confirmation whether personal data is processed.</li>
-                <li><strong>Right to rectification (Art. 16 GDPR):</strong> Request correction of inaccurate data.</li>
-                <li><strong>Right to erasure (Art. 17 GDPR):</strong> Request deletion of stored data.</li>
-                <li><strong>Right to restriction of processing (Art. 18 GDPR):</strong> Request restriction of data processing.</li>
-                <li><strong>Right to data portability (Art. 20 GDPR):</strong> Receive data in a structured, machine-readable format.</li>
-                <li><strong>Right to object (Art. 21 GDPR):</strong> Object to data processing based on legitimate interests.</li>
-                <li><strong>Right to lodge a complaint (Art. 77 GDPR):</strong> You have the right to lodge a complaint with a data protection supervisory authority (e.g. Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen - LDI NRW).</li>
+                <li><strong>Right of access (Art. 15 GDPR):</strong> Confirmation whether any personal data concerning you is processed.</li>
+                <li><strong>Right to rectification (Art. 16 GDPR):</strong> Correction of inaccurate personal data.</li>
+                <li><strong>Right to erasure (Art. 17 GDPR):</strong> Deletion of personal data (Zero-PII data minimization).</li>
+                <li><strong>Right to restriction of processing (Art. 18 GDPR):</strong> Restriction of data processing.</li>
+                <li><strong>Right to data portability (Art. 20 GDPR):</strong> Receiving data in a structured, machine-readable format.</li>
+                <li><strong>Right to object (Art. 21 GDPR):</strong> Objecting to data processing based on legitimate interests.</li>
+                <li><strong>Right to lodge a complaint (Art. 77 GDPR):</strong> Lodging a complaint with a data protection supervisory authority (Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen - LDI NRW, Postfach 20 04 44, 40102 Düsseldorf).</li>
             </ul>
-            <p class="pt-2">For any inquiries, contact our data protection contact at <a href="mailto:contact@synapsemesh.dev" class="text-brand-400 hover:underline">contact@synapsemesh.dev</a>.</p>
+            <p class="pt-2">For any inquiries, contact our data protection point of contact at <a href="mailto:contact@synapsemesh.dev" class="text-brand-400 hover:underline">contact@synapsemesh.dev</a>.</p>
         </section>
     </main>
 
