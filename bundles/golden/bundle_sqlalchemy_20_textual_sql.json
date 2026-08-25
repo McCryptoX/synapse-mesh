@@ -37,7 +37,7 @@
   },
   "patch": {
     "targetFile": "db.py",
-    "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,4 +1,4 @@\n-from sqlalchemy import create_engine\n+from sqlalchemy import create_engine, text\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return conn.execute(text(query_str))\n",
+    "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,3 +1,3 @@\n-from sqlalchemy import create_engine\n+from sqlalchemy import create_engine, text\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return conn.execute(text(query_str))\n",
     "pinnedDependencies": {
       "sqlalchemy": "2.0.0"
     },
@@ -56,12 +56,12 @@
       {
         "id": "mutant_suppress_without_text",
         "description": "Returns raw int instead of executing parameterized text",
-        "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,4 +1,4 @@\n from sqlalchemy import create_engine\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return 0\n"
+        "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,3 +1,3 @@\n from sqlalchemy import create_engine\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return 0\n"
       },
       {
         "id": "mutant_pass_raw_string",
         "description": "Retains raw unescaped string execution without text() wrapper",
-        "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,4 +1,4 @@\n from sqlalchemy import create_engine\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return conn.execute(str(query_str))\n"
+        "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,3 +1,3 @@\n from sqlalchemy import create_engine\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return conn.execute(str(query_str))\n"
       }
     ],
     "expectedPreExit": 1,

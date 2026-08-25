@@ -27,7 +27,7 @@
   },
   "patch": {
     "targetFile": "server.py",
-    "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,18 +1,19 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n-\n-@app.on_event(\"startup\")\n-def startup_event():\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n     app.state.ready = True\n+    yield\n+    app.state.ready = False\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+app = FastAPI(lifespan=lifespan)\n \n @app.get(\"/status\")\n def get_status():\n     return {\"ready\": getattr(app.state, \"ready\", False)}\n",
+    "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,18 +1,17 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n-\n-@app.on_event(\"startup\")\n-def startup_event():\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n     app.state.ready = True\n+    yield\n+    app.state.ready = False\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+app = FastAPI(lifespan=lifespan)\n \n @app.get(\"/status\")\n def get_status():\n     return {\"ready\": getattr(app.state, \"ready\", False)}\n",
     "pinnedDependencies": {
       "fastapi": "0.115.0",
       "starlette": "0.41.0"

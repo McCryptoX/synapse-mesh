@@ -32,7 +32,7 @@
   },
   "patch": {
     "targetFile": "dao.py",
-    "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,4 +1,4 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return session.get(user_cls, user_id)\n",
+    "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,2 +1,2 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return session.get(user_cls, user_id)\n",
     "pinnedDependencies": {
       "sqlalchemy": "2.0.0"
     },
@@ -52,12 +52,12 @@
       {
         "id": "mutant_suppress_and_return_none",
         "description": "Hardcodes return None without querying database",
-        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,4 +1,4 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return None\n"
+        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,2 +1,2 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return None\n"
       },
       {
         "id": "mutant_query_wrong_id",
         "description": "Queries static invalid ID -1 instead of requested user_id",
-        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,4 +1,4 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return session.get(user_cls, -1)\n"
+        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,2 +1,2 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return session.get(user_cls, -1)\n"
       }
     ],
     "expectedPreExit": 1,
