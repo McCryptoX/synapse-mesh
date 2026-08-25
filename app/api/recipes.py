@@ -184,12 +184,13 @@ async def search_recipes(req: RecipeSearchRequest):
                 elif token in desc:
                     score += 25.0
 
-            # 4. Verified Status Boost
-            if row["verification_status"] == "VERIFIED":
-                score += 150.0
-            score *= (row["confidence_score"] or 0.5)
+            # 4. Verified Status Boost (ONLY if there was an actual query match!)
+            if score > 0:
+                if row["verification_status"] == "VERIFIED":
+                    score += 150.0
+                score *= (row["confidence_score"] or 0.5)
 
-            if score >= 120.0:
+            if score >= 200.0:
                 recipe_obj = VerifiedRecipe(
                     id=row["id"],
                     problem=ProblemDefinition(**prob),
