@@ -247,19 +247,21 @@ input:tool-submit-active, button:tool-submit-active {
                            placeholder="Search error signatures (e.g. 'model_validator', 'runes', 'lifespan', 'import attributes')..." 
                            class="w-full py-3.5 pr-4 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 font-mono text-xs sm:text-sm shadow-inner transition" style="padding-left: 3rem;">
                 </div>
-            </form>
-
-            <!-- Search Results Container (Compact List) -->
+                 <!-- Search Results Container (Compact List) -->
             <div id="resultsContainer" class="space-y-4">
                 <!-- Golden Bundle 1: HTTPX 0.28 -->
                 <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>
-                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">bundle_httpx_028_asgi_transport_001</span>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">python</span>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shrink-0">✓ 4-STAGE PROVEN</span>
                         </div>
-                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 shrink-0">✓ 4-STAGE PROVEN</span>
+                        <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
+                            bundle_httpx_028_asgi_transport_001
+                        </div>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         TypeError: AsyncClient.__init__() got an unexpected keyword argument &#39;app&#39;
@@ -284,13 +286,17 @@ input:tool-submit-active, button:tool-submit-active {
 
                 <!-- Golden Bundle 2: Pydantic v2 -->
                 <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>
-                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">bundle_pydantic_v2_model_validator_001</span>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">python</span>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shrink-0">✓ 4-STAGE PROVEN</span>
                         </div>
-                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 shrink-0">✓ 4-STAGE PROVEN</span>
+                        <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
+                            bundle_pydantic_v2_model_validator_001
+                        </div>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated.
@@ -314,13 +320,17 @@ input:tool-submit-active, button:tool-submit-active {
 
                 <!-- Golden Bundle 3: FastAPI Lifespan -->
                 <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>
-                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">bundle_fastapi_0115_lifespan_context_001</span>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">python</span>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shrink-0">✓ 4-STAGE PROVEN</span>
                         </div>
-                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 shrink-0">✓ 4-STAGE PROVEN</span>
+                        <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
+                            bundle_fastapi_0115_lifespan_context_001
+                        </div>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.
@@ -344,13 +354,17 @@ input:tool-submit-active, button:tool-submit-active {
 
                 <!-- Golden Bundle 4: Python 3.12 UTC Datetime -->
                 <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>
-                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">bundle_python_312_datetime_utc_aware_001</span>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">python</span>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shrink-0">✓ 4-STAGE PROVEN</span>
                         </div>
-                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 shrink-0">✓ 4-STAGE PROVEN</span>
+                        <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
+                            bundle_python_312_datetime_utc_aware_001
+                        </div>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.
@@ -368,7 +382,6 @@ input:tool-submit-active, button:tool-submit-active {
                             <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_python_312_datetime_utc_aware_001</code>
                         </div>
                         <a href="/api/v1/bundles/bundle_python_312_datetime_utc_aware_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_python_312_datetime_utc_aware_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
-                    </div>
                 </div>
             </div>
 
@@ -683,18 +696,22 @@ input:tool-submit-active, button:tool-submit-active {
 
             container.innerHTML = displayed.map(r => `
                 <div class="p-4 sm:p-5 rounded-xl border ${r.isGolden ? 'border-brand-500/40 bg-slate-900/70 shadow-lg' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">${r.runtime}</span>
-                            ${r.isGolden ? 
-                                `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>` : 
-                                `<span class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-800 text-slate-300 border border-slate-700">RECIPE</span>`
-                            }
-                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">${r.id}</span>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">${escapeHtml(r.runtime)}</span>
+                                ${r.isGolden ? 
+                                    `<span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>` : 
+                                    `<span class="px-2.5 py-0.5 rounded text-[11px] font-mono bg-slate-800 text-slate-400 border border-slate-700">RECIPE</span>`
+                                }
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium ${r.status === 'VERIFIED' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/60' : 'bg-slate-800 text-slate-300 border border-slate-700'} shrink-0">
+                                ${r.status === 'VERIFIED' ? '✓ 4-STAGE PROVEN' : escapeHtml(r.status)}
+                            </span>
                         </div>
-                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium ${r.status === 'VERIFIED' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/50' : 'bg-slate-800 text-slate-300 border border-slate-700'} shrink-0">
-                            ${r.status === 'VERIFIED' ? '✓ 4-STAGE PROVEN' : r.status}
-                        </span>
+                        <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
+                            ${escapeHtml(r.id)}
+                        </div>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         ${escapeHtml(r.errorSignature)}
@@ -707,11 +724,11 @@ input:tool-submit-active, button:tool-submit-active {
                     ` : ''}
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono text-xs">
                         <div class="overflow-x-auto max-w-full">
-                            <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">${r.reverify}</code>
+                            <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">${escapeHtml(r.reverify)}</code>
                         </div>
                         ${r.detailUrl ? 
-                            `<a href="${r.detailUrl}" aria-label="View verification details and test evidence for ${r.id}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Detail View →</a>` : 
-                            `<a href="/api/v1/bundles/${r.id}" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for ${r.id}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>`
+                            `<a href="${r.detailUrl}" aria-label="View verification details and test evidence for ${escapeHtml(r.id)}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Detail View →</a>` : 
+                            `<a href="/api/v1/bundles/${escapeHtml(r.id)}" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for ${escapeHtml(r.id)}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>`
                         }
                     </div>
                 </div>
