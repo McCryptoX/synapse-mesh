@@ -270,7 +270,7 @@ async def root(request: Request, format: Optional[str] = Query(None)):
             count_python=by_runtime.get("python", 69),
             count_nodejs=by_runtime.get("nodejs", 36),
             count_docker=by_runtime.get("docker", 3),
-            initial_data_json=json.dumps(items)
+            initial_data_json=json.dumps(items).replace("<", "\\u003c")
         )
         return HTMLResponse(content=html_content)
             
