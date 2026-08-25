@@ -89,108 +89,106 @@
     <!-- Header / Nav -->
     <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2.5 group" aria-label="Synapse-Mesh Homepage">
+            <a href="/" class="flex items-center space-x-2 group shrink-0" aria-label="Synapse-Mesh Homepage">
                 <div class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></div>
-                <span class="font-bold text-base sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
-                <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden md:inline-block">Verified Compatibility</span>
+                <span class="font-bold text-sm sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+                <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden lg:inline-block">Verified Compatibility</span>
             </a>
-            <nav aria-label="Main Navigation" class="flex items-center space-x-3 sm:space-x-5 text-xs sm:text-sm font-mono">
+            <nav aria-label="Main Navigation" class="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm font-mono">
                 <a href="/" class="text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5 whitespace-nowrap">Search</a>
-                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Benchmark</a>
-                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Architecture</a>
+                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap hidden sm:inline">Benchmark</a>
+                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap hidden md:inline">Architecture</a>
                 <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition hidden sm:inline">Docs</a>
-                <a href="https://github.com/McCryptoX/synapse-mesh" target="_blank" rel="noopener noreferrer" aria-label="Synapse-Mesh GitHub repository" class="text-slate-300 hover:text-brand-400 transition hidden lg:flex items-center space-x-1">
-                    <span>GitHub</span>
-                    <svg class="w-3.5 h-3.5 shrink-0" width="14" height="14" style="width: 14px; height: 14px; min-width: 14px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                </a>
-                <a href="#connect" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition text-xs sm:text-sm whitespace-nowrap shadow">MCP Connect</a>
+                <a href="#connect" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition text-xs whitespace-nowrap shadow">MCP Connect</a>
             </nav>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-16">
+    <main class="max-w-6xl mx-auto px-4 py-8 sm:py-12 flex-1 w-full space-y-12 sm:space-y-16">
 
         <!-- Hero Section -->
-        <section class="text-center space-y-6 pt-4">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
-                <span class="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
-                <span>MCP Spec 2026-07-28 &bull; A2A Conformance &bull; Client-Side Re-Verification</span>
+        <section class="text-center space-y-5 sm:space-y-6 pt-2 sm:pt-4">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-[11px] sm:text-xs text-slate-300 font-mono">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0" aria-hidden="true"></span>
+                <span class="truncate">MCP Spec 2026-07-28 &bull; A2A &bull; Client-Side Re-Verification</span>
             </div>
             
-            <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
+            <h1 class="text-2xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
                 The Verified Compatibility Layer for <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">AI Software Agents</span>
             </h1>
 
-            <p class="text-slate-200 max-w-3xl mx-auto text-lg leading-relaxed">
+            <p class="text-slate-200 max-w-3xl mx-auto text-sm sm:text-lg leading-relaxed">
                 Synapse-Mesh does not claim universal answers. It delivers <strong class="text-white font-semibold">portable, execution-verified compatibility bundles</strong>: 
                 exact package pins, clean unified diffs, negative recipes (<code class="text-brand-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700 text-xs">doNot</code>), and a 2-phase client verifier that every AI can prove in its own workspace.
             </p>
 
             <!-- 1-Line Terminal Install -->
             <div class="max-w-2xl mx-auto pt-2">
-                <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 shadow-inner">
-                    <span class="text-slate-300 select-none">$</span>
-                    <code class="text-emerald-400 px-2 flex-1 text-left">curl -fsSL https://synapsemesh.dev/install.sh | bash</code>
-                    <button type="button" aria-label="Copy install command" onclick="navigator.clipboard.writeText('curl -fsSL https://synapsemesh.dev/install.sh | bash'); this.textContent='✓ Copied';" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono text-xs cursor-pointer">Copy</button>
+                <div class="flex items-center justify-between gap-2 p-2 sm:p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 shadow-inner">
+                    <span class="text-slate-500 select-none pl-1.5 font-bold">$</span>
+                    <div class="flex-1 overflow-x-auto whitespace-nowrap text-left px-1">
+                        <code class="text-emerald-400 text-[11px] sm:text-xs">curl -fsSL https://synapsemesh.dev/install.sh | bash</code>
+                    </div>
+                    <button type="button" aria-label="Copy install command" onclick="navigator.clipboard.writeText('curl -fsSL https://synapsemesh.dev/install.sh | bash'); this.textContent='✓ Copied';" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono text-xs cursor-pointer shrink-0">Copy</button>
                 </div>
             </div>
         </section>
 
         <!-- Stats Counter Section -->
-        <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-verified-count" class="text-3xl font-bold text-brand-400 font-mono">93</div>
-                <div class="text-xs text-slate-300 uppercase mt-1 tracking-wider">Verified Bundles</div>
+        <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
+            <div class="p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div id="stat-verified-count" class="text-2xl sm:text-3xl font-bold text-brand-400 font-mono">93</div>
+                <div class="text-[10px] sm:text-xs text-slate-300 uppercase mt-1 tracking-wider">Verified Bundles</div>
             </div>
-            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-pass-rate" class="text-3xl font-bold text-emerald-400 font-mono">95%</div>
-                <div class="text-xs text-slate-300 uppercase mt-1 tracking-wider">Verification Ratio</div>
+            <div class="p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div id="stat-pass-rate" class="text-2xl sm:text-3xl font-bold text-emerald-400 font-mono">95%</div>
+                <div class="text-[10px] sm:text-xs text-slate-300 uppercase mt-1 tracking-wider">Verification Ratio</div>
             </div>
-            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div class="text-3xl font-bold text-cyan-400 font-mono">0 PII</div>
-                <div class="text-xs text-slate-300 uppercase mt-1 tracking-wider">GDPR & EU AI Act</div>
+            <div class="p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div class="text-2xl sm:text-3xl font-bold text-cyan-400 font-mono">0 PII</div>
+                <div class="text-[10px] sm:text-xs text-slate-300 uppercase mt-1 tracking-wider">GDPR & EU AI Act</div>
             </div>
-            <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div class="text-3xl font-bold text-indigo-400 font-mono">&lt; 800</div>
-                <div class="text-xs text-slate-300 uppercase mt-1 tracking-wider">Tokens per MCP Call</div>
+            <div class="p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div class="text-2xl sm:text-3xl font-bold text-indigo-400 font-mono">&lt; 800</div>
+                <div class="text-[10px] sm:text-xs text-slate-300 uppercase mt-1 tracking-wider">Tokens per MCP Call</div>
             </div>
         </section>
 
         <!-- The 4-Stage Verification Guarantee -->
-        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+        <section class="max-w-4xl mx-auto p-4 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-5 sm:space-y-6 glow-border">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3 sm:pb-4">
                 <div>
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                    <h2 class="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
                         <span>🛡️ The 4-Stage Verification Contract</span>
                     </h2>
                     <p class="text-slate-300 text-xs font-mono mt-0.5">Every bundle must satisfy all 4 stages in isolated sandbox before earning VERIFIED status</p>
                 </div>
-                <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">
                     4-STAGE VERIFIED
                 </span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 font-mono text-xs">
+                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
                     <div class="text-rose-400 font-bold flex items-center space-x-1.5">
                         <span>1. Pre-Fail Validation</span>
                     </div>
                     <p class="text-slate-200 text-xs leading-relaxed">Reproduction script executes unpatched ➔ Must fail with non-zero exit code and match exact error signature regex.</p>
                 </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
                     <div class="text-cyan-400 font-bold flex items-center space-x-1.5">
                         <span>2. Unified Diff Application</span>
                     </div>
                     <p class="text-slate-200 text-xs leading-relaxed">Clean, AST-compliant unified git diff applied to isolated workspace with pinned versions.</p>
                 </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
                     <div class="text-emerald-400 font-bold flex items-center space-x-1.5">
                         <span>3. Post-Pass Execution</span>
                     </div>
                     <p class="text-slate-200 text-xs leading-relaxed">Hermetic automated test suite executes on patched workspace ➔ Must exit with code 0 in native compiler/engine.</p>
                 </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
                     <div class="text-amber-400 font-bold flex items-center space-x-1.5">
                         <span>4. Mutation Sanity (doNot)</span>
                     </div>
@@ -201,19 +199,19 @@
 
         <!-- Compact Live Solution Explorer -->
         <section class="space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
+                    <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center space-x-2">
                         <span>🔍 Verified Bundle Registry</span>
                     </h2>
-                    <p class="text-slate-200 text-sm">Query live via CLI <code class="text-brand-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">synapse search</code> or MCP <code class="text-brand-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">find_solution</code>.</p>
+                    <p class="text-slate-200 text-xs sm:text-sm">Query live via CLI <code class="text-brand-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">synapse search</code> or MCP <code class="text-brand-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">find_solution</code>.</p>
                 </div>
                 <!-- Category Filter Pills -->
-                <div role="tablist" aria-label="Runtime category filter" class="flex flex-wrap items-center gap-2 text-xs font-mono">
-                    <button type="button" role="tab" aria-selected="true" aria-controls="resultsContainer" onclick="filterRuntime('all')" id="tab-all" class="px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition cursor-pointer">All (<span id="count-all">93</span>)</button>
-                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('python')" id="tab-python" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Python (<span id="count-python">60</span>)</button>
-                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Node.js (<span id="count-nodejs">30</span>)</button>
-                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('docker')" id="tab-docker" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Docker (<span id="count-docker">3</span>)</button>
+                <div role="tablist" aria-label="Runtime category filter" class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-mono">
+                    <button type="button" role="tab" aria-selected="true" aria-controls="resultsContainer" onclick="filterRuntime('all')" id="tab-all" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition cursor-pointer">All (<span id="count-all">93</span>)</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('python')" id="tab-python" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Python (<span id="count-python">60</span>)</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Node.js (<span id="count-nodejs">30</span>)</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('docker')" id="tab-docker" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Docker (<span id="count-docker">3</span>)</button>
                 </div>
             </div>
 
@@ -222,8 +220,8 @@
                 <div class="relative">
                     <label for="searchInput" class="sr-only">Search verified compatibility bundles by error signature or package</label>
                     <input type="text" id="searchInput" name="errorSignature" data-param-name="errorSignature" data-param-description="The error message or traceback keyword to search" aria-label="Search verified compatibility bundles by error signature or runtime" placeholder="Search error signatures (e.g. 'model_validator', 'runes', 'lifespan', 'import attributes')..." 
-                           class="w-full px-5 py-4 pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-300 focus:outline-none focus:border-brand-500 font-mono text-sm shadow-inner transition">
-                    <svg class="w-5 h-5 text-slate-300 absolute left-4 top-4.5 shrink-0" width="20" height="20" style="width: 20px; height: 20px; min-width: 20px;" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           class="w-full px-4 sm:px-5 py-3 sm:py-4 pl-11 sm:pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 font-mono text-xs sm:text-sm shadow-inner transition">
+                    <svg class="w-4.5 h-4.5 sm:w-5 sm:h-5 text-slate-400 absolute left-3.5 sm:left-4 top-3.5 sm:top-4.5 shrink-0" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
@@ -232,19 +230,19 @@
             <!-- Search Results Container (Compact List) -->
             <div id="resultsContainer" class="space-y-4">
                 <!-- Golden Bundle 1: HTTPX 0.28 -->
-                <div class="p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
-                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>
-                            <span class="font-mono text-sm font-semibold text-brand-400">bundle_httpx_028_asgi_transport_001</span>
+                <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>
+                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">bundle_httpx_028_asgi_transport_001</span>
                         </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">✓ 4-STAGE PROVEN</span>
+                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 shrink-0">✓ 4-STAGE PROVEN</span>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         TypeError: AsyncClient.__init__() got an unexpected keyword argument &#39;app&#39;
                     </div>
-                    <div class="text-sm text-slate-300">
+                    <div class="text-xs sm:text-sm text-slate-300">
                         <strong>Solution:</strong> HTTPX 0.28 removes the AsyncClient app shortcut; explicit ASGITransport is required for in-process ASGI testing.
                     </div>
                     <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>--- a/client.py
@@ -254,26 +252,28 @@
 +    transport = httpx.ASGITransport(app=app)
 +    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
          return await client.get("/health")</code></pre>
-                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
-                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">synapse reverify bundle_httpx_028_asgi_transport_001</code>
-                        <a href="/api/v1/bundles/bundle_httpx_028_asgi_transport_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_httpx_028_asgi_transport_001" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <div class="overflow-x-auto max-w-full">
+                            <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_httpx_028_asgi_transport_001</code>
+                        </div>
+                        <a href="/api/v1/bundles/bundle_httpx_028_asgi_transport_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_httpx_028_asgi_transport_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
                 </div>
 
                 <!-- Golden Bundle 2: Pydantic v2 -->
-                <div class="p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
-                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>
-                            <span class="font-mono text-sm font-semibold text-brand-400">bundle_pydantic_v2_model_validator_001</span>
+                <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>
+                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">bundle_pydantic_v2_model_validator_001</span>
                         </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">✓ 4-STAGE PROVEN</span>
+                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 shrink-0">✓ 4-STAGE PROVEN</span>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated.
                     </div>
-                    <div class="text-sm text-slate-300">
+                    <div class="text-xs sm:text-sm text-slate-300">
                         <strong>Solution:</strong> Pydantic v2 replaces root_validator with @model_validator(mode=&#39;before&#39;) that preserves and returns raw input.
                     </div>
                     <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>--- a/user_model.py
@@ -282,26 +282,28 @@
 -    @root_validator(pre=True)
 +    @model_validator(mode="before")
 +    @classmethod</code></pre>
-                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
-                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">synapse reverify bundle_pydantic_v2_model_validator_001</code>
-                        <a href="/api/v1/bundles/bundle_pydantic_v2_model_validator_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_pydantic_v2_model_validator_001" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <div class="overflow-x-auto max-w-full">
+                            <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_pydantic_v2_model_validator_001</code>
+                        </div>
+                        <a href="/api/v1/bundles/bundle_pydantic_v2_model_validator_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_pydantic_v2_model_validator_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
                 </div>
 
                 <!-- Golden Bundle 3: FastAPI Lifespan -->
-                <div class="p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
-                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>
-                            <span class="font-mono text-sm font-semibold text-brand-400">bundle_fastapi_0115_lifespan_context_001</span>
+                <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>
+                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">bundle_fastapi_0115_lifespan_context_001</span>
                         </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">✓ 4-STAGE PROVEN</span>
+                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 shrink-0">✓ 4-STAGE PROVEN</span>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.
                     </div>
-                    <div class="text-sm text-slate-300">
+                    <div class="text-xs sm:text-sm text-slate-300">
                         <strong>Solution:</strong> FastAPI 0.100+ deprecates @app.on_event in favor of async context manager lifespan handlers.
                     </div>
                     <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>--- a/server.py
@@ -310,26 +312,28 @@
 -@app.on_event("startup")
 +@asynccontextmanager
 +async def lifespan(app: FastAPI):</code></pre>
-                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
-                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">synapse reverify bundle_fastapi_0115_lifespan_context_001</code>
-                        <a href="/api/v1/bundles/bundle_fastapi_0115_lifespan_context_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_fastapi_0115_lifespan_context_001" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <div class="overflow-x-auto max-w-full">
+                            <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_fastapi_0115_lifespan_context_001</code>
+                        </div>
+                        <a href="/api/v1/bundles/bundle_fastapi_0115_lifespan_context_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_fastapi_0115_lifespan_context_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
                 </div>
 
                 <!-- Golden Bundle 4: Python 3.12 UTC Datetime -->
-                <div class="p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
-                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>
-                            <span class="font-mono text-sm font-semibold text-brand-400">bundle_python_312_datetime_utc_aware_001</span>
+                <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>
+                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">bundle_python_312_datetime_utc_aware_001</span>
                         </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">✓ 4-STAGE PROVEN</span>
+                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 shrink-0">✓ 4-STAGE PROVEN</span>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.
                     </div>
-                    <div class="text-sm text-slate-300">
+                    <div class="text-xs sm:text-sm text-slate-300">
                         <strong>Solution:</strong> Python 3.12+ deprecates naive datetime.utcnow() in favor of timezone-aware datetime.now(timezone.utc).
                     </div>
                     <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>--- a/timestamps.py
@@ -337,17 +341,19 @@
 @@ -4,2 +4,2 @@
 -    return datetime.utcnow()
 +    return datetime.now(timezone.utc)</code></pre>
-                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
-                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">synapse reverify bundle_python_312_datetime_utc_aware_001</code>
-                        <a href="/api/v1/bundles/bundle_python_312_datetime_utc_aware_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_python_312_datetime_utc_aware_001" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <div class="overflow-x-auto max-w-full">
+                            <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_python_312_datetime_utc_aware_001</code>
+                        </div>
+                        <a href="/api/v1/bundles/bundle_python_312_datetime_utc_aware_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_python_312_datetime_utc_aware_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
                 </div>
             </div>
 
             <!-- Show All / Pagination Toggle -->
             <div id="paginationContainer" class="text-center pt-4">
-                <button id="showAllBtn" type="button" class="cursor-pointer px-6 py-3 rounded-xl border border-brand-500/60 bg-brand-950/60 hover:bg-brand-900/60 text-brand-300 font-mono text-sm font-bold shadow-lg hover:border-brand-400 transition-all flex items-center space-x-2 mx-auto">
-                    <span id="showAllBtnText">View All Verified Bundles (74) ↓</span>
+                <button id="showAllBtn" type="button" class="cursor-pointer px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-brand-500/60 bg-brand-950/60 hover:bg-brand-900/60 text-brand-300 font-mono text-xs sm:text-sm font-bold shadow-lg hover:border-brand-400 transition-all flex items-center space-x-2 mx-auto">
+                    <span id="showAllBtnText">View All Verified Bundles (93) ↓</span>
                 </button>
             </div>
         </section>
@@ -659,34 +665,36 @@
             }
 
             container.innerHTML = displayed.map(r => `
-                <div class="p-5 rounded-xl border ${r.isGolden ? 'border-brand-500/40 bg-slate-900/70 shadow-lg' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 transition space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">${r.runtime}</span>
+                <div class="p-4 sm:p-5 rounded-xl border ${r.isGolden ? 'border-brand-500/40 bg-slate-900/70 shadow-lg' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">${r.runtime}</span>
                             ${r.isGolden ? 
-                                `<span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>` : 
-                                `<span class="px-2 py-0.5 rounded text-xs font-mono bg-slate-800 text-slate-300 border border-slate-700">RECIPE</span>`
+                                `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN</span>` : 
+                                `<span class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-800 text-slate-300 border border-slate-700">RECIPE</span>`
                             }
-                            <span class="font-mono text-sm font-semibold text-brand-400">${r.id}</span>
+                            <span class="font-mono text-xs sm:text-sm font-semibold text-brand-400 break-all">${r.id}</span>
                         </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium ${r.status === 'VERIFIED' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/50' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
+                        <span class="inline-flex items-center self-start sm:self-auto px-2 py-0.5 rounded text-[11px] font-mono font-medium ${r.status === 'VERIFIED' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/50' : 'bg-slate-800 text-slate-300 border border-slate-700'} shrink-0">
                             ${r.status === 'VERIFIED' ? '✓ 4-STAGE PROVEN' : r.status}
                         </span>
                     </div>
                     <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
                         ${escapeHtml(r.errorSignature)}
                     </div>
-                    <div class="text-sm text-slate-300">
+                    <div class="text-xs sm:text-sm text-slate-300">
                         <strong>Solution:</strong> ${escapeHtml(r.summary)}
                     </div>
                     ${r.diff ? `
                         <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.diff)}</code></pre>
                     ` : ''}
-                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
-                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">${r.reverify}</code>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <div class="overflow-x-auto max-w-full">
+                            <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">${r.reverify}</code>
+                        </div>
                         ${r.detailUrl ? 
-                            `<a href="${r.detailUrl}" aria-label="View verification details and test evidence for ${r.id}" class="text-slate-300 hover:text-brand-400 transition underline">Detail View →</a>` : 
-                            `<a href="/api/v1/bundles/${r.id}" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for ${r.id}" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>`
+                            `<a href="${r.detailUrl}" aria-label="View verification details and test evidence for ${r.id}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Detail View →</a>` : 
+                            `<a href="/api/v1/bundles/${r.id}" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for ${r.id}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>`
                         }
                     </div>
                 </div>
