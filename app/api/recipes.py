@@ -320,19 +320,29 @@ async def get_recipe_by_id(recipe_id: str):
 
 
 @router.get("/api/v1/recipes", response_model=List[VerifiedRecipe])
-async def list_recipes(response: Response, limit: int = Query(20, ge=1, le=100)):
+async def list_recipes(
+    response: Response,
+    limit: int = Query(200, ge=1, le=1000),
+    status: Optional[str] = Query(None)
+):
     """List recently verified recipes."""
-    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     db = await get_db_connection()
     try:
-        cursor = await db.execute("SELECT * FROM recipes ORDER BY updated_at DESC LIMIT ?", (limit,))
+        if status:
+            cursor = await db.execute(
+                "SELECT * FROM recipes WHERE verification_status = ? ORDER BY updated_at DESC LIMIT ?",
+                (status.upper(), limit)
+            )
+        else:
+            cursor = await db.execute("SELECT * FROM recipes ORDER BY updated_at DESC LIMIT ?", (limit,))
         rows = await cursor.fetchall()
         results = []
         for row in rows:
-            prob = json.loads(row["problem_json"])
-            sol = json.loads(row["solution_json"])
-            repro = json.loads(row["reproduction_json"])
-            evi = json.loads(row["evidence_json"])
+            prob = json.loads(row["problem_json"]) if row["problem_json"] else {}
+            sol = json.loads(row["solution_json"]) if row["solution_json"] else {}
+            repro = json.loads(row["reproduction_json"]) if row["reproduction_json"] else {}
+            evi = json.loads(row["evidence_json"]) if row["evidence_json"] else {}
             results.append(VerifiedRecipe(
                 id=row["id"],
                 problem=ProblemDefinition(**prob),

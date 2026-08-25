@@ -526,7 +526,7 @@ input:tool-submit-active, button:tool-submit-active {
             try {
                 const [resBundles, resRecipes] = await Promise.allSettled([
                     fetch('/api/v1/bundles', { headers: { 'Accept': 'application/json' } }),
-                    fetch('/api/v1/recipes?limit=150', { headers: { 'Accept': 'application/json' } })
+                    fetch('/api/v1/recipes?limit=500&status=VERIFIED', { headers: { 'Accept': 'application/json' } })
                 ]);
 
                 if (resBundles.status === 'fulfilled' && resBundles.value.ok) {
@@ -535,10 +535,11 @@ input:tool-submit-active, button:tool-submit-active {
                         bundles.forEach(b => {
                             if (!seenIds.has(b.bundleId)) {
                                 seenIds.add(b.bundleId);
+                                const rt = ((b.scope && b.scope.runtime) || 'python').toLowerCase();
                                 results.push({
                                     id: b.bundleId,
                                     isGolden: true,
-                                    runtime: (b.scope && b.scope.runtime) || 'python',
+                                    runtime: (rt === 'javascript' || rt === 'typescript') ? 'nodejs' : rt,
                                     errorSignature: (b.fingerprint && b.fingerprint.errorSignature) || b.bundleId,
                                     summary: b.description || '',
                                     diff: (b.patch && b.patch.unifiedDiff) || '',
@@ -559,11 +560,12 @@ input:tool-submit-active, button:tool-submit-active {
                             const rid = r.id;
                             if (!seenIds.has(rid)) {
                                 seenIds.add(rid);
+                                const rt = ((r.problem && r.problem.runtime) || (r.runtime) || 'python').toLowerCase();
                                 results.push({
                                     id: r.id,
                                     isGolden: false,
-                                    runtime: (r.problem && r.problem.runtime) || 'python',
-                                    errorSignature: (r.problem && r.problem.errorSignature) || r.id,
+                                    runtime: (rt === 'javascript' || rt === 'typescript') ? 'nodejs' : rt,
+                                    errorSignature: (r.problem && r.problem.errorSignature) || r.errorSignature || r.id,
                                     summary: (r.solution && r.solution.summary) || '',
                                     diff: (r.solution && (r.solution.codeDiff || r.solution.patchDiff)) || '',
                                     pins: (r.solution && r.solution.pinnedDependencies) || (r.problem && r.problem.packages) || {},
@@ -892,12 +894,9 @@ input:tool-submit-active, button:tool-submit-active {
             }
         ];
 
-        // Pure On-Demand Data Loading (Zero PageLoad Network Requests for 100/100 PageSpeed)
-        // Data is fetched exclusively when the user interacts with search, filters, or expansion buttons.
-        ['pointerdown', 'keydown', 'touchstart'].forEach(evt => {
-            window.addEventListener(evt, () => {
-                ensureDataLoaded();
-            }, { once: true, passive: true });
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            ensureDataLoaded();
         });
     </script>
 </body>
