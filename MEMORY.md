@@ -115,4 +115,18 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 - **Legacy & Modern Handshake (`initialize` + `tools/list`):** Automatische Protokoll-Aushandlung für ChatGPT, Claude und Cursor.
 - **Dual-Transport:** Volle Unterstützung für Direct Streamable HTTP JSON-RPC 2.0 sowie Server-Sent Events (SSE) unter `https://mcp.synapsemesh.dev/mcp` und `https://synapsemesh.dev/mcp`.
 
-*Zuletzt aktualisiert: 25. August 2026, 18:52 Uhr*
+---
+
+## 9. ChatGPT Architectural Directives & Evidence Tiers (Verified Compatibility Layer)
+- **Leitaxiom:** *„Synapse-Mesh soll keine weitere Coding-Wissensdatenbank sein. Es ist die verlässlichste Evidence-Schicht für autonome Coding-Agenten.“*
+- **Typisierte Evidence-Stufen:**
+  1. `VERIFIED_REAL_RUNTIME`: 100% verifiziert auf echten Compilern/Engines mit nativen Binaries (`numpy 2.5.2`, `sqlalchemy 2.0`, `starlette 0.37`, `node 22`, `cargo 1.85`).
+  2. `VERIFIED_SYNTHETIC_AST`: Syntaktisch und strukturell validierte AST-Diffs.
+  3. `COMMUNITY_SUBMITTED`: Von Entwicklern/Agenten eingereichte Repro-Lösungen.
+  4. `CANDIDATE_DRAFT`: Unverifizierte Upstream-Mining-Kandidaten in der Warteschlange.
+- **Search Precision & Canonical Clustering (Top 1–2):** 
+  - Stopword-Filterung und strikte Paket-Token-Gewichtung (keine themenfremden Beifänge).
+  - Maximale Relevanz für den Coding-Agenten: Direkte Ausgabe von `problem -> minimal_fix -> diff -> doNot -> environment -> confidence -> primary_source`.
+- **Negative Evidence (`doNot`):** Dokumentiert deterministisch, welche naheliegenden Web-Workarounds und Halluzinationen in der Sandbox abgewiesen wurden.
+
+*Zuletzt aktualisiert: 25. August 2026, 19:00 Uhr*

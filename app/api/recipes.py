@@ -91,49 +91,93 @@ async def get_recipe_stats(response: Response):
         await db.close()
 
 
+STOPWORDS = {
+    "the", "was", "has", "been", "and", "for", "with", "from", "that", "this", 
+    "use", "instead", "you", "tried", "access", "error", "warning", "exception",
+    "cannot", "could", "not", "module", "object", "type", "value"
+}
+
+KNOWN_PACKAGES = {
+    "numpy", "sqlalchemy", "pydantic", "fastapi", "httpx", "express", "next", 
+    "tokio", "pytest", "docker", "compose", "typescript", "duckdb", "mysql", 
+    "sqlite", "react", "vite", "flask", "django", "openai"
+}
+
+
 @router.post("/api/v1/recipes/search", response_model=List[VerifiedRecipe])
 async def search_recipes(req: RecipeSearchRequest):
-    """Search for verified solutions given an error signature, runtime, and optional package versions."""
-    clean_error = ZeroPiiSanitizer.sanitize_text(req.errorSignature.strip())
-    keywords = [w.lower() for w in clean_error.split() if len(w) > 2]
+    """High-precision search for verified solutions with exact token scoring and package relevance."""
+    clean_error = ZeroPiiSanitizer.sanitize_text(req.errorSignature.strip()).lower()
+    raw_tokens = [w.strip(".:(),'\"`") for w in clean_error.split()]
+    meaningful_tokens = [t for t in raw_tokens if len(t) > 2 and t not in STOPWORDS]
     
-    query = "SELECT * FROM recipes WHERE confidence_score >= ?"
-    params: List[Any] = [req.minConfidence]
-    
-    if req.runtime:
-        query += " AND runtime = ?"
-        params.append(req.runtime.lower())
-        
-    if keywords:
-        kw_clauses = " OR ".join(["(error_signature LIKE ? OR problem_json LIKE ?)" for _ in keywords])
-        query += f" AND ({kw_clauses})"
-        for k in keywords:
-            params.extend([f"%{k}%", f"%{k}%"])
-            
-    query += " ORDER BY confidence_score DESC, updated_at DESC LIMIT ?"
-    params.append(req.limit)
-    
+    # Detect target packages from query
+    query_packages = {t for t in raw_tokens if t in KNOWN_PACKAGES}
+    if req.packages:
+        query_packages.update(req.packages.keys())
+
     db = await get_db_connection()
     try:
+        # Load candidate recipes matching runtime or basic confidence
+        query = "SELECT * FROM recipes WHERE confidence_score >= ?"
+        params: List[Any] = [req.minConfidence]
+        if req.runtime:
+            query += " AND runtime = ?"
+            params.append(req.runtime.lower())
+            
         cursor = await db.execute(query, params)
         rows = await cursor.fetchall()
         
-        results = []
+        scored_recipes = []
         for row in rows:
             prob = json.loads(row["problem_json"])
             sol = json.loads(row["solution_json"])
             repro = json.loads(row["reproduction_json"])
             evi = json.loads(row["evidence_json"])
             
-            results.append(VerifiedRecipe(
-                id=row["id"],
-                problem=ProblemDefinition(**prob),
-                solution=SolutionDefinition(**sol),
-                reproduction=ReproductionDefinition(**repro),
-                evidence=EvidenceDefinition(**evi)
-            ))
-                
-        return results
+            sig = (row["error_signature"] or "").lower()
+            desc = prob.get("description", "").lower()
+            rec_id = row["id"].lower()
+            
+            score = 0.0
+            # 1. Exact Error Signature Match
+            if clean_error in sig or sig in clean_error:
+                score += 1000.0
+
+            # 2. Package-Specific Relevance
+            recipe_packages = {pkg.lower() for pkg in KNOWN_PACKAGES if pkg in rec_id or pkg in sig or pkg in desc}
+            if query_packages:
+                if query_packages.intersection(recipe_packages):
+                    score += 500.0
+                elif recipe_packages and not query_packages.intersection(recipe_packages):
+                    # Query clearly asked for package X, but this recipe is package Y -> penalize heavily
+                    score -= 800.0
+
+            # 3. Meaningful Keyword Overlap
+            for token in meaningful_tokens:
+                if token in sig:
+                    score += 60.0
+                elif token in desc:
+                    score += 20.0
+
+            # 4. Verified Status Boost
+            if row["verification_status"] == "VERIFIED":
+                score += 150.0
+            score *= (row["confidence_score"] or 0.5)
+
+            if score > 50.0:
+                recipe_obj = VerifiedRecipe(
+                    id=row["id"],
+                    problem=ProblemDefinition(**prob),
+                    solution=SolutionDefinition(**sol),
+                    reproduction=ReproductionDefinition(**repro),
+                    evidence=EvidenceDefinition(**evi)
+                )
+                scored_recipes.append((score, recipe_obj))
+
+        # Sort by relevance score descending
+        scored_recipes.sort(key=lambda x: x[0], reverse=True)
+        return [r for _, r in scored_recipes[:req.limit]]
     finally:
         await db.close()
 
