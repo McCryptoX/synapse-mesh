@@ -25,11 +25,13 @@
     "variants": [
       {
         "errorSignature": "sqlalchemy.exc.ObjectNotExecutableError: Not an executable object: 'SELECT 1'. Use text('SELECT 1') instead.",
-        "regex": "(ObjectNotExecutableError|ArgumentError).*Not an executable object|Textual SQL expression"
+        "regex": "(ObjectNotExecutableError|ArgumentError).*Not an executable object|Textual SQL expression",
+        "preFailAssertion": "import sys, sqlalchemy as sa\nengine = sa.create_engine('sqlite:///:memory:')\nwith engine.connect() as conn:\n    try:\n        conn.execute('SELECT 1')\n        sys.exit(1)\n    except Exception as e:\n        assert 'text(' in str(e) or 'Not an executable object' in str(e)\n"
       },
       {
         "errorSignature": "sqlalchemy.exc.ArgumentError: Textual SQL expression should be explicitly declared as text()",
-        "regex": "Textual SQL expression.*should be explicitly declared as text\\("
+        "regex": "Textual SQL expression.*should be explicitly declared as text\\(",
+        "preFailAssertion": "import sys, sqlalchemy as sa\nengine = sa.create_engine('sqlite:///:memory:')\nwith engine.connect() as conn:\n    try:\n        conn.execute('SELECT 1')\n        sys.exit(1)\n    except Exception as e:\n        assert 'text(' in str(e) or 'Not an executable object' in str(e)\n"
       }
     ]
   },

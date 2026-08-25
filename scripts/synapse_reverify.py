@@ -263,7 +263,25 @@ def verify_golden_bundle(bundle: dict) -> bool:
                 mutants_killed += 1
 
         print(f"[✓] Stage 4 (Mutations): {mutants_killed}/{len(mutations)} real web-fehlfix mutants killed.")
-        print(f"\n[★] GOLDEN BUNDLE 100% PROVEN: Pre:{res_pre.returncode} -> Diff Applied -> Post:0 -> Mutants: {mutants_killed}/{len(mutations)} Killed.")
+
+        # -------------------------------------------------------------
+        # Stage 5: Independent Claim-Level Variant Verification
+        # -------------------------------------------------------------
+        variants = fp.get("variants", [])
+        if variants:
+            for v_idx, v in enumerate(variants):
+                v_sig = v.get("errorSignature", "")
+                v_assert = v.get("preFailAssertion")
+                if v_assert:
+                    var_runner = workspace / f"variant_runner_{v_idx}{ext}"
+                    var_runner.write_text(v_assert, encoding="utf-8")
+                    res_var = subprocess.run(runner_cmd + [str(var_runner)], cwd=workspace, capture_output=True, text=True, timeout=timeout_sec, env=env)
+                    if res_var.returncode != 0:
+                        print(f"[✗] STAGE 5 VARIANT REJECTED: Variant '{v_sig}' claim assertion failed on real runtime with Exit {res_var.returncode}:\n{res_var.stderr}", file=sys.stderr)
+                        return False
+            print(f"[✓] Stage 5 (Variants): All {len(variants)} family claim variants independently proven on real runtime.")
+
+        print(f"\n[★] GOLDEN BUNDLE 100% PROVEN: Pre:{res_pre.returncode} -> Diff Applied -> Post:0 -> Mutants: {mutants_killed}/{len(mutations)} Killed -> Variants: {len(variants)} Verified.")
         return True
 
 

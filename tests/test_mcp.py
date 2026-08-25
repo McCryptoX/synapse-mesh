@@ -229,5 +229,35 @@ async def test_mcp_variant_recall_and_version_mismatch():
         assert c3["recipeAffectedVersions"] == ">=2.0.0"
 
 
+@pytest.mark.asyncio
+async def test_mcp_numpy_bool_rejected_claim_level():
+    """
+    Verifies that 'np.bool' is NOT matched as removed in NumPy 2.0
+    because 'numpy.bool' is present in NumPy 2.0 (canonical name for bool_).
+    """
+    import numpy as np
+    assert hasattr(np, "bool")
+    assert np.bool is np.bool_
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        import json
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 13,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "AttributeError: `np.bool` was removed in the NumPy 2.0 release. Use `bool` instead.",
+                    "packages": {"numpy": "2.0.0"}
+                }
+            }
+        })
+        c = json.loads(res.json()["result"]["content"][0]["text"])
+        assert c["status"] == "NO_VERIFIED_MATCH"
+        assert c["matchConfidence"] == 0.0
+
+
+
 
 
