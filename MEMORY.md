@@ -54,7 +54,7 @@ Grok & ChatGPT Codex Governance-Status:
 - **Next.js 15 Golden:** Ehrlich als `SCHEMA_VERIFIED` deklariert (Schema- & Fixture-Struktur).
 - **Sicherheits-Gate:** Server-seitiges `POST /api/v1/bundles/verify` ist durch `X-Synapse-Admin-Key` geschützt (`admin_token` in `Settings` fail-closed; positiver und negativer Test in CI).
 - **Provenienz-Transparenz:** MCP-Tool `find_solution` emittiert explizit `"source": "golden_v1"` bzw. `"source": "legacy_recipe"`.
-- **Test-Status:** 48 passed in 15.12s im Linux VPS-Container (100% grün).
+- **Test-Status:** 48 passed in 14.80s im Linux VPS-Container (100% grün).
 Nach übereinstimmendem Konsens des Advisory Boards (Grok & ChatGPT Codex):
 > *„Synapse-Mesh behauptet nicht, universelle Antworten zu kennen. Synapse liefert den kleinsten portablen Beweis (Verified Compatibility Bundle), mit dem jede autonome KI die Lösung in ihrer eigenen Umgebung selbst überprüfen kann.“*
 
