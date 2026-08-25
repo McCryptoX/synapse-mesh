@@ -46,12 +46,12 @@ async def get_recipe_stats():
         cursor = await db.execute("SELECT user_agent_summary, COUNT(*) as count FROM access_logs GROUP BY user_agent_summary")
         agent_breakdown = {row["user_agent_summary"]: row["count"] for row in await cursor.fetchall()}
 
-        cursor = await db.execute("SELECT source_type, action, query_snippet, user_agent_summary, created_at FROM access_logs ORDER BY id DESC LIMIT 10")
+        # Go-Gate 10 Anti-Leakage: Never expose raw query strings in public telemetry
+        cursor = await db.execute("SELECT source_type, action, user_agent_summary, created_at FROM access_logs ORDER BY id DESC LIMIT 10")
         recent_activity = [
             {
                 "type": r["source_type"],
                 "action": r["action"],
-                "query": r["query_snippet"],
                 "client": r["user_agent_summary"],
                 "timestamp": r["created_at"]
             }
