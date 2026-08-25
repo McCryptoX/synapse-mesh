@@ -291,6 +291,16 @@ async def trigger_manual_verification_sweep(request: Request, key: Optional[str]
             except Exception as e:
                 logs.append(f"[! BATCH ERROR] {Path(cf).name}: {str(e)}")
 
+        # 3. Run Autonomous Upstream Mining & 4-Stage Verification
+        logs.append("[*] Executing Autonomous Upstream Mining across PyPI/npm/Release Notes...")
+        try:
+            from app.core.upstream_miner import UpstreamMiningEngine
+            mined_bundles = await UpstreamMiningEngine.mine_and_verify_all(persist_to_disk=False)
+            verified_mined = sum(1 for b in mined_bundles if b.status == "VERIFIED")
+            logs.append(f"[✓ UPSTREAM MINER] Harvested & verified {len(mined_bundles)} candidate bundles ({verified_mined} 4-Stage Verified).")
+        except Exception as me:
+            logs.append(f"[! MINER NOTICE] Upstream mining note: {str(me)}")
+
         cursor = await db.execute("""
             SELECT 
                 COUNT(*) as total,

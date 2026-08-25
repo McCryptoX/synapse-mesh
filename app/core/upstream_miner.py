@@ -788,7 +788,8 @@ print("VERIFICATION_PASSED_STAGE_3")
             scope=BundleScope(
                 package=pkg,
                 fromVersion=f"<{ver}",
-                toVersion=f">={ver}",
+                toVersion=ver if not ver.startswith(">=") else ver.replace(">=", ""),
+                affectedVersionRange=f">={ver}" if not ver.startswith(">=") else ver,
                 runtime=rt,
                 platform="all"
             ),
@@ -887,54 +888,56 @@ class UpstreamMiningEngine:
             db = await get_db_connection()
             try:
                 for b in candidates:
-                    if b.status == "VERIFIED":
-                        prob = {
-                            "errorSignature": b.fingerprint.errorSignature,
-                            "runtime": b.scope.runtime,
-                            "packages": b.patch.pinnedDependencies,
-                            "description": b.description
-                        }
-                        sol = {
-                            "summary": b.description,
-                            "codeDiff": b.patch.unifiedDiff,
-                            "patchDiff": b.patch.unifiedDiff,
-                            "instructions": ["Apply verified patch to resolve breaking change."],
-                            "pinnedDependencies": b.patch.pinnedDependencies,
-                            "doNot": b.patch.doNot
-                        }
-                        repro = {
-                            "script": b.verification.reproductionScript,
-                            "testSuite": b.verification.testSuite
-                        }
-                        evi = {
-                            "verificationStatus": "VERIFIED",
-                            "sandboxExitCode": 0,
-                            "passedTests": 1,
-                            "totalTests": 1,
-                            "confidenceScore": 1.0,
-                            "primarySource": b.provenance.primarySources[0] if b.provenance.primarySources else None
-                        }
-                        recipe_id = f"rec_{b.bundleId}"
-                        await db.execute("""
-                            INSERT INTO recipes (id, runtime, error_signature, problem_json, solution_json, reproduction_json, evidence_json, confidence_score, verification_status, updated_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                            ON CONFLICT(id) DO UPDATE SET
-                                problem_json = excluded.problem_json,
-                                solution_json = excluded.solution_json,
-                                reproduction_json = excluded.reproduction_json,
-                                evidence_json = excluded.evidence_json,
-                                updated_at = CURRENT_TIMESTAMP
-                        """, (
-                            recipe_id,
-                            b.scope.runtime,
-                            b.fingerprint.errorSignature,
-                            json.dumps(prob),
-                            json.dumps(sol),
-                            json.dumps(repro),
-                            json.dumps(evi),
-                            1.0,
-                            "VERIFIED"
-                        ))
+                    is_verified = (b.status == "VERIFIED")
+                    prob = {
+                        "errorSignature": b.fingerprint.errorSignature,
+                        "runtime": b.scope.runtime,
+                        "packages": b.patch.pinnedDependencies,
+                        "description": b.description
+                    }
+                    sol = {
+                        "summary": b.description,
+                        "codeDiff": b.patch.unifiedDiff,
+                        "patchDiff": b.patch.unifiedDiff,
+                        "instructions": ["Apply verified patch to resolve breaking change."],
+                        "pinnedDependencies": b.patch.pinnedDependencies,
+                        "doNot": b.patch.doNot
+                    }
+                    repro = {
+                        "script": b.verification.reproductionScript,
+                        "testSuite": b.verification.testSuite
+                    }
+                    evi = {
+                        "verificationStatus": "VERIFIED" if is_verified else "DRAFT",
+                        "sandboxExitCode": 0 if is_verified else 1,
+                        "passedTests": 1 if is_verified else 0,
+                        "totalTests": 1,
+                        "confidenceScore": 1.0 if is_verified else 0.65,
+                        "primarySource": b.provenance.primarySources[0] if b.provenance.primarySources else None
+                    }
+                    recipe_id = f"rec_{b.bundleId}"
+                    await db.execute("""
+                        INSERT INTO recipes (id, runtime, error_signature, problem_json, solution_json, reproduction_json, evidence_json, confidence_score, verification_status, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                        ON CONFLICT(id) DO UPDATE SET
+                            problem_json = excluded.problem_json,
+                            solution_json = excluded.solution_json,
+                            reproduction_json = excluded.reproduction_json,
+                            evidence_json = excluded.evidence_json,
+                            verification_status = excluded.verification_status,
+                            confidence_score = excluded.confidence_score,
+                            updated_at = CURRENT_TIMESTAMP
+                    """, (
+                        recipe_id,
+                        b.scope.runtime,
+                        b.fingerprint.errorSignature,
+                        json.dumps(prob),
+                        json.dumps(sol),
+                        json.dumps(repro),
+                        json.dumps(evi),
+                        1.0 if is_verified else 0.65,
+                        "VERIFIED" if is_verified else "DRAFT"
+                    ))
                 await db.commit()
             finally:
                 await db.close()
