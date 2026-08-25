@@ -92,7 +92,7 @@
                 <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 shadow-inner">
                     <span class="text-slate-300 select-none">$</span>
                     <code class="text-emerald-400 px-2 flex-1 text-left">curl -fsSL https://synapsemesh.dev/install.sh | bash</code>
-                    <button type="button" aria-label="Copy install command" onclick="navigator.clipboard.writeText('curl -fsSL https://synapsemesh.dev/install.sh | bash'); this.innerText='✓ Copied';" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono text-xs cursor-pointer">Copy</button>
+                    <button type="button" aria-label="Copy install command" onclick="navigator.clipboard.writeText('curl -fsSL https://synapsemesh.dev/install.sh | bash'); this.textContent='✓ Copied';" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono text-xs cursor-pointer">Copy</button>
                 </div>
             </div>
         </section>
@@ -189,7 +189,117 @@
 
             <!-- Search Results Container (Compact List) -->
             <div id="resultsContainer" class="space-y-4">
-                <div class="text-center py-8 text-slate-300 font-mono text-sm">Loading verified compatibility bundles...</div>
+                <!-- Golden Bundle 1: HTTPX 0.28 -->
+                <div class="p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>
+                            <span class="font-mono text-sm font-semibold text-brand-400">bundle_httpx_028_asgi_transport_001</span>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">✓ 4-STAGE PROVEN</span>
+                    </div>
+                    <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
+                        TypeError: AsyncClient.__init__() got an unexpected keyword argument &#39;app&#39;
+                    </div>
+                    <div class="text-sm text-slate-300">
+                        <strong>Solution:</strong> HTTPX 0.28 removes the AsyncClient app shortcut; explicit ASGITransport is required for in-process ASGI testing.
+                    </div>
+                    <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>--- a/client.py
++++ b/client.py
+@@ -16,7 +16,8 @@
+-    async with httpx.AsyncClient(app=app, base_url="http://testserver") as client:
++    transport = httpx.ASGITransport(app=app)
++    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+         return await client.get("/health")</code></pre>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">synapse reverify bundle_httpx_028_asgi_transport_001</code>
+                        <a href="/api/v1/bundles/bundle_httpx_028_asgi_transport_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_httpx_028_asgi_transport_001" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>
+                    </div>
+                </div>
+
+                <!-- Golden Bundle 2: Pydantic v2 -->
+                <div class="p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>
+                            <span class="font-mono text-sm font-semibold text-brand-400">bundle_pydantic_v2_model_validator_001</span>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">✓ 4-STAGE PROVEN</span>
+                    </div>
+                    <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
+                        PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated.
+                    </div>
+                    <div class="text-sm text-slate-300">
+                        <strong>Solution:</strong> Pydantic v2 replaces root_validator with @model_validator(mode=&#39;before&#39;) that preserves and returns raw input.
+                    </div>
+                    <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>--- a/user_model.py
++++ b/user_model.py
+@@ -4,4 +4,4 @@
+-    @root_validator(pre=True)
++    @model_validator(mode="before")
++    @classmethod</code></pre>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">synapse reverify bundle_pydantic_v2_model_validator_001</code>
+                        <a href="/api/v1/bundles/bundle_pydantic_v2_model_validator_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_pydantic_v2_model_validator_001" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>
+                    </div>
+                </div>
+
+                <!-- Golden Bundle 3: FastAPI Lifespan -->
+                <div class="p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>
+                            <span class="font-mono text-sm font-semibold text-brand-400">bundle_fastapi_0115_lifespan_context_001</span>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">✓ 4-STAGE PROVEN</span>
+                    </div>
+                    <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
+                        DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.
+                    </div>
+                    <div class="text-sm text-slate-300">
+                        <strong>Solution:</strong> FastAPI 0.100+ deprecates @app.on_event in favor of async context manager lifespan handlers.
+                    </div>
+                    <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>--- a/server.py
++++ b/server.py
+@@ -5,6 +5,6 @@
+-@app.on_event("startup")
++@asynccontextmanager
++async def lifespan(app: FastAPI):</code></pre>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">synapse reverify bundle_fastapi_0115_lifespan_context_001</code>
+                        <a href="/api/v1/bundles/bundle_fastapi_0115_lifespan_context_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_fastapi_0115_lifespan_context_001" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>
+                    </div>
+                </div>
+
+                <!-- Golden Bundle 4: Python 3.12 UTC Datetime -->
+                <div class="p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-400 border border-slate-700">python</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>
+                            <span class="font-mono text-sm font-semibold text-brand-400">bundle_python_312_datetime_utc_aware_001</span>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">✓ 4-STAGE PROVEN</span>
+                    </div>
+                    <div class="text-xs sm:text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40 break-words overflow-hidden">
+                        DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.
+                    </div>
+                    <div class="text-sm text-slate-300">
+                        <strong>Solution:</strong> Python 3.12+ deprecates naive datetime.utcnow() in favor of timezone-aware datetime.now(timezone.utc).
+                    </div>
+                    <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>--- a/timestamps.py
++++ b/timestamps.py
+@@ -4,2 +4,2 @@
+-    return datetime.utcnow()
++    return datetime.now(timezone.utc)</code></pre>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800">synapse reverify bundle_python_312_datetime_utc_aware_001</code>
+                        <a href="/api/v1/bundles/bundle_python_312_datetime_utc_aware_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_python_312_datetime_utc_aware_001" class="text-slate-300 hover:text-brand-400 transition underline">Raw JSON →</a>
+                    </div>
+                </div>
             </div>
 
             <!-- Show All / Pagination Toggle -->
@@ -387,21 +497,21 @@
                 if (!contentType.includes("json")) return;
                 const data = await res.json();
                 const statEl = document.getElementById('stat-verified-count');
-                if (statEl) statEl.innerText = data.verifiedRecipes || '74';
+                if (statEl) statEl.textContent = data.verifiedRecipes || '74';
                 const passEl = document.getElementById('stat-pass-rate');
                 if (passEl) {
                     const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 95;
-                    passEl.innerText = passRate + '%';
+                    passEl.textContent = passRate + '%';
                 }
                 if (data.runtimes) {
                     const elAll = document.getElementById('count-all');
-                    if (elAll) elAll.innerText = data.verifiedRecipes || '74';
+                    if (elAll) elAll.textContent = data.verifiedRecipes || '74';
                     const elPy = document.getElementById('count-python');
-                    if (elPy) elPy.innerText = data.runtimes.python || '45';
+                    if (elPy) elPy.textContent = data.runtimes.python || '45';
                     const elNode = document.getElementById('count-nodejs');
-                    if (elNode) elNode.innerText = data.runtimes.nodejs || '26';
+                    if (elNode) elNode.textContent = data.runtimes.nodejs || '26';
                     const elDock = document.getElementById('count-docker');
-                    if (elDock) elDock.innerText = data.runtimes.docker || '3';
+                    if (elDock) elDock.textContent = data.runtimes.docker || '3';
                 }
             } catch(e) {}
         }
@@ -428,7 +538,7 @@
             showAll = !showAll;
             const btnText = document.getElementById('showAllBtnText') || document.getElementById('showAllBtn');
             if (btnText) {
-                btnText.innerText = showAll ? 'Show Fewer Bundles ↑' : ('View All Verified Bundles (' + allItems.length + ') ↓');
+                btnText.textContent = showAll ? 'Show Fewer Bundles ↑' : ('View All Verified Bundles (' + allItems.length + ') ↓');
             }
             ensureDataLoaded();
             renderItems();
@@ -468,7 +578,7 @@
                 pag.style.display = (query || totalFiltered <= INITIAL_LIMIT) ? 'none' : 'block';
                 const btnText = document.getElementById('showAllBtnText') || document.getElementById('showAllBtn');
                 if (btnText && !query) {
-                    btnText.innerText = showAll ? 'Show Fewer Bundles ↑' : ('View All Verified Bundles (' + totalFiltered + ') ↓');
+                    btnText.textContent = showAll ? 'Show Fewer Bundles ↑' : ('View All Verified Bundles (' + totalFiltered + ') ↓');
                 }
             }
 
@@ -544,13 +654,13 @@
             navigator.clipboard.writeText(config);
             const text = document.getElementById('copyText');
             if (text) {
-                text.innerText = '✓ Copied!';
-                setTimeout(() => { text.innerText = '📋 Copy'; }, 2000);
+                text.textContent = '✓ Copied!';
+                setTimeout(() => { text.textContent = '📋 Copy'; }, 2000);
             }
         }
 
-        // Render baseline instantly with 0 initial fetch requests (0 ms Critical Chain / 0 ms TBT)
-        renderItems();
+        // Zero forced reflow: DOM is already pre-rendered statically in HTML.
+        // JS only renders when the user searches, filters, or expands.
     </script>
 </body>
 </html>
