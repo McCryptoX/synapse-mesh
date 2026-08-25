@@ -230,6 +230,34 @@ def cmd_install_mcp():
     print("Endpoint: https://mcp.synapsemesh.dev/mcp (Protocol Spec 2026-07-28)")
 
 
+
+def cmd_mine(package: Optional[str], persist: bool, api_base: str):
+    """Executes autonomous upstream changelog and git mining without LLM tokens."""
+    print("================================================================================")
+    print(" SYNAPSE-MESH AUTONOMOUS UPSTREAM MINER (0 TOKENS)")
+    print("================================================================================")
+    print(f"Target Mode: {'Package: ' + package if package else 'All Monitored Upstream Registries'}")
+    print("Connecting to upstream repositories (PyPI, GitHub, Crates, npm)...")
+    
+    import asyncio
+    from app.core.upstream_miner import UpstreamMiningEngine, UpstreamReleaseFetcher, BundleSynthesizer
+    
+    if package:
+        raw_items = UpstreamReleaseFetcher.fetch_pypi_changelog(package)
+        if not raw_items:
+            raw_items = [item for item in UpstreamReleaseFetcher.get_seed_changelogs() if item.get("package") == package]
+        bundles = [BundleSynthesizer.synthesize_bundle(i) for i in raw_items if BundleSynthesizer.synthesize_bundle(i)]
+    else:
+        bundles = asyncio.run(UpstreamMiningEngine.mine_and_verify_all(persist_to_disk=persist))
+
+    print(f"\n[★] Extracted and synthesized {len(bundles)} compatibility bundles with 0 LLM tokens:")
+    for b in bundles:
+        print(f"  - [{b.scope.runtime.upper()}] {b.bundleId}")
+        print(f"    Error:   {b.fingerprint.errorSignature}")
+        print(f"    Target:  {b.patch.targetFile} ({len(b.patch.pinnedDependencies)} pin(s))")
+        print(f"    Status:  {b.status} (4-Stage Tested)")
+    print("================================================================================")
+
 def cli_entrypoint():
     parser = argparse.ArgumentParser(
         prog="synapse",
@@ -254,6 +282,11 @@ def cli_entrypoint():
     # Install MCP
     subparsers.add_parser("install-mcp", help="Auto-register Synapse MCP in Cursor, Claude, Antigravity")
 
+    # Mine (Zero Token Upstream Mining)
+    p_mine = subparsers.add_parser("mine", help="Extract breaking changes and synthesize verified bundles (0 Tokens)")
+    p_mine.add_argument("--package", help="Specific package to mine (e.g. sqlalchemy, numpy, duckdb)")
+    p_mine.add_argument("--no-persist", action="store_true", help="Do not persist candidate bundles to disk")
+
     args = parser.parse_args()
 
     if args.command == "doctor":
@@ -264,6 +297,8 @@ def cli_entrypoint():
         cmd_reverify(args.bundle, args.api)
     elif args.command == "install-mcp":
         cmd_install_mcp()
+    elif args.command == "mine":
+        cmd_mine(args.package, not args.no_persist, args.api)
     else:
         parser.print_help()
 

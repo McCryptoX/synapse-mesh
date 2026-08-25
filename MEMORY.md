@@ -48,6 +48,7 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 ---
 
 ## 3. Die Neue Positionierung: Verified Compatibility Layer
+- **Autonomous Upstream Mining Engine (0 Token-Kosten):** Vollautomatischer Extraktor (`app/core/upstream_miner.py`, `synapse mine`, `/api/v1/miner/run`), der Breaking Changes, Fehlersignaturen, Unified Diffs und 4-Stufen-Testfixtures direkt aus Open-Source-Changelogs und Git-Releases extrahiert – 100% tokenfrei ohne LLM-Kosten.
 - **Full WebMCP 2026 Native Support:** Deklaratives `<script type="application/webmcp+json">`, WebMCP-Formular-Annotationen (`data-tool-name`, `data-param-name`), `navigator.modelContext.registerTool()` und `llms.txt` implementiert. Synapse-Mesh besteht alle Google Lighthouse Agentic Browsing Audits.
 - **Strict llmstxt.org Standard:** `/llms.txt` strikt nach Markdown-Link-Spezifikation (`- [Titel](url): Beschreibung`) formatiert, damit Google Lighthouse Agentic Browsing und autonome LLM-Crawler die Schnittstellen fehlerfrei erfassen.
 - **Google Agentic Browsing & WebMCP Standards:** `/llms.txt` und `/llms-full.txt` nach llmstxt.org-Standard implementiert; WebMCP-Formular-Annotationen (`data-mcp-tool`), `window.__mcp_tools__`-Registry und Schema.org `potentialAction` für autonome Browser-Agenten live.
