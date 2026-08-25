@@ -166,45 +166,86 @@ async def mcp_json_rpc(request: Request):
         if tool_name == "find_solution":
             error_sig = arguments.get("errorSignature", "")
             await log_agent_access("mcp_call", "find_solution", error_sig, request)
+            runtime_filter = arguments.get("runtime")
 
-            search_req = RecipeSearchRequest(
-                errorSignature=error_sig,
-                runtime=arguments.get("runtime"),
-                packages=arguments.get("packages")
-            )
-            recipes = await search_recipes(search_req)
-            
-            if not recipes:
-                content_text = json.dumps({
-                    "status": "NO_RECIPE_FOUND",
-                    "errorSignature": search_req.errorSignature,
-                    "suggestion": "Submit a minimal reproduction to Synapse-Mesh for sandbox verification."
-                }, indent=2)
-            else:
-                # Ultra-token-dense machine payload (< 800 tokens)
-                payloads = []
-                for r in recipes:
-                    payloads.append({
-                        "recipeId": r.id,
-                        "runtime": r.problem.runtime,
-                        "errorSignature": r.problem.errorSignature,
-                        "pinnedDependencies": r.solution.pinnedDependencies or r.problem.packages,
-                        "summary": r.solution.summary,
-                        "diff": r.solution.codeDiff or r.solution.patchDiff,
-                        "doNot": r.solution.doNot,
-                        "reverify": {
-                            "testSuite": r.reproduction.testSuite
-                        },
-                        "evidence": {
-                            "status": r.evidence.verificationStatus,
-                            "preExit": r.evidence.preExit,
-                            "postExit": r.evidence.postExit,
-                            "mutationsKilled": r.evidence.mutationsKilled,
-                            "confidence": r.evidence.confidenceScore
-                        },
-                        "canonicalUrl": f"https://synapsemesh.dev/recipes/{r.id}"
+            # 1. Prioritize Golden Compatibility Bundles v1.0
+            from app.api.bundles import load_all_golden_bundles
+            import re
+            matched_bundles = []
+            for b in load_all_golden_bundles():
+                if runtime_filter and b.get("scope", {}).get("runtime", "").lower() != runtime_filter.lower():
+                    continue
+                fp = b.get("fingerprint", {})
+                regex_pat = fp.get("regex", "")
+                sig_text = fp.get("errorSignature", "").lower()
+                desc = b.get("description", "").lower()
+                pkg = b.get("scope", {}).get("package", "").lower()
+
+                matched = False
+                if error_sig.lower() in sig_text or error_sig.lower() in desc or error_sig.lower() in pkg:
+                    matched = True
+                elif regex_pat:
+                    try:
+                        if re.search(regex_pat, error_sig, re.IGNORECASE):
+                            matched = True
+                    except Exception:
+                        pass
+
+                if matched:
+                    matched_bundles.append({
+                        "bundleId": b.get("bundleId"),
+                        "runtime": b.get("scope", {}).get("runtime"),
+                        "status": b.get("status", "VERIFIED"),
+                        "errorSignature": fp.get("errorSignature"),
+                        "pinnedDependencies": b.get("patch", {}).get("pinnedDependencies", {}),
+                        "summary": b.get("description"),
+                        "diff": b.get("patch", {}).get("unifiedDiff"),
+                        "doNot": b.get("patch", {}).get("doNot", []),
+                        "reverify": f"synapse reverify {b.get('bundleId')}",
+                        "canonicalUrl": f"https://synapsemesh.dev/api/v1/bundles/{b.get('bundleId')}"
                     })
-                content_text = json.dumps(payloads if len(payloads) > 1 else payloads[0], indent=2)
+
+            if matched_bundles:
+                content_text = json.dumps(matched_bundles[0] if len(matched_bundles) == 1 else matched_bundles, indent=2)
+            else:
+                # 2. Fallback to Legacy Recipes Store
+                search_req = RecipeSearchRequest(
+                    errorSignature=error_sig,
+                    runtime=runtime_filter,
+                    packages=arguments.get("packages")
+                )
+                recipes = await search_recipes(search_req)
+                
+                if not recipes:
+                    content_text = json.dumps({
+                        "status": "NO_SOLUTION_FOUND",
+                        "errorSignature": search_req.errorSignature,
+                        "suggestion": "Submit a minimal reproduction to Synapse-Mesh for sandbox verification."
+                    }, indent=2)
+                else:
+                    payloads = []
+                    for r in recipes:
+                        payloads.append({
+                            "recipeId": r.id,
+                            "runtime": r.problem.runtime,
+                            "errorSignature": r.problem.errorSignature,
+                            "pinnedDependencies": r.solution.pinnedDependencies or r.problem.packages,
+                            "summary": r.solution.summary,
+                            "diff": r.solution.codeDiff or r.solution.patchDiff,
+                            "doNot": r.solution.doNot,
+                            "reverify": {
+                                "testSuite": r.reproduction.testSuite
+                            },
+                            "evidence": {
+                                "status": r.evidence.verificationStatus,
+                                "preExit": r.evidence.preExit,
+                                "postExit": r.evidence.postExit,
+                                "mutationsKilled": r.evidence.mutationsKilled,
+                                "confidence": r.evidence.confidenceScore
+                            },
+                            "canonicalUrl": f"https://synapsemesh.dev/recipes/{r.id}"
+                        })
+                    content_text = json.dumps(payloads if len(payloads) > 1 else payloads[0], indent=2)
 
             return {
                 "jsonrpc": "2.0",

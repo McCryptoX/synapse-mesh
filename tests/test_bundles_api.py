@@ -34,3 +34,20 @@ async def test_search_bundles():
     results = res.json()
     assert len(results) >= 1
     assert results[0]["bundleId"] == "bundle_pydantic_v2_model_validator_001"
+
+@pytest.mark.asyncio
+async def test_verify_endpoint_requires_auth():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        bundle_payload = {
+            "schemaVersion": "1.0.0",
+            "bundleId": "test_bundle",
+            "status": "VERIFIED",
+            "description": "Test",
+            "scope": {"package": "test", "runtime": "python"},
+            "fingerprint": {"errorSignature": "TestError"},
+            "patch": {"targetFile": "main.py", "unifiedDiff": "--- a/main.py\n+++ b/main.py\n@@ -1,1 +1,1 @@\n-a\n+b\n"},
+            "verification": {"reproductionScript": "a", "testSuite": "b", "workspaceFiles": {"main.py": "a"}}
+        }
+        # Unauthenticated request must receive 403 Forbidden
+        res = await ac.post("/api/v1/bundles/verify", json=bundle_payload)
+        assert res.status_code == 403

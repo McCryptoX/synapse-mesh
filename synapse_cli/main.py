@@ -77,31 +77,77 @@ def cmd_doctor(api_base: str):
 
 def cmd_search(query: str, runtime: Optional[str], api_base: str):
     """Queries verified compatibility bundles with token-dense output."""
-    url = f"{api_base.rstrip('/')}/api/v1/recipes/search"
-    payload = {"errorSignature": query, "limit": 5}
+    # 1. Search Golden Compatibility Bundles
+    url_bundles = f"{api_base.rstrip('/')}/api/v1/bundles/search"
+    payload = {"query": query}
     if runtime:
         payload["runtime"] = runtime
 
     print(f"[*] Searching Synapse-Mesh for: '{query}'...")
+    data_bundles = []
     try:
         if httpx:
-            r = httpx.post(url, json=payload, timeout=8.0)
-            data = r.json()
+            r = httpx.post(url_bundles, json=payload, timeout=8.0)
+            if r.status_code == 200:
+                data_bundles = r.json()
         else:
             import urllib.request
-            req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
+            req = urllib.request.Request(url_bundles, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
             with urllib.request.urlopen(req, timeout=8.0) as resp:
-                data = json.loads(resp.read().decode())
+                data_bundles = json.loads(resp.read().decode())
+    except Exception:
+        pass
+
+    if data_bundles:
+        print(f"\n[★] Found {len(data_bundles)} Golden Compatibility Bundle(s):\n" + "="*80)
+        for b in data_bundles:
+            bid = b.get("bundleId")
+            scope = b.get("scope", {})
+            fp = b.get("fingerprint", {})
+            patch = b.get("patch", {})
+            verif = b.get("verification", {})
+            muts = verif.get("mutations", [])
+            print(f"BUNDLE ID: {bid}")
+            print(f"RUNTIME:   {scope.get('runtime')} | PACKAGE: {scope.get('package')} ({scope.get('toVersion')}) | STATUS: {b.get('status')} ({len(muts)} mutants)")
+            print(f"ERROR:     {fp.get('errorSignature')}")
+            if patch.get("pinnedDependencies"):
+                print(f"PINS:      {patch.get('pinnedDependencies')}")
+            print(f"SUMMARY:   {b.get('description')}")
+            if patch.get("doNot"):
+                print(f"DO NOT:    {patch.get('doNot')}")
+            if patch.get("unifiedDiff"):
+                print(f"\n--- UNIFIED DIFF ---\n{patch.get('unifiedDiff').strip()}\n--------------------")
+            print(f"VERIFY:    synapse reverify {bid}")
+            print("="*80)
+        return
+
+    # 2. Fallback to Legacy Recipes Store
+    url_recipes = f"{api_base.rstrip('/')}/api/v1/recipes/search"
+    payload_rec = {"errorSignature": query, "limit": 5}
+    if runtime:
+        payload_rec["runtime"] = runtime
+
+    data_rec = []
+    try:
+        if httpx:
+            r = httpx.post(url_recipes, json=payload_rec, timeout=8.0)
+            if r.status_code == 200:
+                data_rec = r.json()
+        else:
+            import urllib.request
+            req = urllib.request.Request(url_recipes, data=json.dumps(payload_rec).encode(), headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=8.0) as resp:
+                data_rec = json.loads(resp.read().decode())
     except Exception as e:
         print(f"[!] Query failed: {e}", file=sys.stderr)
         sys.exit(1)
 
-    if not data:
-        print("[!] No verified compatibility bundles found matching query.")
+    if not data_rec:
+        print("[!] No verified compatibility bundles or recipes found matching query.")
         sys.exit(0)
 
-    print(f"\n[✓] Found {len(data)} Verified Compatibility Bundle(s):\n" + "="*80)
-    for b in data:
+    print(f"\n[✓] Found {len(data_rec)} Recipe(s):\n" + "="*80)
+    for b in data_rec:
         bid = b.get("id")
         prob = b.get("problem", {})
         sol = b.get("solution", {})
@@ -110,8 +156,8 @@ def cmd_search(query: str, runtime: Optional[str], api_base: str):
         pins = sol.get("pinnedDependencies") or prob.get("packages") or {}
         do_not = sol.get("doNot", [])
 
-        print(f"BUNDLE ID: {bid}")
-        print(f"RUNTIME:   {prob.get('runtime')} | STATUS: {evi.get('verificationStatus')} (Kills: {evi.get('mutationsKilled', 'N/A')})")
+        print(f"RECIPE ID: {bid}")
+        print(f"RUNTIME:   {prob.get('runtime')} | STATUS: {evi.get('verificationStatus')}")
         print(f"ERROR:     {prob.get('errorSignature')}")
         if pins:
             print(f"PINS:      {pins}")

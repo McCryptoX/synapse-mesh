@@ -79,6 +79,9 @@ async def search_bundles(req: BundleSearchRequest):
     return results
 
 
+from fastapi import Header
+from app.config import settings
+
 class BundleVerificationResponse(BaseModel):
     verified: bool
     bundleId: str
@@ -86,8 +89,17 @@ class BundleVerificationResponse(BaseModel):
 
 
 @router.post("/verify", response_model=BundleVerificationResponse)
-async def verify_bundle_endpoint(bundle: CompatibilityBundle):
-    """Executes the hermetic 4-stage sandbox verification on a submitted bundle."""
+async def verify_bundle_endpoint(
+    bundle: CompatibilityBundle,
+    x_admin_key: Optional[str] = Header(None, alias="X-Synapse-Admin-Key")
+):
+    """Authenticated endpoint for executing server-side sandbox verification on a bundle."""
+    if not x_admin_key or x_admin_key != settings.admin_token:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Server-side bundle verification requires a valid X-Synapse-Admin-Key. Use client-side 'synapse reverify' for unauthenticated local execution."
+        )
+
     try:
         ok = verify_golden_bundle(bundle.model_dump())
         return BundleVerificationResponse(

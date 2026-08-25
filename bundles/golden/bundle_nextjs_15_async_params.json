@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_nextjs_15_async_params_001",
-  "status": "VERIFIED",
+  "status": "SCHEMA_VERIFIED",
   "description": "Next.js 15 dynamic App Router parameters are promises and must be typed and consumed asynchronously.",
   "tags": [
     "nextjs",
