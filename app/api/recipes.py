@@ -28,34 +28,17 @@ jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=
 @router.get("/api/v1/recipes/stats", tags=["System"])
 async def get_recipe_stats(response: Response):
     """Returns real-time statistics and agent usage metrics (Zero-PII)."""
-    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     db = await get_db_connection()
     try:
         cursor = await db.execute("SELECT COUNT(*) as total FROM recipes")
-        total_db = (await cursor.fetchone())["total"]
+        total_all = (await cursor.fetchone())["total"]
 
         cursor = await db.execute("SELECT COUNT(*) as verified FROM recipes WHERE verification_status = 'VERIFIED'")
-        verified_db = (await cursor.fetchone())["verified"]
+        total_verified = (await cursor.fetchone())["verified"]
 
         cursor = await db.execute("SELECT runtime, COUNT(*) as count FROM recipes WHERE verification_status = 'VERIFIED' GROUP BY runtime")
         by_runtime = {row["runtime"].lower(): row["count"] for row in await cursor.fetchall()}
-
-        golden_dir = Path(__file__).resolve().parent.parent.parent / "bundles" / "golden"
-        golden_count = 0
-        if golden_dir.exists():
-            for f in golden_dir.glob("*.json"):
-                try:
-                    data = json.loads(f.read_text(encoding="utf-8"))
-                    rt = data.get("scope", {}).get("runtime", "python").lower()
-                    by_runtime[rt] = by_runtime.get(rt, 0) + 1
-                    golden_count += 1
-                except Exception:
-                    pass
-        if golden_count == 0:
-            golden_count = 12
-
-        total_verified = verified_db + golden_count
-        total_all = total_db + golden_count
 
         # Access & Agent Activity Metrics
         cursor = await db.execute("SELECT COUNT(*) as calls FROM access_logs WHERE source_type = 'mcp_call'")

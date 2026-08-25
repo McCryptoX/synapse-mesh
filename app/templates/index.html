@@ -520,31 +520,34 @@ input:tool-submit-active, button:tool-submit-active {
             if (isDataFetched || isFetching) return;
             isFetching = true;
 
-            const results = [...EMBEDDED_GOLDEN_BUNDLES];
+            const results = [];
+            const seenIds = new Set();
 
             try {
                 const [resBundles, resRecipes] = await Promise.allSettled([
                     fetch('/api/v1/bundles', { headers: { 'Accept': 'application/json' } }),
-                    fetch('/api/v1/recipes?limit=100', { headers: { 'Accept': 'application/json' } })
+                    fetch('/api/v1/recipes?limit=150', { headers: { 'Accept': 'application/json' } })
                 ]);
 
                 if (resBundles.status === 'fulfilled' && resBundles.value.ok) {
                     const bundles = await resBundles.value.json();
                     if (Array.isArray(bundles) && bundles.length > 0) {
-                        results.length = 0;
                         bundles.forEach(b => {
-                            results.push({
-                                id: b.bundleId,
-                                isGolden: true,
-                                runtime: (b.scope && b.scope.runtime) || 'python',
-                                errorSignature: (b.fingerprint && b.fingerprint.errorSignature) || b.bundleId,
-                                summary: b.description || '',
-                                diff: (b.patch && b.patch.unifiedDiff) || '',
-                                pins: (b.patch && b.patch.pinnedDependencies) || {},
-                                doNot: (b.patch && b.patch.doNot) || [],
-                                status: b.status || 'VERIFIED',
-                                reverify: 'synapse reverify ' + b.bundleId
-                            });
+                            if (!seenIds.has(b.bundleId)) {
+                                seenIds.add(b.bundleId);
+                                results.push({
+                                    id: b.bundleId,
+                                    isGolden: true,
+                                    runtime: (b.scope && b.scope.runtime) || 'python',
+                                    errorSignature: (b.fingerprint && b.fingerprint.errorSignature) || b.bundleId,
+                                    summary: b.description || '',
+                                    diff: (b.patch && b.patch.unifiedDiff) || '',
+                                    pins: (b.patch && b.patch.pinnedDependencies) || {},
+                                    doNot: (b.patch && b.patch.doNot) || [],
+                                    status: b.status || 'VERIFIED',
+                                    reverify: 'synapse reverify ' + b.bundleId
+                                });
+                            }
                         });
                     }
                 }
@@ -553,24 +556,32 @@ input:tool-submit-active, button:tool-submit-active {
                     const recipes = await resRecipes.value.json();
                     if (Array.isArray(recipes)) {
                         recipes.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED').forEach(r => {
-                            results.push({
-                                id: r.id,
-                                isGolden: false,
-                                runtime: (r.problem && r.problem.runtime) || 'python',
-                                errorSignature: (r.problem && r.problem.errorSignature) || r.id,
-                                summary: (r.solution && r.solution.summary) || '',
-                                diff: (r.solution && (r.solution.codeDiff || r.solution.patchDiff)) || '',
-                                pins: (r.solution && r.solution.pinnedDependencies) || (r.problem && r.problem.packages) || {},
-                                doNot: (r.solution && r.solution.doNot) || [],
-                                status: r.evidence ? r.evidence.verificationStatus : 'VERIFIED',
-                                reverify: 'synapse reverify ' + r.id,
-                                detailUrl: '/recipes/' + r.id
-                            });
+                            const rid = r.id;
+                            if (!seenIds.has(rid)) {
+                                seenIds.add(rid);
+                                results.push({
+                                    id: r.id,
+                                    isGolden: false,
+                                    runtime: (r.problem && r.problem.runtime) || 'python',
+                                    errorSignature: (r.problem && r.problem.errorSignature) || r.id,
+                                    summary: (r.solution && r.solution.summary) || '',
+                                    diff: (r.solution && (r.solution.codeDiff || r.solution.patchDiff)) || '',
+                                    pins: (r.solution && r.solution.pinnedDependencies) || (r.problem && r.problem.packages) || {},
+                                    doNot: (r.solution && r.solution.doNot) || [],
+                                    status: r.evidence ? r.evidence.verificationStatus : 'VERIFIED',
+                                    reverify: 'synapse reverify ' + r.id,
+                                    detailUrl: '/recipes/' + r.id
+                                });
+                            }
                         });
                     }
                 }
             } catch (e) {
                 console.debug("Background sync note:", e);
+            }
+
+            if (results.length === 0) {
+                results.push(...EMBEDDED_GOLDEN_BUNDLES);
             }
 
             allItems = results;
