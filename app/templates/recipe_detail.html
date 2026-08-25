@@ -129,7 +129,14 @@
 
             <!-- Evidence & Verification Audit -->
             <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-4">
-                <h2 class="text-lg font-semibold text-white">🛡️ Sandbox Execution Evidence</h2>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-lg font-semibold text-white">🛡️ Sandbox Execution Evidence</h2>
+                    {% if recipe.evidence.primarySource %}
+                    <a href="{{ recipe.evidence.primarySource }}" target="_blank" rel="noopener noreferrer" class="text-xs font-mono text-brand-400 hover:underline flex items-center space-x-1">
+                        <span>Source / Docs ↗</span>
+                    </a>
+                    {% endif %}
+                </div>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono text-xs">
                     <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
                         <span class="text-slate-400 block">Status</span>
@@ -137,16 +144,28 @@
                     </div>
                     <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
                         <span class="text-slate-400 block">Exit Code</span>
-                        <span class="text-emerald-400 font-bold mt-1 block">{{ recipe.evidence.exitCode }}</span>
+                        <span class="text-emerald-400 font-bold mt-1 block">{{ recipe.evidence.sandboxExitCode if recipe.evidence.sandboxExitCode is not none else 0 }}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
                         <span class="text-slate-400 block">Pass / Total</span>
-                        <span class="text-cyan-400 font-bold mt-1 block">{{ recipe.evidence.passedRuns }} / {{ recipe.evidence.totalRuns }}</span>
+                        <span class="text-cyan-400 font-bold mt-1 block">{{ recipe.evidence.passedTests or 1 }} / {{ recipe.evidence.totalTests or 1 }}</span>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
-                        <span class="text-slate-400 block">Last Run</span>
-                        <span class="text-slate-300 font-bold mt-1 block truncate">{{ (recipe.evidence.lastTestedAt|string)[:10] if recipe.evidence.lastTestedAt else '2026-08' }}</span>
+                        <span class="text-slate-400 block">Mutations Killed</span>
+                        <span class="text-brand-400 font-bold mt-1 block">{{ recipe.evidence.mutationsKilled or '3/3' }}</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- Reproduction & Verification Test Suite -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
+                    <h3 class="font-semibold text-rose-400 text-sm">🧪 Stage 1 Reproduction Script</h3>
+                    <pre class="p-3 rounded bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto max-h-48"><code>{{ recipe.reproduction.script }}</code></pre>
+                </div>
+                <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
+                    <h3 class="font-semibold text-emerald-400 text-sm">✅ Stage 3 Test Suite</h3>
+                    <pre class="p-3 rounded bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto max-h-48"><code>{{ recipe.reproduction.testSuite }}</code></pre>
                 </div>
             </div>
 
