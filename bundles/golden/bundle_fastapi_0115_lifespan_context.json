@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_fastapi_0115_lifespan_context_001",
+  "status": "VERIFIED",
+  "description": "FastAPI 0.100+ deprecates '@app.on_event' startup and shutdown handlers in favor of async context manager lifespan handlers.",
+  "tags": [
+    "python",
+    "fastapi",
+    "starlette",
+    "lifespan",
+    "asynccontextmanager"
+  ],
+  "scope": {
+    "package": "fastapi",
+    "fromVersion": "0.95.0",
+    "toVersion": ">=0.100.0",
+    "runtime": "python",
+    "runtimeVersion": ">=3.10",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.",
+    "regex": "DeprecationWarning:[\\s\\S]*on_event is deprecated, use lifespan event handlers instead",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "server.py",
+    "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,17 +1,18 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n-\n-@app.on_event(\"startup\")\n-def startup_event():\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n     app.state.ready = True\n+    yield\n+    app.state.ready = False\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+app = FastAPI(lifespan=lifespan)\n \n @app.get(\"/status\")\n def get_status():\n",
+    "pinnedDependencies": {
+      "fastapi": ">=0.100.0",
+      "starlette": ">=0.27.0"
+    },
+    "doNot": [
+      "Do not silence DeprecationWarning while retaining @app.on_event.",
+      "Do not define a lifespan function without yield statement.",
+      "Do not retain @app.on_event alongside FastAPI(lifespan=...).",
+      "Do not forget to handle cleanup logic after the yield statement."
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "server.py": "import warnings\nfrom fastapi import FastAPI\n\nwarnings.simplefilter(\"error\", DeprecationWarning)\n\napp = FastAPI()\n\n@app.on_event(\"startup\")\ndef startup_event():\n    app.state.ready = True\n\n@app.on_event(\"shutdown\")\ndef shutdown_event():\n    app.state.ready = False\n\n@app.get(\"/status\")\ndef get_status():\n    return {\"ready\": getattr(app.state, \"ready\", False)}\n"
+    },
+    "reproductionScript": "import runpy\nimport sys\n\nrunpy.run_path(\"server.py\", run_name=\"__main__\")\n",
+    "testSuite": "import asyncio\nfrom server import app\n\nasync def run_test():\n    async with app.router.lifespan_context(app):\n        assert app.state.ready is True, \"Startup lifespan side-effect failed to set ready=True\"\n    assert app.state.ready is False, \"Shutdown lifespan side-effect failed to set ready=False\"\n    print(\"ALL TESTS PASSED\")\n\nasyncio.run(run_test())\n",
+    "mutations": [
+      {
+        "id": "fastapi_lifespan_without_yield",
+        "description": "Defines an async lifespan function that fails to yield control.",
+        "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,17 +1,17 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n-\n-@app.on_event(\"startup\")\n-def startup_event():\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n     app.state.ready = True\n+    return\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+app = FastAPI(lifespan=lifespan)\n \n @app.get(\"/status\")\n def get_status():\n"
+      },
+      {
+        "id": "fastapi_dual_registration_retain_on_event",
+        "description": "Adds lifespan context manager but retains @app.on_event triggering deprecation error under -W error.",
+        "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,17 +1,17 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n+    app.state.ready = True\n+    yield\n+    app.state.ready = False\n \n-@app.on_event(\"startup\")\n-def startup_event():\n-    app.state.ready = True\n+app = FastAPI(lifespan=lifespan)\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+@app.on_event(\"startup\")\n+def startup_event():\n+    pass\n \n @app.get(\"/status\")\n def get_status():\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 30000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://fastapi.tiangolo.com/advanced/events/#lifespan",
+      "https://www.starlette.io/lifespan/"
+    ],
+    "verifiedAt": "2026-08-25T06:30:00Z"
+  }
+}

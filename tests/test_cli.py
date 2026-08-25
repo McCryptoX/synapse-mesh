@@ -117,3 +117,11 @@ def test_golden_nextjs_bundle_schema_and_fixture_structure():
     assert "workspaceFiles" in data["verification"]
     assert "app/blog/[slug]/page.tsx" in data["verification"]["workspaceFiles"]
     assert len(data["verification"]["mutations"]) >= 2
+
+def test_golden_fastapi_bundle_full_4stage_pass():
+    """Tests the real Golden Bundle for FastAPI 0.115 lifespan context manager."""
+    p = BASE_DIR / "bundles/golden/bundle_fastapi_0115_lifespan_context.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert verify_bundle_data(data) is True
