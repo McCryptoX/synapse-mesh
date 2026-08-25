@@ -20,9 +20,15 @@
   },
   "fingerprint": {
     "errorSignature": "PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated.",
-    "regex": "PydanticDeprecatedSince20: Pydantic V1 style `?@root_validator`? validators are deprecated",
+    "regex": "PydanticDeprecatedSince20.*(?:@?root_validator|root_validator.*deprecated)",
     "regexFlags": "",
-    "matchStream": "stderr"
+    "matchStream": "stderr",
+    "variants": [
+      {
+        "errorSignature": "PydanticDeprecatedSince20: The `@root_validator` method is deprecated, use `@model_validator` instead.",
+        "regex": "PydanticDeprecatedSince20.*@?root_validator.*deprecated"
+      }
+    ]
   },
   "patch": {
     "targetFile": "user_model.py",
