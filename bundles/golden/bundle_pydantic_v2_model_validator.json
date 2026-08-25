@@ -11,10 +11,10 @@
   ],
   "scope": {
     "package": "pydantic",
-    "fromVersion": "1.10.21",
-    "toVersion": "2.10.6",
+    "fromVersion": "1.10.x",
+    "toVersion": ">=2.0.0, <3.0.0",
     "runtime": "python",
-    "runtimeVersion": "3.11.9",
+    "runtimeVersion": "3.12.13",
     "platform": "all"
   },
   "fingerprint": {
@@ -27,10 +27,9 @@
     "targetFile": "user_model.py",
     "unifiedDiff": "--- a/user_model.py\n+++ b/user_model.py\n@@ -1,18 +1,16 @@\n-import warnings\n from typing import Any\n \n-from pydantic import BaseModel, PydanticDeprecatedSince20, root_validator\n-\n-warnings.simplefilter(\"error\", PydanticDeprecatedSince20)\n+from pydantic import BaseModel, model_validator\n \n \n class UserPayload(BaseModel):\n     name: str\n     age: int\n \n-    @root_validator(pre=True)\n-    def migrate_full_name(cls, values: dict[str, Any]) -> dict[str, Any]:\n-        if \"name\" not in values and \"full_name\" in values:\n-            values = dict(values)\n-            values[\"name\"] = values.pop(\"full_name\")\n-        return values\n+    @model_validator(mode=\"before\")\n+    @classmethod\n+    def migrate_full_name(cls, data: Any) -> Any:\n+        if isinstance(data, dict) and \"name\" not in data and \"full_name\" in data:\n+            data = dict(data)\n+            data[\"name\"] = data.pop(\"full_name\")\n+        return data\n",
     "pinnedDependencies": {
-      "pydantic": "2.10.6",
-      "pydantic-core": "2.27.2",
-      "annotated-types": "0.7.0",
-      "typing-extensions": "4.12.2"
+      "pydantic": ">=2.0.0, <3.0.0",
+      "pydantic-core": ">=2.0.0",
+      "typing-extensions": ">=4.6.0"
     },
     "doNot": [
       "Do not silence PydanticDeprecatedSince20 while retaining root_validator.",

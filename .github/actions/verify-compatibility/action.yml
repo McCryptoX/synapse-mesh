@@ -81,13 +81,17 @@ runs:
         INPUT_BUNDLE: ${{ inputs.bundle }}
         VERIFIER: ${{ steps.paths.outputs.verifier }}
         SCHEMA: ${{ steps.paths.outputs.schema }}
+        ATTESTATION: ${{ steps.paths.outputs.attestation }}
       run: |
         set -euo pipefail
         bundle_source="$INPUT_BUNDLE"
         if [[ "$bundle_source" != https://* && "$bundle_source" != /* ]]; then
           bundle_source="$GITHUB_WORKSPACE/$bundle_source"
         fi
-        node "$VERIFIER" "$bundle_source" --schema "$SCHEMA" --validate-only
+        node "$VERIFIER" "$bundle_source" \
+          --schema "$SCHEMA" \
+          --validate-only \
+          --attestation "$ATTESTATION"
 
     - id: verify
       name: Execute pre-fail, patch, post-pass, and mutation gates

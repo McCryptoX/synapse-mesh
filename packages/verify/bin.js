@@ -116,6 +116,7 @@ async function main() {
       result = {
         verified: false,
         validationOnly: true,
+        validationPassed: true,
         bundleId: source.value.bundleId,
         bundleVersion: source.value.schemaVersion,
         bundleSha256: source.sha256,
@@ -136,6 +137,7 @@ async function main() {
     result = {
       verified: false,
       validationOnly: Boolean(args.validateOnly),
+      validationPassed: false,
       bundleId: null,
       bundleSha256: null,
       failureReason: error.message,
@@ -148,7 +150,7 @@ async function main() {
   const attestation = createAttestation(result, args.source);
   if (args.attestationPath) writeJson(args.attestationPath, attestation);
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-  return result.validationOnly || result.verified ? 0 : 1;
+  return (result.validationOnly && result.validationPassed) || result.verified ? 0 : 1;
 }
 
 main()

@@ -805,7 +805,9 @@ async function verifyBundle(bundle, options = {}) {
   const scriptOptions = {
     timeoutMs,
     maxOutputBytes: options.maxOutputBytes || DEFAULT_MAX_OUTPUT_BYTES,
-    pythonBinary: options.pythonBinary && !path.isAbsolute(options.pythonBinary)
+    pythonBinary: options.pythonBinary &&
+      !path.isAbsolute(options.pythonBinary) &&
+      /[\\/]/.test(options.pythonBinary)
       ? path.resolve(options.pythonBinary)
       : options.pythonBinary,
     environment: executionEnvironment,
@@ -1043,6 +1045,8 @@ function createAttestation(result, source) {
       generatedAt: new Date().toISOString(),
       source: source || null,
       verified: Boolean(result.verified),
+      validationOnly: Boolean(result.validationOnly),
+      validationPassed: result.validationPassed === undefined ? null : Boolean(result.validationPassed),
       failureReason: result.failureReason || null,
       preExit: result.preExit ?? null,
       postExit: result.postExit ?? null,

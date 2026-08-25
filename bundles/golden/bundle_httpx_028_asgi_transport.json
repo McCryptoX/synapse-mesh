@@ -14,7 +14,7 @@
     "fromVersion": "0.27.2",
     "toVersion": "0.28.1",
     "runtime": "python",
-    "runtimeVersion": "3.11.9",
+    "runtimeVersion": "3.12.13",
     "platform": "all"
   },
   "fingerprint": {
@@ -27,7 +27,12 @@
     "targetFile": "client.py",
     "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -16,7 +16,8 @@\n \n \n async def fetch_health() -> httpx.Response:\n-    async with httpx.AsyncClient(app=app, base_url=\"http://testserver\") as client:\n+    transport = httpx.ASGITransport(app=app)\n+    async with httpx.AsyncClient(transport=transport, base_url=\"http://testserver\") as client:\n         return await client.get(\"/health\")\n \n \n",
     "pinnedDependencies": {
-      "httpx": "0.28.1"
+      "httpx": "0.28.1",
+      "httpcore": "1.0.9",
+      "anyio": "4.14.2",
+      "certifi": "2026.7.22",
+      "h11": "0.16.0",
+      "idna": "3.19"
     },
     "doNot": [
       "Do not downgrade HTTPX to restore the removed app shortcut.",

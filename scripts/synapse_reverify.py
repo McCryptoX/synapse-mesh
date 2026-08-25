@@ -232,6 +232,7 @@ def verify_golden_bundle(bundle: dict) -> bool:
             return False
 
         mutants_killed = 0
+        timeout_sec = float(verif.get("timeoutMs", 30000)) / 1000.0
         for idx, mut in enumerate(mutations):
             mut_id = mut.get("id", f"mut_{idx}")
             mut_diff = mut.get("unifiedDiff", "")
@@ -242,11 +243,11 @@ def verify_golden_bundle(bundle: dict) -> bool:
             # Apply mutant diff to target_path
             mut_applied = apply_patch_unified(target_path, mut_diff, workspace)
             if not mut_applied:
-                print(f"[WARN] Mutant {mut_id} diff failed to apply directly; writing diff snippet.")
-                target_path.write_text(mut_diff, encoding="utf-8")
+                print(f"[✗] STAGE 4 MUTATION FAILED: Mutant '{mut_id}' unified diff failed to apply cleanly to {target_file_rel}.", file=sys.stderr)
+                return False
 
             # Run test_runner on mutant workspace
-            res_mut = subprocess.run(runner_cmd + [str(test_runner)], cwd=workspace, capture_output=True, text=True, timeout=10)
+            res_mut = subprocess.run(runner_cmd + [str(test_runner)], cwd=workspace, capture_output=True, text=True, timeout=timeout_sec)
             if res_mut.returncode == 0:
                 print(f"[✗] STAGE 4 MUTATION FAILED: Web-Fehlfix mutant '{mut_id}' unexpectedly PASSED (escaped kill).", file=sys.stderr)
                 return False
