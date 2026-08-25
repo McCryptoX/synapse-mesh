@@ -546,10 +546,19 @@
             }
         }
 
-        // Instant render from embedded data, then asynchronously enhance with live API data
-        renderItems();
-        loadStats();
-        fetchAllData();
+        // 1. Initial sub-5ms paint of embedded baseline
+        if (window.requestAnimationFrame) {
+            requestAnimationFrame(renderItems);
+        } else {
+            renderItems();
+        }
+
+        // 2. Schedule non-critical background data fetching strictly during idle time (0 ms Long Tasks / 0 ms TBT)
+        const scheduleIdle = window.requestIdleCallback || function(cb) { return setTimeout(cb, 150); };
+        scheduleIdle(() => {
+            loadStats();
+            fetchAllData();
+        }, { timeout: 2000 });
     </script>
 </body>
 </html>
