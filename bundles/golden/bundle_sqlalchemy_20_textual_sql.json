@@ -39,7 +39,7 @@
     "targetFile": "db.py",
     "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,4 +1,4 @@\n-from sqlalchemy import create_engine\n+from sqlalchemy import create_engine, text\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return conn.execute(text(query_str))\n",
     "pinnedDependencies": {
-      "sqlalchemy": ">=2.0.0"
+      "sqlalchemy": "2.0.0"
     },
     "doNot": [
       "Do not pass raw unescaped strings directly to session.execute() in SQLAlchemy 2.0"

@@ -194,6 +194,12 @@
           "maxLength": 65,
           "pattern": "^(?:all|[a-z0-9][a-z0-9._-]{0,31}-[a-z0-9][a-z0-9._-]{0,31})$",
           "description": "all or a normalized operating-system/architecture pair such as linux-x86_64 or darwin-arm64."
+        },
+        "affectedVersionRange": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "The SemVer or PEP-440 specifier range of affected package versions."
         }
       }
     },
@@ -210,6 +216,33 @@
           "minLength": 1,
           "maxLength": 16384,
           "description": "The stable, non-PII error text expected from the failing reproduction."
+        },
+        "variants": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "required": [
+              "errorSignature"
+            ],
+            "properties": {
+              "errorSignature": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16384
+              },
+              "regex": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              "preFailAssertion": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 65536
+              }
+            }
+          }
         },
         "regex": {
           "type": "string",

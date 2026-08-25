@@ -59,7 +59,7 @@
     "targetFile": "cleaner.py",
     "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,3 +1,3 @@\n import numpy as np\n def fill_missing_values(val):\n-    return np.NAN if val is None else val\n+    return np.nan if val is None else val\n",
     "pinnedDependencies": {
-      "numpy": ">=2.0.0"
+      "numpy": "2.0.0"
     },
     "doNot": [
       "Do not monkeypatch np.NAN = np.nan on module import",

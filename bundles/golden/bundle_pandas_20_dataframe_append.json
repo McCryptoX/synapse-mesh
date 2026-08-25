@@ -43,7 +43,7 @@
     "targetFile": "merge_data.py",
     "unifiedDiff": "--- a/merge_data.py\n+++ b/merge_data.py\n@@ -1,5 +1,5 @@\n import pandas as pd\n def combine_batches(df1, df2):\n-    return df1.append(df2, ignore_index=True)\n+    return pd.concat([df1, df2], ignore_index=True)\n",
     "pinnedDependencies": {
-      "pandas": ">=2.0.0"
+      "pandas": "2.0.0"
     },
     "doNot": [
       "Do not monkeypatch DataFrame.append = pd.concat on global pandas module",
