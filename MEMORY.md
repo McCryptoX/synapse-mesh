@@ -124,9 +124,10 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
   2. `VERIFIED_SYNTHETIC_AST`: Syntaktisch und strukturell validierte AST-Diffs.
   3. `COMMUNITY_SUBMITTED`: Von Entwicklern/Agenten eingereichte Repro-Lösungen.
   4. `CANDIDATE_DRAFT`: Unverifizierte Upstream-Mining-Kandidaten in der Warteschlange.
-- **Search Precision & Canonical Clustering (Top 1–2):** 
-  - Stopword-Filterung und strikte Paket-Token-Gewichtung (keine themenfremden Beifänge).
-  - Maximale Relevanz für den Coding-Agenten: Direkte Ausgabe von `problem -> minimal_fix -> diff -> doNot -> environment -> confidence -> primary_source`.
+- **Search Precision & Hard-Gated Retrieval (Top-1 Canonical):** 
+  - Trennung von `matchConfidence` (Query-Relevanz) und `verificationConfidence` (Sandbox-Beweiskraft).
+  - Hard-Gate bei Retrieval: Keine Zuweisung von generischen Verben (`session`, `execute`, `router`) an Packages. Ein Match erfordert zwingend exakte Signatur-, Regex- oder High-Entropy-Token-Übereinstimmungen (Score >= 400).
+  - Adversariale Rausch- und Fantasieanfragen (z. B. `RuntimeError: session execute model router...`) liefern strikt `status: NO_VERIFIED_MATCH` mit `matchConfidence: 0.0`.
 - **Negative Evidence (`doNot`):** Dokumentiert deterministisch, welche naheliegenden Web-Workarounds und Halluzinationen in der Sandbox abgewiesen wurden.
 
-*Zuletzt aktualisiert: 25. August 2026, 19:00 Uhr*
+*Zuletzt aktualisiert: 25. August 2026, 19:16 Uhr*
