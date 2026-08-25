@@ -75,5 +75,5 @@ async def test_benchmark_page():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         res = await ac.get("/benchmark")
         assert res.status_code == 200
-        assert "Hallucination Elimination" in res.text
-        assert "GROUP C (SYNAPSE)" in res.text
+        assert "Execution-Verified Contracts" in res.text
+        assert "TREATMENT C" in res.text
