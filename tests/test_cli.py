@@ -125,3 +125,11 @@ def test_golden_fastapi_bundle_full_4stage_pass():
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
     assert verify_bundle_data(data) is True
+
+def test_golden_python_datetime_bundle_full_4stage_pass():
+    """Tests the real Golden Bundle for Python 3.12+ datetime.now(timezone.utc) migration."""
+    p = BASE_DIR / "bundles/golden/bundle_python_312_datetime_utc_aware.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert verify_bundle_data(data) is True
