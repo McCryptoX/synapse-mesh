@@ -51,3 +51,35 @@ async def test_ops_query_key_access():
         response = await client.get(f"/ops?key={settings.ops_password or synapse-ops-2026}")
         assert response.status_code == 200
         assert "Synapse-Mesh Ops" in response.text
+
+
+@pytest.mark.asyncio
+async def test_ops_change_password_workflow():
+    await init_db()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        # 1. Login with initial password
+        initial_pw = settings.ops_password or "synapse-ops-2026"
+        login_res = await client.post("/ops/login", data={"password": initial_pw})
+        cookies = login_res.cookies
+
+        # 2. Change password to new password
+        new_pw = "synapse-super-secret-2026"
+        change_res = await client.post(
+            "/ops/change-password",
+            data={
+                "current_password": initial_pw,
+                "new_password": new_pw,
+                "confirm_password": new_pw
+            },
+            cookies=cookies
+        )
+        assert change_res.status_code == 303
+
+        # 3. Verify old password no longer works
+        old_login = await client.post("/ops/login", data={"password": "wrong_old_password_123"})
+        assert old_login.status_code == 401
+
+        # 4. Verify new password works
+        new_login = await client.post("/ops/login", data={"password": new_pw})
+        assert new_login.status_code == 303

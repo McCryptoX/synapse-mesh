@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ops & Pipeline Observatory | Synapse-Mesh</title>
+    <title>Ops &amp; Pipeline Observatory | Synapse-Mesh</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     <style>
@@ -20,6 +20,8 @@
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.6rem 1.2rem; border-radius: 0.625rem; font-weight: 600; font-size: 0.875rem; font-family: ui-monospace, monospace; cursor: pointer; transition: all 0.15s ease; }
         .btn-brand { background-color: #0d9488; color: #020617; border: 1px solid #14b8a6; }
         .btn-brand:hover { background-color: #14b8a6; color: #000; box-shadow: 0 0 15px rgba(20, 184, 166, 0.4); }
+        .btn-secondary { background-color: #1e293b; color: #e2e8f0; border: 1px solid #334155; }
+        .btn-secondary:hover { background-color: #334155; color: #fff; }
         .btn-filter { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: 0.5rem; }
         .btn-filter.active { background-color: #0d9488; color: #020617; font-weight: bold; border-color: #14b8a6; }
         .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
@@ -27,12 +29,15 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         pre code { font-size: 0.75rem; font-family: ui-monospace, monospace; color: #6ee7b7; }
         .diff-box { background-color: #020617; border: 1px solid #1e293b; border-radius: 0.5rem; padding: 0.75rem; overflow-x: auto; margin-top: 0.75rem; }
+        .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 50; padding: 1rem; }
+        .input-text { width: 100%; background: #020617; border: 1px solid #334155; padding: 0.6rem 0.8rem; border-radius: 0.5rem; color: #fff; font-size: 0.85rem; font-family: ui-monospace, monospace; outline: none; margin-top: 0.25rem; margin-bottom: 0.75rem; }
+        .input-text:focus { border-color: #14b8a6; }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Top Navigation / Header -->
-        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #1e293b;">
+        <header style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #1e293b;">
             <div>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span class="pulse-dot"></span>
@@ -41,12 +46,25 @@
                 </div>
                 <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem;">Live-Status aller n&auml;chtlich geladenen Rezepte, Sandbox-Testl&auml;ufe &amp; Promotion-Gates.</p>
             </div>
-            <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
                 <button id="triggerBtn" onclick="runManualSweep()" class="btn btn-brand">&#9889; Run Verification Sweep Now</button>
+                <button onclick="togglePasswordModal(true)" class="btn btn-secondary" style="font-size: 0.75rem;">&#128273; Passwort &auml;ndern</button>
                 <a href="/" style="color: #94a3b8; font-size: 0.8rem; text-decoration: underline; font-family: monospace;">Public Site &rarr;</a>
                 <a href="/ops/logout" style="color: #f43f5e; font-size: 0.8rem; text-decoration: underline; font-family: monospace;">Logout</a>
             </div>
         </header>
+
+        <!-- Dynamic Message / Alert Banners -->
+        {% if msg %}
+        <div style="background-color: rgba(6, 78, 59, 0.6); border: 1px solid rgba(5, 150, 105, 0.6); color: #34d399; padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-family: ui-monospace, monospace; font-size: 0.85rem;">
+            &check; <strong>Erfolg:</strong> {{ msg }}
+        </div>
+        {% endif %}
+        {% if err %}
+        <div style="background-color: rgba(76, 5, 25, 0.6); border: 1px solid rgba(225, 29, 72, 0.6); color: #f43f5e; padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-family: ui-monospace, monospace; font-size: 0.85rem;">
+            &#10007; <strong>Fehler:</strong> {{ err }}
+        </div>
+        {% endif %}
 
         <!-- Stat Cards -->
         <div class="grid-stats">
@@ -93,7 +111,7 @@
             </div>
         </div>
 
-        <!-- Feedback Banner -->
+        <!-- Feedback Banner for Live Sweeps -->
         <div id="sweepFeedback" style="display: none; padding: 0.875rem 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-family: monospace; font-size: 0.85rem;"></div>
 
         <!-- Recipe Items List -->
@@ -162,6 +180,31 @@
             {% endfor %}
         </div>
 
+        <!-- Password Change Modal -->
+        <div id="passwordModal" class="modal-bg">
+            <div class="card" style="max-width: 24rem; width: 100%; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="font-size: 1.1rem; font-weight: 800; color: #fff;">&#128273; Passwort &auml;ndern</h3>
+                    <button onclick="togglePasswordModal(false)" style="background: transparent; color: #94a3b8; font-size: 1.25rem; cursor: pointer;">&times;</button>
+                </div>
+                <form action="/ops/change-password" method="POST">
+                    <label style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">Aktuelles Passwort</label>
+                    <input type="password" name="current_password" required class="input-text">
+                    
+                    <label style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">Neues Passwort (min. 6 Zeichen)</label>
+                    <input type="password" name="new_password" required minlength="6" class="input-text">
+                    
+                    <label style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">Neues Passwort best&auml;tigen</label>
+                    <input type="password" name="confirm_password" required minlength="6" class="input-text">
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                        <button type="button" onclick="togglePasswordModal(false)" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.5rem 1rem;">Abbrechen</button>
+                        <button type="submit" class="btn btn-brand" style="font-size: 0.8rem; padding: 0.5rem 1rem;">Speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <footer style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #1e293b; text-align: center; font-size: 0.75rem; color: #64748b; font-family: monospace;">
             Synapse-Mesh Internal Ops Observatory &bull; Last Database Sync: {{ last_sync }} &bull; Zero-PII by Design
         </footer>
@@ -170,6 +213,11 @@
     <script>
         let currentStatusFilter = 'all';
         let currentRuntimeFilter = 'all';
+
+        function togglePasswordModal(show) {
+            const el = document.getElementById('passwordModal');
+            if (el) el.style.display = show ? 'flex' : 'none';
+        }
 
         function setFilter(type, value, btn) {
             const parent = btn.parentElement;

@@ -4,6 +4,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import json
 import logging
+import hashlib
 import secrets
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
@@ -21,24 +22,47 @@ jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=
 COOKIE_NAME = "synapse_ops_session"
 
 
-def is_authenticated(request: Request, key: Optional[str] = None) -> bool:
-    """Verifies authentication via Cookie, Query param, or Header."""
-    valid_passwords = [p for p in [settings.ops_password, settings.admin_token] if p]
-    if not valid_passwords:
-        return True  # If no password configured, permit local access
+def hash_ops_password(raw_pass: str) -> str:
+    """Computes deterministic salted SHA-256 hash for ops password."""
+    return hashlib.sha256(f"synapse_ops_salt_2026_{raw_pass.strip()}".encode("utf-8")).hexdigest()
 
+
+async def verify_ops_password(db, raw_pass: str) -> bool:
+    """Verifies a candidate password against the database custom hash or fallback config."""
+    if not raw_pass:
+        return False
+    
+    # 1. Check custom password stored in database
+    cursor = await db.execute("SELECT value FROM system_config WHERE key = 'ops_password_hash'")
+    row = await cursor.fetchone()
+    if row and row["value"]:
+        expected_hash = row["value"]
+        candidate_hash = hash_ops_password(raw_pass)
+        if secrets.compare_digest(candidate_hash, expected_hash):
+            return True
+
+    # 2. Fallback to settings / env variables
+    valid_defaults = [p for p in [settings.ops_password, settings.admin_token] if p]
+    if any(secrets.compare_digest(raw_pass.strip(), p) for p in valid_defaults):
+        return True
+
+    return False
+
+
+async def is_authenticated(request: Request, db, key: Optional[str] = None) -> bool:
+    """Verifies authentication via Cookie, Query param, or Header."""
     # 1. Check Query parameter
-    if key and any(secrets.compare_digest(key, p) for p in valid_passwords):
+    if key and await verify_ops_password(db, key):
         return True
 
     # 2. Check Cookie
     cookie_val = request.cookies.get(COOKIE_NAME)
-    if cookie_val and any(secrets.compare_digest(cookie_val, p) for p in valid_passwords):
+    if cookie_val and await verify_ops_password(db, cookie_val):
         return True
 
     # 3. Check Header
     hdr = request.headers.get("X-Synapse-Admin-Key") or request.headers.get("Authorization", "").replace("Bearer ", "")
-    if hdr and any(secrets.compare_digest(hdr, p) for p in valid_passwords):
+    if hdr and await verify_ops_password(db, hdr):
         return True
 
     return False
@@ -46,14 +70,20 @@ def is_authenticated(request: Request, key: Optional[str] = None) -> bool:
 
 @router.get("/ops", response_class=HTMLResponse)
 @router.head("/ops", include_in_schema=False)
-async def get_ops_dashboard(request: Request, key: Optional[str] = Query(None)):
+async def get_ops_dashboard(
+    request: Request,
+    key: Optional[str] = Query(None),
+    msg: Optional[str] = Query(None),
+    err: Optional[str] = Query(None)
+):
     """Password-protected Operations & Pipeline Observatory Dashboard."""
-    if not is_authenticated(request, key):
-        template = jinja_env.get_template("ops_login.html")
-        return HTMLResponse(template.render(error=None), status_code=200)
-
     db = await get_db_connection()
     try:
+        if not await is_authenticated(request, db, key):
+            template = jinja_env.get_template("ops_login.html")
+            return HTMLResponse(template.render(error=None), status_code=200)
+
+        # 1. Total and status counts
         cursor = await db.execute("""
             SELECT 
                 COUNT(*) as total,
@@ -121,11 +151,13 @@ async def get_ops_dashboard(request: Request, key: Optional[str] = Query(None)):
             ratio=ratio,
             by_runtime=by_runtime,
             items=items,
-            last_sync=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+            last_sync=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            msg=msg,
+            err=err
         )
         resp = HTMLResponse(content=html_content)
         # If authenticated via key in URL, auto-set cookie for seamless browsing
-        if key and is_authenticated(request, key):
+        if key and await is_authenticated(request, db, key):
             resp.set_cookie(COOKIE_NAME, key, max_age=86400 * 30, httponly=True, samesite="lax")
         return resp
     finally:
@@ -135,13 +167,52 @@ async def get_ops_dashboard(request: Request, key: Optional[str] = Query(None)):
 @router.post("/ops/login")
 async def ops_login(request: Request, password: str = Form(...)):
     """Authenticates the user and sets session cookie."""
-    valid_passwords = [p for p in [settings.ops_password, settings.admin_token] if p]
-    if any(secrets.compare_digest(password.strip(), p) for p in valid_passwords):
-        resp = RedirectResponse(url="/ops", status_code=303)
-        resp.set_cookie(COOKIE_NAME, password.strip(), max_age=86400 * 30, httponly=True, samesite="lax")
+    db = await get_db_connection()
+    try:
+        if await verify_ops_password(db, password):
+            resp = RedirectResponse(url="/ops", status_code=303)
+            resp.set_cookie(COOKIE_NAME, password.strip(), max_age=86400 * 30, httponly=True, samesite="lax")
+            return resp
+        template = jinja_env.get_template("ops_login.html")
+        return HTMLResponse(template.render(error="Ungültiges Passwort. Bitte erneut versuchen."), status_code=401)
+    finally:
+        await db.close()
+
+
+@router.post("/ops/change-password")
+async def ops_change_password(
+    request: Request,
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    confirm_password: str = Form(...)
+):
+    """Allows authenticated user to change the ops dashboard password directly."""
+    db = await get_db_connection()
+    try:
+        if not await is_authenticated(request, db) or not await verify_ops_password(db, current_password):
+            return RedirectResponse(url="/ops?err=Aktuelles+Passwort+ist+ungueltig", status_code=303)
+
+        if new_password != confirm_password:
+            return RedirectResponse(url="/ops?err=Die+neuen+Passwoerter+stimmen+nicht+ueberein", status_code=303)
+
+        if len(new_password.strip()) < 6:
+            return RedirectResponse(url="/ops?err=Das+neue+Passwort+muss+mindestens+6+Zeichen+lang+sein", status_code=303)
+
+        # Store hashed new password in database
+        new_hash = hash_ops_password(new_password)
+        await db.execute("""
+            INSERT INTO system_config (key, value, updated_at) 
+            VALUES ('ops_password_hash', ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP
+        """, (new_hash,))
+        await db.commit()
+
+        # Update session cookie to new password
+        resp = RedirectResponse(url="/ops?msg=Passwort+erfolgreich+gekuerzt+und+gespeichert", status_code=303)
+        resp.set_cookie(COOKIE_NAME, new_password.strip(), max_age=86400 * 30, httponly=True, samesite="lax")
         return resp
-    template = jinja_env.get_template("ops_login.html")
-    return HTMLResponse(template.render(error="Ungültiges Passwort. Bitte erneut versuchen."), status_code=401)
+    finally:
+        await db.close()
 
 
 @router.get("/ops/logout")
@@ -155,10 +226,10 @@ async def ops_logout():
 @router.get("/api/v1/ops/telemetry", tags=["Operations & Pipeline Observatory"])
 async def get_ops_telemetry(request: Request, key: Optional[str] = Query(None)):
     """Raw JSON telemetry stream (protected)."""
-    if not is_authenticated(request, key):
-        raise HTTPException(status_code=403, detail="Forbidden: Ops authentication required.")
     db = await get_db_connection()
     try:
+        if not await is_authenticated(request, db, key):
+            raise HTTPException(status_code=403, detail="Forbidden: Ops authentication required.")
         cursor = await db.execute("""
             SELECT id, runtime, error_signature, problem_json, solution_json, evidence_json, confidence_score, verification_status, created_at, updated_at
             FROM recipes
@@ -183,17 +254,17 @@ async def get_ops_telemetry(request: Request, key: Optional[str] = Query(None)):
 @router.post("/api/v1/ops/trigger-verify", tags=["Operations & Pipeline Observatory"])
 async def trigger_manual_verification_sweep(request: Request, key: Optional[str] = Query(None)):
     """Manually triggers an immediate 4-stage sandbox verification sweep across all batches (protected)."""
-    if not is_authenticated(request, key):
-        raise HTTPException(status_code=403, detail="Forbidden: Ops authentication required.")
-    import glob
-    from scripts.batch_importer import process_candidate_recipes
-    files = sorted(glob.glob("data/candidate_recipes*.json"))
-    processed = []
-    for f in files:
-        await process_candidate_recipes(f)
-        processed.append(f)
     db = await get_db_connection()
     try:
+        if not await is_authenticated(request, db, key):
+            raise HTTPException(status_code=403, detail="Forbidden: Ops authentication required.")
+        import glob
+        from scripts.batch_importer import process_candidate_recipes
+        files = sorted(glob.glob("data/candidate_recipes*.json"))
+        processed = []
+        for f in files:
+            await process_candidate_recipes(f)
+            processed.append(f)
         cursor = await db.execute("""
             SELECT 
                 COUNT(*) as total,

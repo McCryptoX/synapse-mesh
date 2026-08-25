@@ -48,6 +48,15 @@ async def init_db():
             );
         """)
 
+        # System Config (Persistent Ops Passwords & Dynamic Settings)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS system_config (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
         await db.execute("CREATE INDEX IF NOT EXISTS idx_recipes_runtime ON recipes(runtime);")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_recipes_status ON recipes(verification_status);")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_access_logs_type ON access_logs(source_type);")
