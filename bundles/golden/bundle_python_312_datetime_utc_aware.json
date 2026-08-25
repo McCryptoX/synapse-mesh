@@ -2,69 +2,60 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_python_312_datetime_utc_aware_001",
   "status": "VERIFIED",
-  "description": "Python 3.12+ deprecates naive datetime.utcnow() in favor of timezone-aware datetime.now(timezone.utc).",
-  "tags": [
-    "python",
-    "stdlib",
-    "datetime",
-    "timezone",
-    "utc"
-  ],
+  "description": "Python 3.12 deprecates datetime.datetime.utcnow() and utcfromtimestamp() in favor of timezone-aware datetime.now(datetime.timezone.utc).",
+  "tags": ["python", "datetime", "python312", "deprecation"],
   "scope": {
-    "package": "python-stdlib",
-    "fromVersion": "3.8",
-    "toVersion": ">=3.12.0",
+    "package": "python",
+    "fromVersion": "3.11.0",
+    "toVersion": "3.12.0",
     "runtime": "python",
-    "runtimeVersion": ">=3.12.0",
+    "runtimeVersion": "3.12.0",
     "platform": "all"
   },
   "fingerprint": {
-    "errorSignature": "DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.",
-    "regex": "DeprecationWarning:[\\s\\S]*datetime\\.datetime\\.utcnow\\(\\) is deprecated and scheduled for removal",
-    "regexFlags": "",
+    "errorSignature": "DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).",
+    "regex": "(?:DeprecationWarning: )?datetime\\.datetime\\.utcnow\\(\\) is deprecated",
     "matchStream": "stderr"
   },
   "patch": {
     "targetFile": "timestamps.py",
-    "unifiedDiff": "--- a/timestamps.py\n+++ b/timestamps.py\n@@ -1,9 +1,9 @@\n import warnings\n-from datetime import datetime\n+from datetime import datetime, timezone\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n def get_created_at() -> datetime:\n-    return datetime.utcnow()\n+    return datetime.now(timezone.utc)\n",
+    "unifiedDiff": "--- a/timestamps.py\n+++ b/timestamps.py\n@@ -1,4 +1,4 @@\n from datetime import datetime, timezone\n \n def get_current_utc_timestamp():\n-    return datetime.utcnow()\n+    return datetime.now(timezone.utc)\n",
     "pinnedDependencies": {
-      "python": ">=3.12.0"
+      "python": "3.12.0"
     },
     "doNot": [
-      "Do not silence DeprecationWarning while retaining naive datetime.utcnow().",
-      "Do not replace utcnow() with naive datetime.now() without passing timezone.utc.",
-      "Do not store naive UTC datetimes when interacting with external timezone-aware APIs."
+      "Do not silence DeprecationWarning by retaining utcnow()",
+      "Do not use naive datetime objects when storing UTC timestamps in modern databases"
     ]
   },
   "verification": {
     "scriptLanguage": "python",
     "workspaceFiles": {
-      "timestamps.py": "import warnings\nfrom datetime import datetime\n\nwarnings.simplefilter(\"error\", DeprecationWarning)\n\ndef get_created_at() -> datetime:\n    return datetime.utcnow()\n"
+      "timestamps.py": "from datetime import datetime, timezone\n\ndef get_current_utc_timestamp():\n    return datetime.utcnow()\n"
     },
-    "reproductionScript": "import sys\nimport runpy\n\nif sys.version_info < (3, 12):\n    print(\"PREREQUISITE_VERSION_MISMATCH: Python 3.12+ required for utcnow deprecation warning\", file=sys.stderr)\n    raise SystemExit(126)\n\nimport timestamps\ntimestamps.get_created_at()\n",
-    "testSuite": "from datetime import datetime, timezone\nfrom timestamps import get_created_at\n\ndt = get_created_at()\nassert isinstance(dt, datetime), \"must return a datetime object\"\nassert dt.tzinfo is not None, \"returned datetime must be timezone-aware\"\nassert dt.tzinfo == timezone.utc, f\"expected timezone.utc, got {dt.tzinfo}\"\nprint(\"ALL TESTS PASSED\")\n",
+    "reproductionScript": "import sys\nimport warnings\nimport timestamps\n\nwarnings.simplefilter('error', DeprecationWarning)\ntry:\n    timestamps.get_current_utc_timestamp()\n    sys.exit(0)\nexcept DeprecationWarning as e:\n    if \"utcnow() is deprecated\" in str(e):\n        sys.stderr.write(f\"{type(e).__name__}: {e}\\n\")\n        sys.exit(1)\n    sys.exit(2)\n",
+    "testSuite": "import sys\nimport warnings\nfrom datetime import timezone\nimport timestamps\n\nwarnings.simplefilter('error', DeprecationWarning)\nts = timestamps.get_current_utc_timestamp()\nassert ts.tzinfo == timezone.utc\nprint(\"VERIFICATION_SUCCESS_STAGE_3\")\nsys.exit(0)\n",
     "mutations": [
       {
-        "id": "mut_naive_local_now",
-        "description": "Replaces utcnow with naive datetime.now() lacking timezone information.",
-        "unifiedDiff": "--- a/timestamps.py\n+++ b/timestamps.py\n@@ -1,9 +1,9 @@\n import warnings\n from datetime import datetime\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n def get_created_at() -> datetime:\n-    return datetime.utcnow()\n+    return datetime.now()\n"
+        "id": "mutant_suppress_warning_filter",
+        "description": "Suppresses deprecation warning without making timestamp timezone-aware",
+        "unifiedDiff": "--- a/timestamps.py\n+++ b/timestamps.py\n@@ -1,4 +1,6 @@\n+import warnings\n from datetime import datetime, timezone\n \n def get_current_utc_timestamp():\n+    warnings.filterwarnings('ignore', category=DeprecationWarning)\n     return datetime.utcnow()\n"
       },
       {
-        "id": "mut_silence_warning_keep_naive",
-        "description": "Silences the DeprecationWarning but continues returning naive UTC datetime without timezone info.",
-        "unifiedDiff": "--- a/timestamps.py\n+++ b/timestamps.py\n@@ -1,9 +1,9 @@\n import warnings\n from datetime import datetime\n \n-warnings.simplefilter(\"error\", DeprecationWarning)\n+warnings.filterwarnings(\"ignore\", category=DeprecationWarning)\n \n def get_created_at() -> datetime:\n     return datetime.utcnow()\n"
+        "id": "mutant_naive_now",
+        "description": "Calls datetime.now() without timezone argument producing local time",
+        "unifiedDiff": "--- a/timestamps.py\n+++ b/timestamps.py\n@@ -1,4 +1,4 @@\n from datetime import datetime, timezone\n \n def get_current_utc_timestamp():\n-    return datetime.utcnow()\n+    return datetime.now()\n"
       }
     ],
     "expectedPreExit": 1,
     "expectedPostExit": 0,
-    "timeoutMs": 30000
+    "timeoutMs": 15000
   },
   "provenance": {
     "spdxLicense": "MIT",
     "primarySources": [
-      "https://docs.python.org/3/whatsnew/3.12.html#deprecated",
-      "https://docs.python.org/3/library/datetime.html#datetime.datetime.utcnow"
+      "https://docs.python.org/3/whatsnew/3.12.html#deprecated"
     ],
-    "verifiedAt": "2026-08-25T06:35:00Z"
+    "verifiedAt": "2026-08-25T11:42:00Z"
   }
 }

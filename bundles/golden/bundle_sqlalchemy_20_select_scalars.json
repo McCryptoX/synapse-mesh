@@ -2,50 +2,49 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_sqlalchemy_20_select_scalars_001",
   "status": "VERIFIED",
-  "description": "SQLAlchemy 2.0 removes string-based session.execute and replaces Query.get() with Session.get() or select() scalar execution.",
-  "tags": ["sqlalchemy", "python", "orm", "v2.0"],
+  "description": "SQLAlchemy 2.0 removed legacy Query.get() and enforces session.get() or session.execute(select(...)).scalars().",
+  "tags": ["sqlalchemy", "python", "orm", "database"],
   "scope": {
     "package": "sqlalchemy",
-    "fromVersion": "<2.0.0",
-    "toVersion": ">=2.0.0",
+    "fromVersion": "1.4.0",
+    "toVersion": "2.0.0",
     "runtime": "python",
-    "runtimeVersion": ">=3.9",
+    "runtimeVersion": "3.12.0",
     "platform": "all"
   },
   "fingerprint": {
-    "errorSignature": "ArgumentError: Textual SQL expression must be explicitly declared as text()",
-    "regex": "ArgumentError: Textual SQL expression",
+    "errorSignature": "AttributeError: 'Query' object has no attribute 'get' in SQLAlchemy 2.0 ORM query execution pattern",
+    "regex": "AttributeError: 'Query' object has no attribute 'get'",
     "matchStream": "stderr"
   },
   "patch": {
-    "targetFile": "repository.py",
-    "unifiedDiff": "--- a/repository.py\n+++ b/repository.py\n@@ -1,5 +1,6 @@\n+from sqlalchemy import text\n \n def get_user_query(session, user_id):\n-    return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n+    return session.execute(text(\"SELECT * FROM users WHERE id = :id\"), {\"id\": user_id})\n",
+    "targetFile": "dao.py",
+    "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,4 +1,4 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return session.get(user_cls, user_id)\n",
     "pinnedDependencies": {
-      "sqlalchemy": ">=2.0.0, <3.0.0"
+      "sqlalchemy": "2.0.0"
     },
     "doNot": [
-      "Do not pass raw strings directly to session.execute()",
-      "Do not silence ArgumentError with generic try/except",
-      "Do not use string formatting for SQL parameters"
+      "Do not retain legacy query.get() with legacy 1.4 compatibility mode flags",
+      "Do not catch AttributeError and return None blindly"
     ]
   },
   "verification": {
     "scriptLanguage": "python",
     "workspaceFiles": {
-      "repository.py": "def get_user_query(session, user_id):\n    return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n"
+      "dao.py": "def get_user_by_id(session, user_cls, user_id):\n    return session.query(user_cls).get(user_id)\n"
     },
-    "reproductionScript": "import sys, types\n# Hermetic fallback if sqlalchemy is not in host interpreter\nif 'sqlalchemy' not in sys.modules:\n    m = types.ModuleType('sqlalchemy')\n    m.text = lambda s: {'_sql_text_clause': s}\n    sys.modules['sqlalchemy'] = m\n\nfrom repository import get_user_query\n\nclass MockSession:\n    def execute(self, stmt, params=None):\n        if isinstance(stmt, str):\n            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n        return \"OK\"\n\ntry:\n    get_user_query(MockSession(), 42)\n    sys.exit(0)\nexcept ValueError as e:\n    if \"ArgumentError: Textual SQL expression\" in str(e):\n        sys.stderr.write(str(e) + \"\\n\")\n        sys.exit(1)\n    sys.exit(2)\n",
-    "testSuite": "import sys, types\nif 'sqlalchemy' not in sys.modules:\n    m = types.ModuleType('sqlalchemy')\n    m.text = lambda s: {'_sql_text_clause': s}\n    sys.modules['sqlalchemy'] = m\n\nfrom repository import get_user_query\n\nclass MockSession:\n    def execute(self, stmt, params=None):\n        if isinstance(stmt, str):\n            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n        return \"OK\"\n\nres = get_user_query(MockSession(), 42)\nassert res == \"OK\"\nprint(\"VERIFICATION_SUCCESS_STAGE_3\")\nsys.exit(0)\n",
+    "reproductionScript": "import sys\nimport dao\n\nclass MockSession:\n    def query(self, cls):\n        class MockQuery:\n            pass\n        return MockQuery()\n    def get(self, cls, ident):\n        return {\"id\": ident, \"type\": cls}\n\nsess = MockSession()\ntry:\n    dao.get_user_by_id(sess, \"User\", 42)\n    sys.exit(0)\nexcept AttributeError as e:\n    sys.stderr.write(f\"AttributeError: 'Query' object has no attribute 'get'\\n\")\n    sys.exit(1)\n",
+    "testSuite": "import sys\nimport dao\n\nclass MockSession:\n    def get(self, cls, ident):\n        return {\"id\": ident, \"type\": cls}\n\nsess = MockSession()\nres = dao.get_user_by_id(sess, \"User\", 42)\nassert res[\"id\"] == 42\nprint(\"VERIFICATION_SUCCESS_STAGE_3\")\nsys.exit(0)\n",
     "mutations": [
       {
-        "id": "mutant_string_cast_silence",
-        "description": "Casts statement to string instead of using text() object",
-        "unifiedDiff": "--- a/repository.py\n+++ b/repository.py\n@@ -1,3 +1,3 @@\n def get_user_query(session, user_id):\n-    return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n+    return session.execute(str(f\"SELECT * FROM users WHERE id = {user_id}\"))\n"
+        "id": "mutant_suppress_attribute_error",
+        "description": "Suppresses AttributeError and returns None masking missing record from invalid API",
+        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,2 +1,5 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    try:\n+        return session.query(user_cls).get(user_id)\n+    except AttributeError:\n+        return None\n"
       },
       {
-        "id": "mutant_try_except_empty",
-        "description": "Catches error and returns None instead of fixing statement",
-        "unifiedDiff": "--- a/repository.py\n+++ b/repository.py\n@@ -1,3 +1,6 @@\n def get_user_query(session, user_id):\n-    return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n+    try:\n+        return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n+    except Exception:\n+        return None\n"
+        "id": "mutant_wrong_session_get_arg_order",
+        "description": "Inverts argument order to session.get()",
+        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,2 +1,2 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return session.get(user_id, user_cls)\n"
       }
     ],
     "expectedPreExit": 1,
@@ -55,7 +54,7 @@
   "provenance": {
     "spdxLicense": "MIT",
     "primarySources": [
-      "https://docs.sqlalchemy.org/en/20/changelog/migration_20.html"
+      "https://docs.sqlalchemy.org/en/20/changelog/migration_20.html#migration-orm-usage"
     ],
     "verifiedAt": "2026-08-25T11:42:00Z"
   }

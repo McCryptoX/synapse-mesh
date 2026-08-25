@@ -1,15 +1,15 @@
 {
-  "$schema": "https://synapsemesh.dev/schemas/bundle.schema.json",
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_langchain_03_runnable_invoke_001",
   "status": "VERIFIED",
   "description": "Migration from legacy LLMChain / Chain.run() to Runnable.invoke() in LangChain v0.3.",
-  "tags": ["langchain", "langchain-core", "lcel", "runnable", "python", "ai-agents"],
+  "tags": ["langchain", "langchain-core", "lcel", "runnable", "python"],
   "scope": {
     "package": "langchain-core",
-    "fromVersion": "<0.3.0",
-    "toVersion": ">=0.3.0",
+    "fromVersion": "0.2.38",
+    "toVersion": "0.3.0",
     "runtime": "python",
+    "runtimeVersion": "3.12.0",
     "platform": "all"
   },
   "fingerprint": {
@@ -21,8 +21,8 @@
     "targetFile": "agent_chain.py",
     "unifiedDiff": "--- a/agent_chain.py\n+++ b/agent_chain.py\n@@ -1,6 +1,6 @@\n-class LegacyLLMChain:\n-    def run(self, input_val):\n-        raise TypeError(\"LangChainDeprecationWarning: LLMChain was removed in 0.3.0. Use invoke() on RunnableSequence instead.\")\n+class RunnableChain:\n+    def invoke(self, input_dict):\n+        return {\"output\": f\"processed_{input_dict.get('input', '')}\"}\n \n-chain = LegacyLLMChain()\n-result = chain.run(input_val=\"test\")\n+chain = RunnableChain()\n+result = chain.invoke({\"input\": \"test\"})",
     "pinnedDependencies": {
-      "langchain-core": ">=0.3.0,<0.4.0",
-      "langchain": ">=0.3.0,<0.4.0"
+      "langchain-core": "0.3.0",
+      "langchain": "0.3.0"
     },
     "doNot": [
       "Do not use legacy LLMChain constructor in LangChain >=0.3.0",
@@ -42,6 +42,11 @@
         "id": "mutant_suppress_warning",
         "description": "Anti-pattern of silencing warning without migrating to invoke",
         "unifiedDiff": "--- a/agent_chain.py\n+++ b/agent_chain.py\n@@ -1,6 +1,6 @@\n-class LegacyLLMChain:\n-    def run(self, input_val):\n-        raise TypeError(\"LangChainDeprecationWarning: LLMChain was removed in 0.3.0. Use invoke() on RunnableSequence instead.\")\n+class LegacyLLMChain:\n+    def run(self, input_val):\n+        return {\"output\": \"bypass\"}\n \n-chain = LegacyLLMChain()\n-result = chain.run(input_val=\"test\")\n+chain = LegacyLLMChain()\n+result = chain.run(input_val=\"test\")"
+      },
+      {
+        "id": "mutant_empty_invoke",
+        "description": "Anti-pattern of returning empty dictionary",
+        "unifiedDiff": "--- a/agent_chain.py\n+++ b/agent_chain.py\n@@ -1,6 +1,6 @@\n-class LegacyLLMChain:\n-    def run(self, input_val):\n-        raise TypeError(\"LangChainDeprecationWarning: LLMChain was removed in 0.3.0. Use invoke() on RunnableSequence instead.\")\n+class RunnableChain:\n+    def invoke(self, input_dict):\n+        return {}\n \n-chain = LegacyLLMChain()\n-result = chain.run(input_val=\"test\")\n+chain = RunnableChain()\n+result = chain.invoke({\"input\": \"test\"})"
       }
     ],
     "expectedPreExit": 1,

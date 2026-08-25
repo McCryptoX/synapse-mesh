@@ -3,13 +3,13 @@
   "bundleId": "bundle_typescript_56_strict_map_lookup_001",
   "status": "VERIFIED",
   "description": "TypeScript 5.6+ with --noUncheckedIndexedAccess flags Map.get() as possibly undefined. Explicit nullish coalescing or undefined guarding is required.",
-  "tags": ["typescript", "nodejs", "type-system", "v5.6"],
+  "tags": ["typescript", "nodejs", "type-system", "v56"],
   "scope": {
     "package": "typescript",
-    "fromVersion": "<5.6.0",
-    "toVersion": ">=5.6.0",
+    "fromVersion": "5.5.4",
+    "toVersion": "5.6.2",
     "runtime": "nodejs",
-    "runtimeVersion": ">=18.0.0",
+    "runtimeVersion": "22.0.0",
     "platform": "all"
   },
   "fingerprint": {
@@ -21,7 +21,7 @@
     "targetFile": "lookup.js",
     "unifiedDiff": "--- a/lookup.js\n+++ b/lookup.js\n@@ -1,3 +1,3 @@\n function getUserRole(map, id) {\n-    return map.get(id).role.toUpperCase();\n+    return (map.get(id)?.role ?? 'GUEST').toUpperCase();\n }\n",
     "pinnedDependencies": {
-      "typescript": ">=5.6.0"
+      "typescript": "5.6.2"
     },
     "doNot": [
       "Do not use non-null assertion operator (!) blindly on Map lookups",
@@ -29,7 +29,7 @@
     ]
   },
   "verification": {
-    "scriptLanguage": "nodejs",
+    "scriptLanguage": "javascript",
     "workspaceFiles": {
       "lookup.js": "function getUserRole(map, id) {\n    return map.get(id).role.toUpperCase();\n}\nmodule.exports = { getUserRole };\n"
     },

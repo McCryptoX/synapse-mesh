@@ -13,9 +13,9 @@
   "scope": {
     "package": "fastapi",
     "fromVersion": "0.95.0",
-    "toVersion": ">=0.100.0",
+    "toVersion": "0.115.0",
     "runtime": "python",
-    "runtimeVersion": ">=3.10",
+    "runtimeVersion": "3.12.0",
     "platform": "all"
   },
   "fingerprint": {
@@ -26,10 +26,10 @@
   },
   "patch": {
     "targetFile": "server.py",
-    "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,17 +1,18 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n-\n-@app.on_event(\"startup\")\n-def startup_event():\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n     app.state.ready = True\n+    yield\n+    app.state.ready = False\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+app = FastAPI(lifespan=lifespan)\n \n @app.get(\"/status\")\n def get_status():\n",
+    "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,18 +1,19 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n-\n-@app.on_event(\"startup\")\n-def startup_event():\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n     app.state.ready = True\n+    yield\n+    app.state.ready = False\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+app = FastAPI(lifespan=lifespan)\n \n @app.get(\"/status\")\n def get_status():\n     return {\"ready\": getattr(app.state, \"ready\", False)}\n",
     "pinnedDependencies": {
-      "fastapi": ">=0.100.0",
-      "starlette": ">=0.27.0"
+      "fastapi": "0.115.0",
+      "starlette": "0.41.0"
     },
     "doNot": [
       "Do not silence DeprecationWarning while retaining @app.on_event.",
@@ -43,18 +43,18 @@
     "workspaceFiles": {
       "server.py": "import warnings\nfrom fastapi import FastAPI\n\nwarnings.simplefilter(\"error\", DeprecationWarning)\n\napp = FastAPI()\n\n@app.on_event(\"startup\")\ndef startup_event():\n    app.state.ready = True\n\n@app.on_event(\"shutdown\")\ndef shutdown_event():\n    app.state.ready = False\n\n@app.get(\"/status\")\ndef get_status():\n    return {\"ready\": getattr(app.state, \"ready\", False)}\n"
     },
-    "reproductionScript": "from importlib.metadata import version\nimport runpy\nimport sys\n\ninstalled = version(\"fastapi\")\n# on_event emits DeprecationWarning in FastAPI >= 0.100.0\nv_parts = [int(p) for p in installed.split(\".\")[:2] if p.isdigit()]\nif len(v_parts) >= 2 and (v_parts[0] == 0 and v_parts[1] < 100):\n    print(f\"PREREQUISITE_VERSION_MISMATCH: expected fastapi >= 0.100.0, got {installed}\", file=sys.stderr)\n    raise SystemExit(126)\n\nrunpy.run_path(\"server.py\", run_name=\"__main__\")\n",
+    "reproductionScript": "from importlib.metadata import version\nimport runpy\nimport sys\n\ninstalled = version(\"fastapi\")\nrunpy.run_path(\"server.py\", run_name=\"__main__\")\n",
     "testSuite": "import asyncio\nfrom server import app\n\nasync def run_test():\n    async with app.router.lifespan_context(app):\n        assert app.state.ready is True, \"Startup lifespan side-effect failed to set ready=True\"\n    assert app.state.ready is False, \"Shutdown lifespan side-effect failed to set ready=False\"\n    print(\"ALL TESTS PASSED\")\n\nasyncio.run(run_test())\n",
     "mutations": [
       {
         "id": "fastapi_lifespan_without_yield",
         "description": "Defines an async lifespan function that fails to yield control.",
-        "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,17 +1,17 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n-\n-@app.on_event(\"startup\")\n-def startup_event():\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n     app.state.ready = True\n+    return\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+app = FastAPI(lifespan=lifespan)\n \n @app.get(\"/status\")\n def get_status():\n"
+        "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,18 +1,16 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n-\n-@app.on_event(\"startup\")\n-def startup_event():\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n     app.state.ready = True\n+    return\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+app = FastAPI(lifespan=lifespan)\n \n @app.get(\"/status\")\n def get_status():\n     return {\"ready\": getattr(app.state, \"ready\", False)}\n"
       },
       {
         "id": "fastapi_dual_registration_retain_on_event",
         "description": "Adds lifespan context manager but retains @app.on_event triggering deprecation error under -W error.",
-        "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,17 +1,17 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n+    app.state.ready = True\n+    yield\n+    app.state.ready = False\n \n-@app.on_event(\"startup\")\n-def startup_event():\n-    app.state.ready = True\n+app = FastAPI(lifespan=lifespan)\n \n-@app.on_event(\"shutdown\")\n-def shutdown_event():\n-    app.state.ready = False\n+@app.on_event(\"startup\")\n+def startup_event():\n+    pass\n \n @app.get(\"/status\")\n def get_status():\n"
+        "unifiedDiff": "--- a/server.py\n+++ b/server.py\n@@ -1,18 +1,25 @@\n import warnings\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n warnings.simplefilter(\"error\", DeprecationWarning)\n \n-app = FastAPI()\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n+    app.state.ready = True\n+    yield\n+    app.state.ready = False\n \n @app.on_event(\"startup\")\n def startup_event():\n     app.state.ready = True\n \n @app.on_event(\"shutdown\")\n def shutdown_event():\n     app.state.ready = False\n \n+app = FastAPI(lifespan=lifespan)\n+\n @app.get(\"/status\")\n def get_status():\n     return {\"ready\": getattr(app.state, \"ready\", False)}\n"
       }
     ],
     "expectedPreExit": 1,
