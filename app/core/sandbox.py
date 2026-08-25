@@ -125,9 +125,9 @@ class SandboxRunner:
                 target_file.parent.mkdir(parents=True, exist_ok=True)
                 target_file.write_text(content, encoding="utf-8")
 
-            # 2. Strict Environment Sanitization (Zero Secret / Token Leakage)
-            SAFE_ENV_VARS = {"PATH", "LANG", "LC_ALL", "TERM"}
-            env = {k: v for k, v in os.environ.items() if k in SAFE_ENV_VARS}
+            # 2. Strict Environment Allowlist (Zero Secret Leakage)
+            ALLOWED_ENV_VARS = {"PATH", "LANG", "LC_ALL", "TERM", "TZ"}
+            env = {k: os.environ[k] for k in ALLOWED_ENV_VARS if k in os.environ}
             env["PYTHONUNBUFFERED"] = "1"
             env["PYTHONDONTWRITEBYTECODE"] = "1"
             env["HOME"] = temp_dir
@@ -136,12 +136,6 @@ class SandboxRunner:
             env["TMP"] = temp_dir
             if os.path.exists("/usr/lib/node_modules"):
                 env["NODE_PATH"] = "/usr/lib/node_modules"
-
-            # Scrub all possible host/app secret variables
-            for forbidden_prefix in ("GITHUB_", "DATABASE_", "OPS_", "SECRET_", "ADMIN_", "AWS_", "SYNAPSE_"):
-                for env_k in list(env.keys()):
-                    if env_k.startswith(forbidden_prefix):
-                        env.pop(env_k, None)
 
             rt = runtime.lower()
 

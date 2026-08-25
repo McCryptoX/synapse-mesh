@@ -201,3 +201,38 @@ except (MemoryError, OverflowError):
     # The sandbox must not freeze or crash the host
     assert res["exitCode"] in (0, -1, 1, 137, 134)
 
+
+@pytest.mark.asyncio
+async def test_multi_generation_process_tree_termination():
+    """
+    Tests that a 3-generation deep process tree (Parent -> Child -> Grandchild)
+    is completely reaped and terminated upon timeout or sandbox exit.
+    """
+    three_gen_script = """
+import subprocess
+import sys
+import time
+
+# Grandparent spawns Parent
+p = subprocess.Popen([
+    sys.executable, "-c",
+    '''
+import subprocess, sys, time
+# Parent spawns Grandchild
+g = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(600)"])
+time.sleep(600)
+'''
+])
+time.sleep(600)
+"""
+    start = time.time()
+    res = await SandboxRunner.run_workspace_test(
+        files={"three_gen.py": three_gen_script},
+        entrypoint="three_gen.py",
+        runtime="python"
+    )
+    duration = time.time() - start
+
+    assert not res["passed"]
+    assert duration < 15.0
+
