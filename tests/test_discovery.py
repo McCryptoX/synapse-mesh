@@ -30,15 +30,23 @@ async def test_well_known_agent():
 @pytest.mark.asyncio
 async def test_impressum_and_privacy_pages():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        res_imp = await ac.get("/impressum")
+        res_imp = await ac.get("/legal")
         assert res_imp.status_code == 200
-        assert "Impressum" in res_imp.text
+        assert "Legal Notice" in res_imp.text
         assert "Synapse-Mesh Operator" in res_imp.text
 
-        res_priv = await ac.get("/datenschutz")
+        res_imp_alias = await ac.get("/impressum")
+        assert res_imp_alias.status_code == 200
+        assert "Legal Notice" in res_imp_alias.text
+
+        res_priv = await ac.get("/privacy")
         assert res_priv.status_code == 200
-        assert "Datenschutzerklärung" in res_priv.text
+        assert "Privacy Policy" in res_priv.text
         assert "Zero-PII" in res_priv.text
+
+        res_priv_alias = await ac.get("/datenschutz")
+        assert res_priv_alias.status_code == 200
+        assert "Privacy Policy" in res_priv_alias.text
 
 @pytest.mark.asyncio
 async def test_install_script_endpoint():

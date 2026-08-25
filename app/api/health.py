@@ -144,21 +144,24 @@ async def verification_page():
     return HTMLResponse("<h1>Verification Architecture</h1>")
 
 
+@router.get("/legal", tags=["Legal"], response_class=HTMLResponse)
 @router.get("/impressum", tags=["Legal"], response_class=HTMLResponse)
+@router.get("/imprint", tags=["Legal"], response_class=HTMLResponse)
 async def impressum_page():
     if IMPRESSUM_HTML_PATH.exists():
         with open(IMPRESSUM_HTML_PATH, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Impressum</h1><p>Synapse-Mesh Operator - contact@synapsemesh.dev</p>")
+    return HTMLResponse("<h1>Legal Notice</h1><p>Synapse-Mesh Operator - contact@synapsemesh.dev</p>")
 
 
-@router.get("/datenschutz", tags=["Legal"], response_class=HTMLResponse)
 @router.get("/privacy", tags=["Legal"], response_class=HTMLResponse)
+@router.get("/datenschutz", tags=["Legal"], response_class=HTMLResponse)
+@router.get("/privacy-policy", tags=["Legal"], response_class=HTMLResponse)
 async def datenschutz_page():
     if DATENSCHUTZ_HTML_PATH.exists():
         with open(DATENSCHUTZ_HTML_PATH, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Datenschutz</h1><p>Zero-PII Architecture.</p>")
+    return HTMLResponse("<h1>Privacy Policy</h1><p>Zero-PII Architecture.</p>")
 
 
 @router.get("/", tags=["System"])
@@ -168,8 +171,8 @@ async def root(request: Request, format: Optional[str] = Query(None)):
     # Return JSON ONLY if explicitly asked via query param ?format=json or pure Accept: application/json without text/html
     if format == "json" or ("application/json" in accept and "text/html" not in accept and "*/*" not in accept):
         return {
-            "message": "Welcome to Synapse-Mesh (Projekt Exocortex) - CI/CD for AI Knowledge",
-            "axiom": "Synapse soll nicht versuchen, von KIs 'gekannt' zu werden. Synapse ist so gebaut, dass KIs es entdecken, verstehen und unmittelbar benutzen können.",
+            "message": "Welcome to Synapse-Mesh (Project Exocortex) - Verified Compatibility Layer for AI Agents",
+            "axiom": "Synapse does not try to be known by AIs. Synapse is built so that AIs can discover, understand, and immediately execute it as a tool.",
             "protocolVersion": settings.mcp_protocol_version,
             "version": settings.app_version,
             "discovery": {
@@ -178,8 +181,9 @@ async def root(request: Request, format: Optional[str] = Query(None)):
                 "sitemap": "/sitemap.xml",
                 "robots": "/robots.txt",
                 "favicon": "/favicon.svg",
-                "ogImage": "/og-image.png",
-                "llms": "/llms.txt"
+                "legalNotice": "/legal",
+                "privacyPolicy": "/privacy",
+                "llmsTxt": "/llms.txt"
             },
             "endpoints": {
                 "mcpCanonical": settings.canonical_mcp_url,
