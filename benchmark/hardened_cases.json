@@ -142,7 +142,7 @@
   {
     "id": "R1_CARGO_1_80_CHECK_CFG",
     "family": "Rust",
-    "name": "Cargo 1.80 unexpected_cfgs Lint Migration (cargo::rustc-check-cfg)",
+    "name": "Cargo 1.80 unexpected_cfgs Lint Migration (build.rs cargo::rustc-check-cfg)",
     "yearIntroduced": "2024",
     "breakingPackage": "rustc>=1.80.0",
     "errorSignature": "error: unexpected `cfg` condition name: `has_accel`",
@@ -150,16 +150,18 @@
     "targetPatchFile": "build.rs",
     "entrypoint": "test_runner.py",
     "workspaceFiles": {
-      "main.rs": "#[cfg(has_accel)]\nfn compute() -> &'static str { \"accel\" }\n\n#[deny(unexpected_cfgs)]\nfn main() {\n    println!(\"OK\");\n}"
+      "Cargo.toml": "[package]\nname = \"synapse-cfg-test\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+      "src/main.rs": "#[cfg(has_accel)]\nfn compute() -> &'static str { \"accel\" }\n\nfn main() {\n    println!(\"OK\");\n}\n",
+      "build.rs": "fn main() {}\n"
     },
-    "reproductionScript": "import subprocess, sys\n# Real rustc 1.80+ check-cfg validation under deny(warnings)\nres = subprocess.run(['rustc', '--check-cfg', 'cfg()', '-D', 'warnings', 'main.rs'], capture_output=True, text=True)\nif res.returncode != 0:\n    sys.stderr.write(res.stderr)\n    sys.exit(res.returncode)\nsys.exit(0)",
-    "validPatch": "// Unconditional check-cfg declaration in build.rs\nfn main() {\n    println!(\"cargo::rustc-check-cfg=cfg(has_accel)\");\n    if std::env::var(\"FEATURE_ACCEL\").is_ok() {\n        println!(\"cargo::rustc-cfg=has_accel\");\n    }\n}",
+    "reproductionScript": "import subprocess, sys, os\nenv = os.environ.copy()\nenv['RUSTFLAGS'] = '-D warnings'\nres = subprocess.run(['cargo', 'check'], env=env, capture_output=True, text=True)\nif res.returncode != 0:\n    sys.stderr.write(res.stderr)\n    sys.exit(res.returncode)\nsys.exit(0)",
+    "validPatch": "fn main() {\n    println!(\"cargo::rustc-check-cfg=cfg(has_accel)\");\n}",
     "mutationPatches": [
-      "// Web-Fehlfix 1: #[allow(unexpected_cfgs)] lint mute\nfn main() {\n    println!(\"cargo::rustc-cfg=has_accel\");\n}",
-      "// Web-Fehlfix 2: Conditional check-cfg inside if branch (fails when feature disabled)\nfn main() {\n    if std::env::var(\"FEATURE_ACCEL\").is_ok() {\n        println!(\"cargo::rustc-check-cfg=cfg(has_accel)\");\n        println!(\"cargo::rustc-cfg=has_accel\");\n    }\n}",
-      "// Web-Fehlfix 3: Values mismatch check-cfg\nfn main() {\n    println!(\"cargo::rustc-check-cfg=cfg(has_accel, values(\\\"true\\\"))\");\n}"
+      "// Mutation 1: Empty build.rs without check-cfg\nfn main() {}",
+      "// Mutation 2: Conditional check-cfg inside if branch\nfn main() {\n    if std::env::var(\"FEATURE_ACCEL\").is_ok() {\n        println!(\"cargo::rustc-check-cfg=cfg(has_accel)\");\n    }\n}",
+      "// Mutation 3: Values mismatch check-cfg\nfn main() {\n    println!(\"cargo::rustc-check-cfg=cfg(has_accel, values(\\\"true\\\"))\");\n}"
     ],
-    "groundTruthTestSuite": "import subprocess, sys\n# Verify build.rs source invariant (unconditional check-cfg declaration)\nwith open('build.rs', 'r') as f: build_src = f.read()\nassert 'cargo::rustc-check-cfg=cfg(has_accel)' in build_src, 'Must contain unconditional cargo::rustc-check-cfg'\nif 'if ' in build_src:\n    assert build_src.find('cargo::rustc-check-cfg') < build_src.find('if '), 'cargo::rustc-check-cfg must be declared unconditionally before if branches'\nassert 'values(' not in build_src, 'Values check must not restrict boolean cfg'\n\n# Run real compiler with declared check-cfg\nres = subprocess.run(['rustc', '--check-cfg', 'cfg(has_accel)', '-D', 'warnings', 'main.rs'], capture_output=True, text=True)\nassert res.returncode == 0, f'Rust compilation failed: {res.stderr}'\nprint('ALL TESTS PASSED')",
+    "groundTruthTestSuite": "import subprocess, os\nenv = os.environ.copy()\nenv['RUSTFLAGS'] = '-D warnings'\n\n# Test 1: Cargo check with feature disabled (must pass check-cfg)\nres = subprocess.run(['cargo', 'check'], env=env, capture_output=True, text=True)\nassert res.returncode == 0, f\"Cargo check failed: {res.stderr}\"\n\n# Test 2: Cargo check with feature enabled (must also pass check-cfg)\nenv['FEATURE_ACCEL'] = '1'\nres_feat = subprocess.run(['cargo', 'check'], env=env, capture_output=True, text=True)\nassert res_feat.returncode == 0, f\"Cargo check with feature enabled failed: {res_feat.stderr}\"\nprint('ALL TESTS PASSED')",
     "officialSource": "https://blog.rust-lang.org/2024/05/06/check-cfg.html",
     "antiDowngradeEnforced": true,
     "executionMode": "compiler_runtime"
