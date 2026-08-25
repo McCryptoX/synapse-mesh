@@ -47,7 +47,22 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 
 ---
 
-## 3. Multi-Treatment Agent Orchestrator (A/B/C)
+## 3. Die Neue Positionierung: Verified Compatibility Layer
+Nach übereinstimmendem Konsens des Advisory Boards (Grok & ChatGPT Codex):
+> *„Synapse-Mesh behauptet nicht, universelle Antworten zu kennen. Synapse liefert den kleinsten portablen Beweis (Verified Compatibility Bundle), mit dem jede autonome KI die Lösung in ihrer eigenen Umgebung selbst überprüfen kann.“*
+
+### Kern-Architektur des Bundles:
+- **Exakter Versions-Scope:** z. B. `httpx` von `0.27.2` auf `0.28.1` unter `python 3.12`.
+- **Echte Diffs:** Minimaler Unified Diff für `git apply`.
+- **doNot-Katalog:** Explizite Negativ-Rezepte (bekannte Web-Fehlfixes), die in der Sandbox scheitern.
+- **Client-Side Re-Verifier:** 2-Phasen-Prüfung (`Pre-Fail` auf Repro, `Post-Pass` auf Testsuite) via `scripts/synapse_reverify.py`.
+
+### Protokolle & Offene Governance:
+- **MCP Spezifikation 2026-07-28:** Vollständige Unterstützung von `server/discover`, `tools/list`, `tools/call`, `resources/list`.
+- **A2A Protokoll:** Standard-Discovery unter `/.well-known/agent-card.json`.
+- **Open Source Governance:** `LICENSE` (MIT), `SECURITY.md` (Zero-PII Disclosure Policy), `CONTRIBUTING.md`.
+
+## 4. Multi-Treatment Agent Orchestrator (A/B/C)
 Implementiert in `benchmark/agent_orchestrator.py`:
 - **Gruppe A (Baseline):** Isoliertes LLM ohne externe Retrieval-Tools.
 - **Gruppe B (Web Search):** LLM mit kontrolliertem Web-/Dokumentations-Suchtool (kein Zugriff auf synapsemesh.dev).
@@ -61,7 +76,7 @@ Implementiert in `benchmark/agent_orchestrator.py`:
 ## 4. Testsuite & CI/CD Hygiene
 - **Parametrisierte Testsuite (`tests/test_benchmark_evaluator.py`):** 30 eigenständige Test-Items via `@pytest.mark.parametrize`.
 - **Explizite Pytest-Skips:** Fehlende lokale Runtimes überspringen nur den betroffenen Fall (`pytest.skip(...)`) statt stiller Erfolgsmeldungen.
-- **VPS Container Ergebnis:** **32 passed in 11.97s (einschließlich test_manifest_sha256_freeze und /install.sh)** (100% grün).
+- **VPS Container Ergebnis:** **34 passed in 11.47s (einschließlich MCP server/discover, A2A agent-card.json und test_manifest_sha256_freeze)** (100% grün).
 
 ---
 
