@@ -69,3 +69,11 @@ async def test_llms_txt_standard():
         res_full = await ac.get("/llms-full.txt")
         assert res_full.status_code == 200
         assert "# Synapse-Mesh" in res_full.text
+
+@pytest.mark.asyncio
+async def test_benchmark_page():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/benchmark")
+        assert res.status_code == 200
+        assert "Hallucination Elimination" in res.text
+        assert "GROUP C (SYNAPSE)" in res.text

@@ -13,6 +13,7 @@ INDEX_HTML_PATH = TEMPLATES_DIR / "index.html"
 IMPRESSUM_HTML_PATH = TEMPLATES_DIR / "impressum.html"
 DATENSCHUTZ_HTML_PATH = TEMPLATES_DIR / "datenschutz.html"
 VERIFICATION_HTML_PATH = TEMPLATES_DIR / "verification.html"
+BENCHMARK_HTML_PATH = TEMPLATES_DIR / "benchmark.html"
 FAVICON_SVG_PATH = STATIC_DIR / "favicon.svg"
 OG_IMAGE_PATH = STATIC_DIR / "og-image.png"
 STYLE_CSS_PATH = STATIC_DIR / "style.min.css"
@@ -127,6 +128,13 @@ async def health_check():
     }
 
 
+@router.get("/benchmark", tags=["Architecture"], response_class=HTMLResponse)
+async def benchmark_page():
+    if BENCHMARK_HTML_PATH.exists():
+        with open(BENCHMARK_HTML_PATH, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse("<h1>Benchmark Dashboard</h1>")
+
 @router.get("/verification", tags=["Architecture"], response_class=HTMLResponse)
 async def verification_page():
     if VERIFICATION_HTML_PATH.exists():
@@ -175,6 +183,7 @@ async def root(request: Request, format: Optional[str] = Query(None)):
             "endpoints": {
                 "mcpCanonical": settings.canonical_mcp_url,
                 "verificationArchitecture": "/verification",
+                "benchmarkDashboard": "/benchmark",
                 "search": "/api/v1/recipes/search",
                 "submit": "/api/v1/recipes/submit",
                 "docs": "/docs",

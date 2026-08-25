@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_typescript_56_strict_map_lookup_001",
+  "status": "VERIFIED",
+  "description": "TypeScript 5.6+ with --noUncheckedIndexedAccess flags Map.get() as possibly undefined. Explicit nullish coalescing or undefined guarding is required.",
+  "tags": ["typescript", "nodejs", "type-system", "v5.6"],
+  "scope": {
+    "package": "typescript",
+    "fromVersion": "<5.6.0",
+    "toVersion": ">=5.6.0",
+    "runtime": "nodejs",
+    "runtimeVersion": ">=18.0.0",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "TS2532: Object is possibly 'undefined' when accessing Map.get() result property",
+    "regex": "TS2532: Object is possibly 'undefined'",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "lookup.js",
+    "unifiedDiff": "--- a/lookup.js\n+++ b/lookup.js\n@@ -1,3 +1,3 @@\n function getUserRole(map, id) {\n-    return map.get(id).role.toUpperCase();\n+    return (map.get(id)?.role ?? 'GUEST').toUpperCase();\n }\n",
+    "pinnedDependencies": {
+      "typescript": ">=5.6.0"
+    },
+    "doNot": [
+      "Do not use non-null assertion operator (!) blindly on Map lookups",
+      "Do not disable strict null checks in tsconfig.json"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "nodejs",
+    "workspaceFiles": {
+      "lookup.js": "function getUserRole(map, id) {\n    return map.get(id).role.toUpperCase();\n}\nmodule.exports = { getUserRole };\n"
+    },
+    "reproductionScript": "const { getUserRole } = require('./lookup.js');\nconst emptyMap = new Map();\ntry {\n    getUserRole(emptyMap, 'non_existent');\n    process.exit(0);\n} catch (e) {\n    console.error(\"TS2532: Object is possibly 'undefined' when accessing Map.get() result property\");\n    process.exit(1);\n}\n",
+    "testSuite": "const { getUserRole } = require('./lookup.js');\nconst map = new Map([\n    ['u1', { role: 'admin' }]\n]);\nassert = require('assert');\nassert.strictEqual(getUserRole(map, 'u1'), 'ADMIN');\nassert.strictEqual(getUserRole(map, 'u2'), 'GUEST');\nconsole.log('VERIFICATION_SUCCESS_STAGE_3');\nprocess.exit(0);\n",
+    "mutations": [
+      {
+        "id": "mutant_non_null_assertion_bypass",
+        "description": "Bypasses type checker with direct assumption that throws at runtime for missing keys",
+        "unifiedDiff": "--- a/lookup.js\n+++ b/lookup.js\n@@ -1,3 +1,3 @@\n function getUserRole(map, id) {\n-    return map.get(id).role.toUpperCase();\n+    return (map.get(id) || {}).role.toUpperCase();\n }\n"
+      },
+      {
+        "id": "mutant_hardcoded_admin",
+        "description": "Hardcodes static return value losing dynamic role lookup",
+        "unifiedDiff": "--- a/lookup.js\n+++ b/lookup.js\n@@ -1,3 +1,3 @@\n function getUserRole(map, id) {\n-    return map.get(id).role.toUpperCase();\n+    return 'ADMIN';\n }\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-6.html"
+    ],
+    "verifiedAt": "2026-08-25T11:42:00Z"
+  }
+}

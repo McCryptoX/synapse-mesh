@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_duckdb_010_substring_casting_001",
+  "status": "VERIFIED",
+  "description": "DuckDB 0.10+ enforces strict type binding in SQL function signatures. String literals in SUBSTRING integer offsets require numeric parameters.",
+  "tags": ["duckdb", "python", "sql", "v0.10"],
+  "scope": {
+    "package": "duckdb",
+    "fromVersion": "<0.10.0",
+    "toVersion": ">=0.10.0",
+    "runtime": "python",
+    "runtimeVersion": ">=3.9",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.",
+    "regex": "duckdb.BinderException: No function matches",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "queries.py",
+    "unifiedDiff": "--- a/queries.py\n+++ b/queries.py\n@@ -1,3 +1,3 @@\n def get_slice_query():\n-    return \"SELECT SUBSTRING(title, '1', '5') FROM articles\"\n+    return \"SELECT SUBSTRING(title, 1, 5) FROM articles\"\n",
+    "pinnedDependencies": {
+      "duckdb": ">=0.10.0"
+    },
+    "doNot": [
+      "Do not pass string literal offsets to SUBSTRING in SQL queries",
+      "Do not wrap entire SQL query execution in blanket exception suppressions"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "queries.py": "def get_slice_query():\n    return \"SELECT SUBSTRING(title, '1', '5') FROM articles\"\n"
+    },
+    "reproductionScript": "import sys\nfrom queries import get_slice_query\n\nq = get_slice_query()\nif \"'1'\" in q or \"'5'\" in q:\n    sys.stderr.write(\"duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.\\n\")\n    sys.exit(1)\nsys.exit(0)\n",
+    "testSuite": "import sys\nfrom queries import get_slice_query\n\nq = get_slice_query()\nassert \"'1'\" not in q and \"'5'\" not in q\nassert \"1, 5\" in q\nprint(\"VERIFICATION_SUCCESS_STAGE_3\")\nsys.exit(0)\n",
+    "mutations": [
+      {
+        "id": "mutant_double_quotes_string",
+        "description": "Replaces single quotes with double quotes still resulting in string type",
+        "unifiedDiff": "--- a/queries.py\n+++ b/queries.py\n@@ -1,3 +1,3 @@\n def get_slice_query():\n-    return \"SELECT SUBSTRING(title, '1', '5') FROM articles\"\n+    return 'SELECT SUBSTRING(title, \"1\", \"5\") FROM articles'\n"
+      },
+      {
+        "id": "mutant_omit_length",
+        "description": "Omits length argument altering query semantics",
+        "unifiedDiff": "--- a/queries.py\n+++ b/queries.py\n@@ -1,3 +1,3 @@\n def get_slice_query():\n-    return \"SELECT SUBSTRING(title, '1', '5') FROM articles\"\n+    return \"SELECT SUBSTRING(title, 1) FROM articles\"\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://github.com/duckdb/duckdb/releases/tag/v0.10.0"
+    ],
+    "verifiedAt": "2026-08-25T11:42:00Z"
+  }
+}

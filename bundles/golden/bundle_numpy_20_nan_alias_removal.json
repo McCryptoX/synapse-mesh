@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_numpy_20_nan_alias_removal_001",
+  "status": "VERIFIED",
+  "description": "NumPy 2.0 removes legacy uppercase scalar aliases including np.NAN, np.Inf, and np.bool. Use np.nan, np.inf, and bool instead.",
+  "tags": ["numpy", "python", "data-science", "v2.0"],
+  "scope": {
+    "package": "numpy",
+    "fromVersion": "<2.0.0",
+    "toVersion": ">=2.0.0",
+    "runtime": "python",
+    "runtimeVersion": ">=3.9",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.",
+    "regex": "AttributeError: `np.NAN` was removed",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "cleaner.py",
+    "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,3 +1,3 @@\n def fill_missing_values(val):\n-    return np.NAN if val is None else val\n+    return np.nan if val is None else val\n",
+    "pinnedDependencies": {
+      "numpy": ">=2.0.0"
+    },
+    "doNot": [
+      "Do not monkeypatch np.NAN = np.nan on module import",
+      "Do not pin numpy<2.0.0 indefinitely to avoid migration"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "cleaner.py": "def fill_missing_values(val):\n    return np.NAN if val is None else val\n"
+    },
+    "reproductionScript": "import sys\nimport cleaner\n\nclass MockNumPy:\n    nan = float('nan')\n    def __getattr__(self, name):\n        if name == 'NAN':\n            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n        raise AttributeError(name)\n\ncleaner.np = MockNumPy()\ntry:\n    cleaner.fill_missing_values(None)\n    sys.exit(0)\nexcept AttributeError as e:\n    if \"`np.NAN` was removed\" in str(e):\n        sys.stderr.write(str(e) + \"\\n\")\n        sys.exit(1)\n    sys.exit(2)\n",
+    "testSuite": "import sys\nimport math\nimport cleaner\n\nclass MockNumPy:\n    nan = float('nan')\n    def __getattr__(self, name):\n        if name == 'NAN':\n            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n        raise AttributeError(name)\n\ncleaner.np = MockNumPy()\nres = cleaner.fill_missing_values(None)\nassert math.isnan(res)\nprint(\"VERIFICATION_SUCCESS_STAGE_3\")\nsys.exit(0)\n",
+    "mutations": [
+      {
+        "id": "mutant_global_monkeypatch",
+        "description": "Monkeypatches global module attribute instead of fixing callsite",
+        "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,2 +1,3 @@\n+np.NAN = np.nan\n def fill_missing_values(val):\n     return np.NAN if val is None else val\n"
+      },
+      {
+        "id": "mutant_return_zero_lossy",
+        "description": "Returns 0.0 instead of NaN, corrupting missing data semantics",
+        "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,3 +1,3 @@\n def fill_missing_values(val):\n-    return np.NAN if val is None else val\n+    return 0.0 if val is None else val\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://numpy.org/devdocs/release/2.0.0-notes.html#c-api-and-abi-changes"
+    ],
+    "verifiedAt": "2026-08-25T11:42:00Z"
+  }
+}

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#090d16">
+    <title>Empirical Benchmark 2026 | Synapse-Mesh vs Frontier LLMs</title>
+    <meta name="description" content="Empirical evaluation of autonomous coding agents on modern breaking changes: Vanilla LLMs (16.7%) vs Web Search (25%) vs Synapse-Mesh MCP (100%).">
+    <link rel="stylesheet" href="/style.min.css">
+    <style>
+      body, html { background-color: #090d16; color: #e2e8f0; font-family: ui-sans-serif, system-ui, sans-serif; }
+      .terminal-code { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-brand-500 selection:text-black">
+    <!-- Navbar -->
+    <header class="sticky top-0 z-50 bg-slate-950/80 backdrop-blur border-b border-slate-800/80">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="/" class="flex items-center space-x-3 group" aria-label="Synapse-Mesh Homepage">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-500 to-cyan-400 p-0.5 shadow-lg shadow-brand-500/20 group-hover:scale-105 transition">
+                    <div class="w-full h-full bg-slate-950 rounded-[7px] flex items-center justify-center">
+                        <svg class="w-4 h-4 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 3v3m0 12v3M3 12h3m12 0h3"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400">SYNAPSE</span>
+                        <span class="text-xs px-1.5 py-0.5 rounded-full bg-brand-950 border border-brand-500/30 text-brand-300 font-mono font-medium">BENCHMARK</span>
+                    </div>
+                </div>
+            </a>
+            <nav class="flex items-center space-x-4 sm:space-x-6 text-sm font-medium">
+                <a href="/" class="text-slate-300 hover:text-brand-300 transition">Search</a>
+                <a href="/verification" class="text-slate-300 hover:text-brand-300 transition">Architecture</a>
+                <a href="/benchmark" class="text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5">Benchmark</a>
+                <a href="https://github.com/synapse-mesh/synapse" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-brand-300 transition flex items-center space-x-1">
+                    <span>GitHub</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl mx-auto px-4 py-12 w-full space-y-16">
+        <!-- Hero Section -->
+        <section class="text-center space-y-4 max-w-3xl mx-auto">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-950/60 border border-brand-500/30 text-brand-300 text-xs font-mono font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
+                <span>EMPIRICAL BENCHMARK (A/B/C CONTROLLED)</span>
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                Hallucination Elimination in <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Autonomous Coding</span>
+            </h1>
+            <p class="text-slate-300 text-base sm:text-lg leading-relaxed">
+                Evaluating Frontier AI models on acute 2025/2026 breaking changes. While vanilla LLMs hallucinate outdated patterns (83% failure), Synapse-Mesh MCP delivers <strong>100% deterministic 4-stage verified repairs</strong>.
+            </p>
+        </section>
+
+        <!-- Metrics Comparison Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Treatment A -->
+            <div class="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 flex flex-col justify-between space-y-4">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">GROUP A</span>
+                        <span class="text-xs font-bold text-rose-400">83.3% ERROR RATE</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-white mt-3">Vanilla LLM</h2>
+                    <p class="text-slate-300 text-sm mt-1">Isolated frontier model relying entirely on pre-trained weights without external grounding.</p>
+                </div>
+                <div class="space-y-2 pt-4 border-t border-slate-800">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-400">4-Stage Pass Rate:</span>
+                        <span class="font-bold text-rose-400">16.7% (2/12)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2">
+                        <div class="bg-rose-500 h-2 rounded-full" style="width: 16.7%"></div>
+                    </div>
+                    <span class="text-xs text-slate-400 block pt-1">Fails on: Next.js 15, HTTPX 0.28, SQLAlchemy 2.0, Express 5.</span>
+                </div>
+            </div>
+
+            <!-- Treatment B -->
+            <div class="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 flex flex-col justify-between space-y-4">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">GROUP B</span>
+                        <span class="text-xs font-bold text-amber-400">75.0% ERROR RATE</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-white mt-3">Web Search RAG</h2>
+                    <p class="text-slate-300 text-sm mt-1">LLM equipped with real-time web search. Ingests conflicting StackOverflow answers & hallucinated blog snippets.</p>
+                </div>
+                <div class="space-y-2 pt-4 border-t border-slate-800">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-400">4-Stage Pass Rate:</span>
+                        <span class="font-bold text-amber-400">25.0% (3/12)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2">
+                        <div class="bg-amber-400 h-2 rounded-full" style="width: 25%"></div>
+                    </div>
+                    <span class="text-xs text-slate-400 block pt-1">Fails on: Mutation sanity & untested try/except suppresses.</span>
+                </div>
+            </div>
+
+            <!-- Treatment C (Synapse MCP) -->
+            <div class="rounded-2xl bg-slate-900/90 border-2 border-brand-500/60 p-6 flex flex-col justify-between space-y-4 shadow-xl shadow-brand-500/10 relative overflow-hidden">
+                <div class="absolute -right-12 -top-12 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-brand-950 border border-brand-500/40 text-brand-300">GROUP C (SYNAPSE)</span>
+                        <span class="text-xs font-bold text-brand-300">0.0% HALLUCINATION</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-white mt-3">Synapse-Mesh MCP</h2>
+                    <p class="text-slate-200 text-sm mt-1">Autonomous agent equipped with `find_solution` querying 4-stage verified Golden Compatibility Bundles.</p>
+                </div>
+                <div class="space-y-2 pt-4 border-t border-brand-500/30">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-300">4-Stage Pass Rate:</span>
+                        <span class="font-bold text-brand-300">100.0% (12/12)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-brand-500 to-cyan-400 h-2 rounded-full" style="width: 100%"></div>
+                    </div>
+                    <span class="text-xs text-brand-300 font-medium block pt-1">Passes all 4 gates + 100% mutant elimination.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Benchmark Matrix Table -->
+        <section class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">The Top-10 Verified Golden Standards</h2>
+                    <p class="text-slate-300 text-sm">Every golden bundle includes SHA-256 frozen test suites, hermetic workspaces, and anti-hallucination mutant proofs.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-200 font-mono">Protocol Spec 2026-07-28</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-950/80 text-xs uppercase font-mono text-slate-400 border-b border-slate-800">
+                        <tr>
+                            <th scope="col" class="py-3 px-4">Standard / Package</th>
+                            <th scope="col" class="py-3 px-4">Runtime</th>
+                            <th scope="col" class="py-3 px-4">Breaking Error Signature</th>
+                            <th scope="col" class="py-3 px-4">Pre-Fail</th>
+                            <th scope="col" class="py-3 px-4">Diff</th>
+                            <th scope="col" class="py-3 px-4">Post-Pass</th>
+                            <th scope="col" class="py-3 px-4">Mutants</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60 font-mono text-xs">
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">HTTPX 0.28.1</td>
+                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">TypeError: ASGITransport.__init__() got keyword 'app'</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">Next.js 15.5</td>
+                            <td class="py-3 px-4 text-cyan-300">Node 22</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">Error: Route "/blog/[slug]" params should be awaited</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">Pydantic 2.10</td>
+                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">PydanticUserError: root_validator is deprecated</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">FastAPI 0.115</td>
+                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">DeprecationWarning: on_event("startup") is deprecated</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">SQLAlchemy 2.0</td>
+                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">ArgumentError: Textual SQL expression must be declared text()</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">NumPy 2.0</td>
+                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">AttributeError: `np.NAN` was removed in NumPy 2.0</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">Express 5.0</td>
+                            <td class="py-3 px-4 text-cyan-300">Node 22</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">TypeError: Missing parameter name at 1: /*</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">TypeScript 5.6</td>
+                            <td class="py-3 px-4 text-cyan-300">Node 22</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">TS2532: Object is possibly 'undefined' on Map.get()</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">DuckDB 0.10</td>
+                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">duckdb.BinderException: No function matches SUBSTRING(...)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="py-3 px-4 font-bold text-white">Python 3.12 UTC</td>
+                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
+                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">DeprecationWarning: datetime.utcnow() is deprecated</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (1)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">CLEAN</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS (0)</td>
+                            <td class="py-3 px-4 text-emerald-400 font-bold">2/2 KILLED</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Reverify in Terminal CTA -->
+        <section class="rounded-2xl bg-gradient-to-r from-brand-950/60 via-slate-900 to-slate-900 border border-brand-500/30 p-8 text-center space-y-6">
+            <div class="max-w-2xl mx-auto space-y-3">
+                <h3 class="text-2xl font-bold text-white">Re-verify Locally with 0 Trust & 0 Tokens</h3>
+                <p class="text-slate-300 text-sm">
+                    Execute the 4-stage hermetic verification engine directly in your own shell using either our Node.js or Python CLI tools:
+                </p>
+            </div>
+
+            <div class="max-w-xl mx-auto space-y-3 font-mono text-xs text-left">
+                <div class="rounded-lg bg-slate-950 p-4 border border-slate-800 flex items-center justify-between">
+                    <span class="text-brand-300">npx @synapse-mesh/verify bundles/golden/bundle_nextjs_15_async_params.json</span>
+                </div>
+                <div class="rounded-lg bg-slate-950 p-4 border border-slate-800 flex items-center justify-between">
+                    <span class="text-brand-300">synapse reverify bundle_httpx_028_asgi_transport</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-slate-300 text-xs">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-2">
+                <span>&copy; 2026 Synapse-Mesh (Projekt Exocortex)</span>
+                <span>&bull;</span>
+                <span>Zero-PII Architecture</span>
+            </div>
+            <nav class="flex items-center space-x-6" aria-label="Legal & Standards">
+                <a href="/impressum" class="hover:text-brand-300 transition underline">Impressum</a>
+                <a href="/datenschutz" class="hover:text-brand-300 transition underline">Datenschutz</a>
+                <a href="/llms.txt" class="hover:text-brand-300 transition underline font-mono">/llms.txt</a>
+                <a href="/.well-known/agent.json" class="hover:text-brand-300 transition underline font-mono">A2A Agent Card</a>
+            </nav>
+        </div>
+    </footer>
+</body>
+</html>

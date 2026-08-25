@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_sqlalchemy_20_select_scalars_001",
+  "status": "VERIFIED",
+  "description": "SQLAlchemy 2.0 removes string-based session.execute and replaces Query.get() with Session.get() or select() scalar execution.",
+  "tags": ["sqlalchemy", "python", "orm", "v2.0"],
+  "scope": {
+    "package": "sqlalchemy",
+    "fromVersion": "<2.0.0",
+    "toVersion": ">=2.0.0",
+    "runtime": "python",
+    "runtimeVersion": ">=3.9",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "ArgumentError: Textual SQL expression must be explicitly declared as text()",
+    "regex": "ArgumentError: Textual SQL expression",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "repository.py",
+    "unifiedDiff": "--- a/repository.py\n+++ b/repository.py\n@@ -1,5 +1,6 @@\n+from sqlalchemy import text\n \n def get_user_query(session, user_id):\n-    return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n+    return session.execute(text(\"SELECT * FROM users WHERE id = :id\"), {\"id\": user_id})\n",
+    "pinnedDependencies": {
+      "sqlalchemy": ">=2.0.0, <3.0.0"
+    },
+    "doNot": [
+      "Do not pass raw strings directly to session.execute()",
+      "Do not silence ArgumentError with generic try/except",
+      "Do not use string formatting for SQL parameters"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "repository.py": "def get_user_query(session, user_id):\n    return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n"
+    },
+    "reproductionScript": "import sys, types\n# Hermetic fallback if sqlalchemy is not in host interpreter\nif 'sqlalchemy' not in sys.modules:\n    m = types.ModuleType('sqlalchemy')\n    m.text = lambda s: {'_sql_text_clause': s}\n    sys.modules['sqlalchemy'] = m\n\nfrom repository import get_user_query\n\nclass MockSession:\n    def execute(self, stmt, params=None):\n        if isinstance(stmt, str):\n            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n        return \"OK\"\n\ntry:\n    get_user_query(MockSession(), 42)\n    sys.exit(0)\nexcept ValueError as e:\n    if \"ArgumentError: Textual SQL expression\" in str(e):\n        sys.stderr.write(str(e) + \"\\n\")\n        sys.exit(1)\n    sys.exit(2)\n",
+    "testSuite": "import sys, types\nif 'sqlalchemy' not in sys.modules:\n    m = types.ModuleType('sqlalchemy')\n    m.text = lambda s: {'_sql_text_clause': s}\n    sys.modules['sqlalchemy'] = m\n\nfrom repository import get_user_query\n\nclass MockSession:\n    def execute(self, stmt, params=None):\n        if isinstance(stmt, str):\n            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n        return \"OK\"\n\nres = get_user_query(MockSession(), 42)\nassert res == \"OK\"\nprint(\"VERIFICATION_SUCCESS_STAGE_3\")\nsys.exit(0)\n",
+    "mutations": [
+      {
+        "id": "mutant_string_cast_silence",
+        "description": "Casts statement to string instead of using text() object",
+        "unifiedDiff": "--- a/repository.py\n+++ b/repository.py\n@@ -1,3 +1,3 @@\n def get_user_query(session, user_id):\n-    return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n+    return session.execute(str(f\"SELECT * FROM users WHERE id = {user_id}\"))\n"
+      },
+      {
+        "id": "mutant_try_except_empty",
+        "description": "Catches error and returns None instead of fixing statement",
+        "unifiedDiff": "--- a/repository.py\n+++ b/repository.py\n@@ -1,3 +1,6 @@\n def get_user_query(session, user_id):\n-    return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n+    try:\n+        return session.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n+    except Exception:\n+        return None\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://docs.sqlalchemy.org/en/20/changelog/migration_20.html"
+    ],
+    "verifiedAt": "2026-08-25T11:42:00Z"
+  }
+}

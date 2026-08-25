@@ -155,3 +155,51 @@ def test_golden_python_datetime_bundle_full_4stage_pass():
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
     assert verify_bundle_data(data) is True
+
+def test_golden_sqlalchemy_bundle_full_4stage_pass():
+    """Tests the real Golden Bundle for SQLAlchemy 2.0 select scalars migration."""
+    p = BASE_DIR / "bundles/golden/bundle_sqlalchemy_20_select_scalars.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert verify_bundle_data(data) is True
+
+
+def test_golden_numpy_bundle_full_4stage_pass():
+    """Tests the real Golden Bundle for NumPy 2.0 NaN alias removal."""
+    p = BASE_DIR / "bundles/golden/bundle_numpy_20_nan_alias_removal.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert verify_bundle_data(data) is True
+
+
+def test_golden_duckdb_bundle_full_4stage_pass():
+    """Tests the real Golden Bundle for DuckDB 0.10 substring casting."""
+    p = BASE_DIR / "bundles/golden/bundle_duckdb_010_substring_casting.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert verify_bundle_data(data) is True
+
+
+def test_golden_express_bundle_schema_and_fixture_structure():
+    """Tests the Express 5.0 Golden Bundle schema, diffs, and mutations."""
+    p = BASE_DIR / "bundles/golden/bundle_express_50_path_to_regexp.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert data["schemaVersion"] == "1.0.0"
+    assert "router.js" in data["verification"]["workspaceFiles"]
+    assert len(data["verification"]["mutations"]) >= 2
+
+
+def test_golden_typescript_bundle_schema_and_fixture_structure():
+    """Tests the TypeScript 5.6 Golden Bundle schema, diffs, and mutations."""
+    p = BASE_DIR / "bundles/golden/bundle_typescript_56_strict_map_lookup.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert data["schemaVersion"] == "1.0.0"
+    assert "lookup.js" in data["verification"]["workspaceFiles"]
+    assert len(data["verification"]["mutations"]) >= 2
