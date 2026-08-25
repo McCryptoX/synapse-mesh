@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Request, Response, HTTPException, Query, Header
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import APIRouter, Request, Response, HTTPException, Query, Header, Form
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import json
 import logging
+import secrets
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
@@ -17,10 +18,40 @@ router = APIRouter(tags=["Operations & Pipeline Observatory"])
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=True)
 
+COOKIE_NAME = "synapse_ops_session"
+
+
+def is_authenticated(request: Request, key: Optional[str] = None) -> bool:
+    """Verifies authentication via Cookie, Query param, or Header."""
+    valid_passwords = [p for p in [settings.ops_password, settings.admin_token] if p]
+    if not valid_passwords:
+        return True  # If no password configured, permit local access
+
+    # 1. Check Query parameter
+    if key and any(secrets.compare_digest(key, p) for p in valid_passwords):
+        return True
+
+    # 2. Check Cookie
+    cookie_val = request.cookies.get(COOKIE_NAME)
+    if cookie_val and any(secrets.compare_digest(cookie_val, p) for p in valid_passwords):
+        return True
+
+    # 3. Check Header
+    hdr = request.headers.get("X-Synapse-Admin-Key") or request.headers.get("Authorization", "").replace("Bearer ", "")
+    if hdr and any(secrets.compare_digest(hdr, p) for p in valid_passwords):
+        return True
+
+    return False
+
 
 @router.get("/ops", response_class=HTMLResponse)
 @router.head("/ops", include_in_schema=False)
-async def get_ops_dashboard(request: Request):
+async def get_ops_dashboard(request: Request, key: Optional[str] = Query(None)):
+    """Password-protected Operations & Pipeline Observatory Dashboard."""
+    if not is_authenticated(request, key):
+        template = jinja_env.get_template("ops_login.html")
+        return HTMLResponse(template.render(error=None), status_code=200)
+
     db = await get_db_connection()
     try:
         cursor = await db.execute("""
@@ -92,13 +123,40 @@ async def get_ops_dashboard(request: Request):
             items=items,
             last_sync=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         )
-        return HTMLResponse(content=html_content)
+        resp = HTMLResponse(content=html_content)
+        # If authenticated via key in URL, auto-set cookie for seamless browsing
+        if key and is_authenticated(request, key):
+            resp.set_cookie(COOKIE_NAME, key, max_age=86400 * 30, httponly=True, samesite="lax")
+        return resp
     finally:
         await db.close()
 
 
+@router.post("/ops/login")
+async def ops_login(request: Request, password: str = Form(...)):
+    """Authenticates the user and sets session cookie."""
+    valid_passwords = [p for p in [settings.ops_password, settings.admin_token] if p]
+    if any(secrets.compare_digest(password.strip(), p) for p in valid_passwords):
+        resp = RedirectResponse(url="/ops", status_code=303)
+        resp.set_cookie(COOKIE_NAME, password.strip(), max_age=86400 * 30, httponly=True, samesite="lax")
+        return resp
+    template = jinja_env.get_template("ops_login.html")
+    return HTMLResponse(template.render(error="Ungültiges Passwort. Bitte erneut versuchen."), status_code=401)
+
+
+@router.get("/ops/logout")
+async def ops_logout():
+    """Logs out and clears session cookie."""
+    resp = RedirectResponse(url="/ops", status_code=303)
+    resp.delete_cookie(COOKIE_NAME)
+    return resp
+
+
 @router.get("/api/v1/ops/telemetry", tags=["Operations & Pipeline Observatory"])
-async def get_ops_telemetry():
+async def get_ops_telemetry(request: Request, key: Optional[str] = Query(None)):
+    """Raw JSON telemetry stream (protected)."""
+    if not is_authenticated(request, key):
+        raise HTTPException(status_code=403, detail="Forbidden: Ops authentication required.")
     db = await get_db_connection()
     try:
         cursor = await db.execute("""
@@ -123,7 +181,10 @@ async def get_ops_telemetry():
 
 
 @router.post("/api/v1/ops/trigger-verify", tags=["Operations & Pipeline Observatory"])
-async def trigger_manual_verification_sweep():
+async def trigger_manual_verification_sweep(request: Request, key: Optional[str] = Query(None)):
+    """Manually triggers an immediate 4-stage sandbox verification sweep across all batches (protected)."""
+    if not is_authenticated(request, key):
+        raise HTTPException(status_code=403, detail="Forbidden: Ops authentication required.")
     import glob
     from scripts.batch_importer import process_candidate_recipes
     files = sorted(glob.glob("data/candidate_recipes*.json"))

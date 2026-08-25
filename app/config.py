@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     
     # Security
     admin_token: str = ""
+    ops_password: str = "synapse-ops-2026"
     
     # CORS
     cors_origins: list[str] = ["*"]
