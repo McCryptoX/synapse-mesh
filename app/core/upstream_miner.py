@@ -67,8 +67,64 @@ class UpstreamReleaseFetcher:
                     "ecosystem": "pypi"
                 }]
         except Exception as e:
-            logger.debug(f"PyPI live fetch for {package_name} skipped ({e}), using deterministic offline knowledge feed.")
+            logger.debug(f"PyPI live fetch for {package_name} skipped ({e})")
             return []
+
+    @classmethod
+    def fetch_pypi_rss_updates(cls, limit: int = 10) -> List[Dict[str, Any]]:
+        """Fetches the latest package updates directly from PyPI's public RSS feed."""
+        import xml.etree.ElementTree as ET
+        url = "https://pypi.org/rss/updates.xml"
+        results = []
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Synapse-Upstream-Miner/1.0"})
+            with urllib.request.urlopen(req, timeout=5.0) as resp:
+                root = ET.fromstring(resp.read())
+                for item in root.findall("./channel/item")[:limit]:
+                    title = item.findtext("title", "")
+                    link = item.findtext("link", "")
+                    desc = item.findtext("description", "")
+                    if " " in title:
+                        pkg_name, ver = title.split(" ", 1)
+                        results.append({
+                            "package": pkg_name.strip(),
+                            "version": ver.strip(),
+                            "release_notes": desc,
+                            "url": link,
+                            "ecosystem": "pypi",
+                            "runtime": "python"
+                        })
+        except Exception as e:
+            logger.debug(f"PyPI RSS live fetch skipped ({e})")
+        return results
+
+    @classmethod
+    def fetch_github_releases_atom(cls, repo: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """Fetches recent releases from GitHub repository Atom feed without API key requirement."""
+        import xml.etree.ElementTree as ET
+        url = f"https://github.com/{repo}/releases.atom"
+        results = []
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Synapse-Upstream-Miner/1.0"})
+            with urllib.request.urlopen(req, timeout=5.0) as resp:
+                root = ET.fromstring(resp.read())
+                ns = {"atom": "http://www.w3.org/2005/Atom"}
+                for entry in root.findall("atom:entry", ns)[:limit]:
+                    title = entry.findtext("atom:title", "", ns)
+                    content = entry.findtext("atom:content", "", ns)
+                    link_el = entry.find("atom:link", ns)
+                    link = link_el.attrib.get("href", "") if link_el is not None else ""
+                    results.append({
+                        "package": repo.split("/")[-1],
+                        "version": title.lstrip("v"),
+                        "release_notes": content,
+                        "url": link,
+                        "ecosystem": "github",
+                        "runtime": "all"
+                    })
+        except Exception as e:
+            logger.debug(f"GitHub Atom feed fetch for {repo} skipped ({e})")
+        return results
 
     @classmethod
     def get_seed_changelogs(cls) -> List[Dict[str, Any]]:
@@ -499,6 +555,90 @@ Pin: litellm>=1.40.0
 Do Not: Do not pass raw model_list arrays into top-level litellm.completion functions.
 """,
                 "url": "https://docs.litellm.ai/docs/routing"
+            },
+            {
+                "package": "go",
+                "version": "1.22.0",
+                "ecosystem": "go",
+                "runtime": "python",
+                "release_notes": """
+# Go 1.22 For-Loop Variable Scoping
+### Breaking Changes
+- In Go 1.22, for-loop iteration variables have per-iteration scoping instead of per-loop sharing.
+- Code capturing loop variables concurrently in older versions triggers `LoopVariableCaptureWarning: loop variable captured by func literal in for loop. Go 1.22 changes for-loop variables to per-iteration scoping.`.
+### Migration
+Before:
+```python
+import sys
+class MockGoRuntime:
+    def execute(self, code):
+        if "val := v" not in code and "go1.22" not in code:
+            raise RuntimeError("LoopVariableCaptureWarning: loop variable captured by func literal in for loop. Go 1.22 changes for-loop variables to per-iteration scoping.")
+        return [1, 2, 3]
+runtime = MockGoRuntime()
+try:
+    runtime.execute("for _, v := range items { go func() { print(v) }() }")
+except RuntimeError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockGoRuntime:
+    def execute(self, code):
+        return [1, 2, 3]
+runtime = MockGoRuntime()
+result = runtime.execute("for _, v := range items { val := v; go func() { print(val) }() }")
+assert len(result) == 3
+```
+Pin: go>=1.22.0
+Do Not: Do not rely on shared per-loop iteration variable pointers in concurrent goroutines.
+""",
+                "url": "https://go.dev/doc/go1.22"
+            },
+            {
+                "package": "spring-boot",
+                "version": "3.0.0",
+                "ecosystem": "maven",
+                "runtime": "python",
+                "release_notes": """
+# Spring Boot 3.0 Jakarta EE Migration
+### Breaking Changes
+- Spring Boot 3.0 has completed the baseline upgrade from Java EE to Jakarta EE 10.
+- Importing legacy `javax.servlet.*` packages causes `ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet.*).`.
+### Migration
+Before:
+```python
+import sys
+class MockJVM:
+    def load_class(self, name):
+        if name.startswith("javax.servlet"):
+            raise ModuleNotFoundError("ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet.*).")
+        return True
+jvm = MockJVM()
+try:
+    jvm.load_class("javax.servlet.http.HttpServletRequest")
+except ModuleNotFoundError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockJVM:
+    def load_class(self, name):
+        if name.startswith("jakarta.servlet"):
+            return {"loaded": name, "status": "OK"}
+        raise ModuleNotFoundError(name)
+jvm = MockJVM()
+result = jvm.load_class("jakarta.servlet.http.HttpServletRequest")
+assert result["status"] == "OK"
+```
+Pin: org.springframework.boot:spring-boot-starter-web>=3.0.0
+Do Not: Do not import deprecated javax.servlet or javax.persistence packages in Spring Boot 3.
+""",
+                "url": "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide"
             }
         ]
 
