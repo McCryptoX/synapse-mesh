@@ -11,9 +11,9 @@ from datetime import datetime, timezone
 
 
 class SandboxRunner:
-    """Executes reproduction and test suites in an isolated temporary process with strict resource and time limits."""
+    """Executes multi-ecosystem reproduction and test suites in isolated temporary workspaces with strict limits."""
 
-    TIMEOUT_SECONDS = 8.0
+    TIMEOUT_SECONDS = 12.0
 
     @classmethod
     async def run_workspace_test(
@@ -22,12 +22,12 @@ class SandboxRunner:
         entrypoint: str,
         runtime: str = "python"
     ) -> Dict[str, Any]:
-        """Executes a multi-file workspace hermetically in an isolated directory."""
+        """Executes a multi-file workspace hermetically in an isolated directory across Python, Node.js, and Rust."""
         start_time = time.time()
         temp_dir = tempfile.mkdtemp(prefix="synapse_sandbox_")
 
         try:
-            # Write all workspace files
+            # 1. Write all workspace files
             for rel_path, content in files.items():
                 target_file = Path(temp_dir) / rel_path
                 target_file.parent.mkdir(parents=True, exist_ok=True)
@@ -36,14 +36,16 @@ class SandboxRunner:
             env = os.environ.copy()
             env["PYTHONUNBUFFERED"] = "1"
             env["PYTHONDONTWRITEBYTECODE"] = "1"
-            # Include global node_modules if present
-            if "NODE_PATH" not in env and os.path.exists("/usr/local/lib/node_modules"):
-                env["NODE_PATH"] = "/usr/local/lib/node_modules"
+            if "NODE_PATH" not in env and os.path.exists("/usr/lib/node_modules"):
+                env["NODE_PATH"] = "/usr/lib/node_modules"
 
-            if runtime.lower() == "python":
+            rt = runtime.lower()
+
+            # 2. Select Executable & Command Line
+            if rt == "python":
                 executable = sys.executable
                 args = [executable, entrypoint]
-            elif runtime.lower() in ("nodejs", "node", "javascript", "typescript"):
+            elif rt in ("nodejs", "node", "javascript", "typescript"):
                 executable = shutil.which("node")
                 if not executable:
                     return {
@@ -55,6 +57,25 @@ class SandboxRunner:
                         "unverified": True
                     }
                 args = [executable, entrypoint]
+            elif rt == "rust":
+                cargo_bin = shutil.which("cargo")
+                if not cargo_bin:
+                    return {
+                        "exitCode": -1,
+                        "passed": False,
+                        "durationMs": 0.0,
+                        "stdout": "",
+                        "stderr": "UNVERIFIED: cargo toolchain not found on host",
+                        "unverified": True
+                    }
+                # For Rust, entrypoint specifies the cargo/rustc action (e.g. 'check' or 'test')
+                if entrypoint == "check":
+                    args = [cargo_bin, "check", "--offline"]
+                elif entrypoint == "test":
+                    args = [cargo_bin, "test", "--offline"]
+                else:
+                    rustc_bin = shutil.which("rustc")
+                    args = [rustc_bin, entrypoint]
             else:
                 executable = sys.executable
                 args = [executable, entrypoint]
@@ -98,7 +119,6 @@ class SandboxRunner:
 
     @classmethod
     async def run_python_test(cls, test_script: str) -> Dict[str, Any]:
-        """Convenience wrapper for single-script Python test."""
         return await cls.run_workspace_test(
             files={"test_script.py": test_script},
             entrypoint="test_script.py",
@@ -107,7 +127,6 @@ class SandboxRunner:
 
     @classmethod
     async def run_nodejs_test(cls, test_script: str) -> Dict[str, Any]:
-        """Convenience wrapper for single-script Node.js test."""
         return await cls.run_workspace_test(
             files={"test_script.js": test_script},
             entrypoint="test_script.js",
@@ -116,7 +135,6 @@ class SandboxRunner:
 
     @classmethod
     async def verify_recipe(cls, runtime: str, test_suite: str, primary_source: str = None) -> EvidenceDefinition:
-        """Runs test suite and generates a structured EvidenceDefinition."""
         rt = runtime.lower()
         if rt == "python":
             res = await cls.run_python_test(test_suite)

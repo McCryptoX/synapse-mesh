@@ -26,6 +26,22 @@ class BenchmarkTestCase(BaseModel):
     antiDowngradeEnforced: bool = Field(default=True, description="Strictly rejects package downgrades")
 
 
+class DiagnosticEvaluationResult(BaseModel):
+    caseId: str
+    family: str
+    preFailPassed: bool
+    signatureMatched: bool
+    postPassPassed: bool
+    mutationsTotal: int
+    mutationsRejected: int
+    fullyVerified: bool
+    durationMs: float
+    notes: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self.model_dump()
+
+
 class AgentExecutionTelemetry(BaseModel):
     group: str = Field(..., description="Group_A_Baseline | Group_B_WebSearch | Group_C_SynapseMesh")
     caseId: str

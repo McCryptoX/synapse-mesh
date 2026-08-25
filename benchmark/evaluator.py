@@ -1,60 +1,18 @@
 import asyncio
+import importlib.util
 import json
 import logging
+import os
 import re
 import sys
 import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-# Add project root to sys.path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from benchmark.schema import BenchmarkTestCase
+from benchmark.schema import BenchmarkTestCase, DiagnosticEvaluationResult
 from app.core.sandbox import SandboxRunner
 
-logging.basicConfig(level="INFO", format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("benchmark_evaluator")
-
-
-class DiagnosticEvaluationResult:
-    def __init__(
-        self,
-        caseId: str,
-        family: str,
-        preFailPassed: bool,
-        signatureMatched: bool,
-        postPassPassed: bool,
-        mutationsTotal: int,
-        mutationsRejected: int,
-        fullyVerified: bool,
-        durationMs: float,
-        notes: str
-    ):
-        self.caseId = caseId
-        self.family = family
-        self.preFailPassed = preFailPassed
-        self.signatureMatched = signatureMatched
-        self.postPassPassed = postPassPassed
-        self.mutationsTotal = mutationsTotal
-        self.mutationsRejected = mutationsRejected
-        self.fullyVerified = fullyVerified
-        self.durationMs = durationMs
-        self.notes = notes
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "caseId": self.caseId,
-            "family": self.family,
-            "preFailPassed": self.preFailPassed,
-            "signatureMatched": self.signatureMatched,
-            "postPassPassed": self.postPassPassed,
-            "mutationsTotal": self.mutationsTotal,
-            "mutationsRejected": self.mutationsRejected,
-            "fullyVerified": self.fullyVerified,
-            "durationMs": self.durationMs,
-            "notes": self.notes
-        }
+logger = logging.getLogger("benchmark.evaluator")
 
 
 class ScientificBenchmarkEvaluator:
@@ -74,7 +32,14 @@ class ScientificBenchmarkEvaluator:
 
     async def evaluate_case(self, case: BenchmarkTestCase) -> DiagnosticEvaluationResult:
         start_time = time.perf_counter()
-        runtime = "nodejs" if case.family in ("Node.js", "JavaScript", "TypeScript") else "python"
+        
+        # Determine runtime
+        if case.family == "Rust":
+            runtime = "rust"
+        elif case.family in ("Node.js", "JavaScript", "TypeScript"):
+            runtime = "nodejs"
+        else:
+            runtime = "python"
         
         # 1. Pre-Fail & Signature Regex Validation (Real Reproduction Script in Workspace)
         repro_files = dict(case.workspaceFiles)
@@ -82,10 +47,12 @@ class ScientificBenchmarkEvaluator:
         repro_entrypoint = f"repro{repro_ext}"
         repro_files[repro_entrypoint] = case.reproductionScript
 
+        # Note: Repro harness runner uses python to drive compiler/runtimes if entrypoint is .py
+        repro_runtime = "python" if repro_entrypoint.endswith(".py") else runtime
         repro_res = await SandboxRunner.run_workspace_test(
             files=repro_files,
             entrypoint=repro_entrypoint,
-            runtime=runtime
+            runtime=repro_runtime
         )
         
         if repro_res.get("unverified"):
@@ -106,7 +73,7 @@ class ScientificBenchmarkEvaluator:
         combined_output = f"{repro_res.get('stderr', '')}\n{repro_res.get('stdout', '')}"
         
         if case.errorSignatureRegex:
-            sig_matched = bool(re.search(case.errorSignatureRegex, combined_output))
+            sig_matched = bool(re.search(case.errorSignatureRegex, combined_output, re.IGNORECASE))
         else:
             sig_matched = (case.errorSignature.lower() in combined_output.lower())
 
@@ -115,10 +82,11 @@ class ScientificBenchmarkEvaluator:
         valid_files[case.targetPatchFile] = case.validPatch
         valid_files[case.entrypoint] = case.groundTruthTestSuite
 
+        post_runtime = "python" if case.entrypoint.endswith(".py") else runtime
         post_res = await SandboxRunner.run_workspace_test(
             files=valid_files,
             entrypoint=case.entrypoint,
-            runtime=runtime
+            runtime=post_runtime
         )
         
         post_pass_ok = (post_res["exitCode"] == 0 and post_res["passed"] is True)
@@ -135,12 +103,13 @@ class ScientificBenchmarkEvaluator:
             mut_res = await SandboxRunner.run_workspace_test(
                 files=mut_files,
                 entrypoint=case.entrypoint,
-                runtime=runtime
+                runtime=post_runtime
             )
             if mut_res["exitCode"] != 0 or mut_res["passed"] is False:
                 mutations_rejected += 1
 
-        all_mutations_killed = (len(mutations) == 0 or mutations_rejected == len(mutations))
+        # Strict Red-Team Gate: Must have at least 3 mutations and ALL must be killed
+        all_mutations_killed = (len(mutations) >= 3 and mutations_rejected == len(mutations))
         duration = round((time.perf_counter() - start_time) * 1000, 2)
         fully_verified = (pre_fail_ok and sig_matched and post_pass_ok and all_mutations_killed)
 
@@ -174,18 +143,17 @@ class ScientificBenchmarkEvaluator:
         for c in cases:
             res = await self.evaluate_case(c)
             results.append(res)
-            status_icon = "✓ PASS" if res.fullyVerified else "✗ FAIL"
-            logger.info(f"[{status_icon}] {res.caseId} ({res.family}) in {res.durationMs}ms - {res.notes}")
         return results
 
 
 if __name__ == "__main__":
-    evaluator = ScientificBenchmarkEvaluator("benchmark/hardened_cases.json")
+    evaluator = ScientificBenchmarkEvaluator()
     results = asyncio.run(evaluator.run_full_evaluation())
-    print("\n" + "="*95)
-    print("SCIENTIFIC BENCHMARK VERIFICATION REPORT (GENUINE FILE-WORKSPACE EVALUATOR)")
-    print("="*95)
+    print("\n" + "="*80)
+    print("SCIENTIFIC 4-STAGE BENCHMARK ORACLE RESULTS")
+    print("="*80)
     for r in results:
-        mut_str = f"{r.mutationsRejected}/{r.mutationsTotal} Killed" if r.mutationsTotal else "N/A"
-        print(f"[{'✓' if r.fullyVerified else '✗'}] {r.caseId:<32} | Pre-Fail: {r.preFailPassed} | Sig-Match: {r.signatureMatched} | Post-Pass: {r.postPassPassed} | Mutations: {mut_str:<12} | {r.durationMs}ms")
-    print("="*95)
+        status = "✓ PASS" if r.fullyVerified else "✗ FAIL"
+        mut_str = f"{r.mutationsRejected}/{r.mutationsTotal} Killed"
+        print(f"[{status}] {r.caseId:<32} | Pre-Fail: {r.preFailPassed} | Sig-Match: {r.signatureMatched} | Post-Pass: {r.postPassPassed} | Mutations: {mut_str:<12} | {r.durationMs}ms")
+    print("="*80)

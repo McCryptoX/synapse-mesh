@@ -9,8 +9,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install official Node.js 22 LTS, gosu for safe privilege drop, and packages
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg gosu \
+# Install official Node.js 22 LTS, Rust toolchain, gosu for safe privilege drop, and packages
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg gosu rustc cargo \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && npm install -g express@5.0.1 supertest \
