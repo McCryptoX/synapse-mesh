@@ -98,7 +98,8 @@ STOPWORDS = {
     "use", "instead", "you", "tried", "access", "error", "warning", "exception",
     "cannot", "could", "not", "module", "object", "type", "value", "out", "while",
     "when", "into", "over", "time", "timed", "mode", "render", "rendering",
-    "passed", "instead", "only", "must", "should", "some", "like", "such", "than"
+    "passed", "instead", "only", "must", "should", "some", "like", "such", "than",
+    "after", "failed", "processing", "unrelated", "while"
 }
 
 KNOWN_PACKAGES = {
@@ -112,15 +113,7 @@ PACKAGE_ALIASES = {
     "series": "pandas",
     "read_csv": "pandas",
     "read_parquet": "pandas",
-    "concat": "pandas",
-    "basemodel": "pydantic",
-    "field": "pydantic",
-    "validator": "pydantic",
-    "ndarray": "numpy",
-    "nan": "numpy",
-    "session": "sqlalchemy",
-    "select": "sqlalchemy",
-    "scalars": "sqlalchemy"
+    "basemodel": "pydantic"
 }
 
 
@@ -167,9 +160,12 @@ async def search_recipes(req: RecipeSearchRequest):
             desc_words = set(re.findall(r'[a-zA-Z0-9_]+', desc))
             
             score = 0.0
+            matched_rule = None
+            
             # 1. Exact Error Signature Match
             if clean_error in sig or sig in clean_error:
                 score += 1000.0
+                matched_rule = "EXACT"
 
             # 2. Package-Specific Relevance
             recipe_packages = {pkg.lower() for pkg in KNOWN_PACKAGES if pkg in rec_id or pkg in sig or pkg in desc}
@@ -179,25 +175,32 @@ async def search_recipes(req: RecipeSearchRequest):
                     
             if query_packages:
                 if query_packages.intersection(recipe_packages):
-                    score += 500.0
+                    score += 300.0
                 elif recipe_packages and not query_packages.intersection(recipe_packages):
-                    # Query clearly asked for package X, but this recipe is package Y -> penalize heavily
-                    score -= 1000.0
+                    # Hard penalty: Query specified package X, recipe is package Y -> strictly reject!
+                    score -= 10000.0
 
-            # 3. Whole-Word Meaningful Overlap
-            for token in meaningful_tokens:
-                if token in sig_words:
-                    score += 90.0
-                elif token in desc_words:
-                    score += 30.0
+            # 3. Whole-Word Meaningful Overlap on Signature
+            sig_overlap = [t for t in meaningful_tokens if t in sig_words]
+            if len(sig_overlap) >= 2:
+                score += len(sig_overlap) * 120.0
+                if not matched_rule:
+                    matched_rule = "MULTI_TOKEN_SIG"
+            elif len(sig_overlap) == 1 and query_packages and query_packages.intersection(recipe_packages):
+                score += 80.0
+                if not matched_rule:
+                    matched_rule = "PACKAGE_TOKEN"
+
+            # Hard Gate: Must have matched an exact rule or high-entropy signature tokens
+            if not matched_rule or score < 400.0:
+                continue
 
             # 4. Verified Status Boost (ONLY if there was an actual query match!)
-            if score > 0:
-                if row["verification_status"] == "VERIFIED":
-                    score += 150.0
-                score *= (row["confidence_score"] or 0.5)
+            if row["verification_status"] == "VERIFIED":
+                score += 100.0
+            score *= (row["confidence_score"] or 0.5)
 
-            if score >= 250.0:
+            if score >= 350.0:
                 recipe_obj = VerifiedRecipe(
                     id=row["id"],
                     problem=ProblemDefinition(**prob),

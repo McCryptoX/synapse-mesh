@@ -93,3 +93,30 @@ async def test_mcp_unknown_error_returns_no_verified_match():
     assert content["status"] == "NO_VERIFIED_MATCH"
     assert content["matchConfidence"] == 0.0
 
+
+@pytest.mark.asyncio
+async def test_mcp_adversarial_queries_rejected():
+    adversarial_queries = [
+        "RuntimeError: session execute model router timed out while processing unrelated widget payload",
+        "WidgetPipelineError: model router session execute failed after banana checksum mismatch",
+        "PipelineProcessingError: random payload validation failed on worker 42"
+    ]
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        for q in adversarial_queries:
+            res = await ac.post("/mcp", json={
+                "jsonrpc": "2.0",
+                "id": 6,
+                "method": "tools/call",
+                "params": {
+                    "name": "find_solution",
+                    "arguments": {"errorSignature": q}
+                }
+            })
+            assert res.status_code == 200
+            data = res.json()
+            import json
+            content = json.loads(data["result"]["content"][0]["text"])
+            assert content["status"] == "NO_VERIFIED_MATCH"
+            assert content["matchConfidence"] == 0.0
+
+

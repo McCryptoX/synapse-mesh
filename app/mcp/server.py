@@ -220,55 +220,61 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                     continue
 
                 sig_words = set(re.findall(r'[a-zA-Z0-9_]+', sig_text))
-                desc_words = set(re.findall(r'[a-zA-Z0-9_]+', desc))
-
+                
                 score = 0.0
+                matched_rule = None
+                
                 if clean_query in sig_text or sig_text in clean_query:
-                    score += 1000.0
+                    score = 1000.0
+                    matched_rule = "EXACT"
                 elif regex_pat:
                     try:
                         if re.search(regex_pat, error_sig, re.IGNORECASE):
-                            score += 800.0
+                            score = 900.0
+                            matched_rule = "REGEX"
                     except Exception:
                         pass
 
-                for token in meaningful_tokens:
-                    if token in sig_words:
-                        score += 90.0
-                    elif token in desc_words:
-                        score += 30.0
+                if not matched_rule:
+                    sig_overlap = [t for t in meaningful_tokens if t in sig_words]
+                    # Hard Gate: Must have at least 2 distinctive error signature tokens AND package match
+                    if len(sig_overlap) >= 2 and pkg in query_packages:
+                        score = 400.0 + len(sig_overlap) * 100.0
+                        matched_rule = "TOKEN_OVERLAP"
 
-                if pkg in query_packages:
-                    score += 200.0
+                # If no hard gate was passed, reject this bundle
+                if not matched_rule or score < 400.0:
+                    continue
 
-                if score >= 250.0:
-                    prov = b.get("provenance", {})
-                    primary_src = prov.get("primarySources", ["https://synapsemesh.dev/benchmark"])[0] if prov.get("primarySources") else prov.get("primarySource", "https://synapsemesh.dev/benchmark")
-                    scored_bundles.append((score, {
-                        "status": "VERIFIED_MATCH",
-                        "matchConfidence": 1.0,
-                        "verificationConfidence": 1.0,
-                        "evidenceTier": "VERIFIED_REAL_RUNTIME",
-                        "recipeId": b.get("bundleId"),
-                        "runtime": b.get("scope", {}).get("runtime"),
-                        "package": b.get("scope", {}).get("package"),
-                        "affectedVersions": b.get("scope", {}).get("affectedVersionRange", ">=2.0.0"),
-                        "errorSignature": fp.get("errorSignature"),
-                        "minimalFix": b.get("description"),
-                        "codeDiff": b.get("patch", {}).get("unifiedDiff"),
-                        "pinnedDependencies": b.get("patch", {}).get("pinnedDependencies", {}),
-                        "doNot": b.get("patch", {}).get("doNot", []),
-                        "environment": {
-                            "runtime": f"{b.get('scope', {}).get('runtime')} 3.12.14 / Node 22",
-                            "compilerIsolation": "Hermetic Native Execution",
-                            "sandboxExitCodes": [1, 0],
-                            "mutationsKilled": "2/2"
-                        },
-                        "confidence": 1.0,
-                        "confidenceExplanation": "100% Hermetic pass in isolated sandbox: Pre-Fail Exit 1 verified on native compiler, AST-Diff applied, Post-Pass Exit 0, 2/2 Mutants Killed.",
-                        "primarySource": primary_src,
-                        "canonicalUrl": f"https://synapsemesh.dev/api/v1/bundles/{b.get('bundleId')}"
-                    }))
+                calculated_match_conf = 1.0 if matched_rule in ("EXACT", "REGEX") else min(0.95, round(score / 1000.0, 2))
+
+                prov = b.get("provenance", {})
+                primary_src = prov.get("primarySources", ["https://synapsemesh.dev/benchmark"])[0] if prov.get("primarySources") else prov.get("primarySource", "https://synapsemesh.dev/benchmark")
+                scored_bundles.append((score, {
+                    "status": "VERIFIED_MATCH",
+                    "matchConfidence": calculated_match_conf,
+                    "verificationConfidence": 1.0,
+                    "evidenceTier": "VERIFIED_REAL_RUNTIME",
+                    "recipeId": b.get("bundleId"),
+                    "runtime": b.get("scope", {}).get("runtime"),
+                    "package": b.get("scope", {}).get("package"),
+                    "affectedVersions": b.get("scope", {}).get("affectedVersionRange", ">=2.0.0"),
+                    "errorSignature": fp.get("errorSignature"),
+                    "minimalFix": b.get("description"),
+                    "codeDiff": b.get("patch", {}).get("unifiedDiff"),
+                    "pinnedDependencies": b.get("patch", {}).get("pinnedDependencies", {}),
+                    "doNot": b.get("patch", {}).get("doNot", []),
+                    "environment": {
+                        "runtime": f"{b.get('scope', {}).get('runtime')} 3.12.14 / Node 22",
+                        "compilerIsolation": "Hermetic Native Execution",
+                        "sandboxExitCodes": [1, 0],
+                        "mutationsKilled": "2/2"
+                    },
+                    "confidence": 1.0,
+                    "confidenceExplanation": "100% Hermetic pass in isolated sandbox: Pre-Fail Exit 1 verified on native compiler, AST-Diff applied, Post-Pass Exit 0, 2/2 Mutants Killed.",
+                    "primarySource": primary_src,
+                    "canonicalUrl": f"https://synapsemesh.dev/api/v1/bundles/{b.get('bundleId')}"
+                }))
 
             if scored_bundles:
                 scored_bundles.sort(key=lambda x: x[0], reverse=True)
