@@ -16,7 +16,8 @@
     "toVersion": "0.115.0",
     "runtime": "python",
     "runtimeVersion": "3.12.0",
-    "platform": "all"
+    "platform": "all",
+    "affectedVersionRange": ">=0.115.0"
   },
   "fingerprint": {
     "errorSignature": "DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.",

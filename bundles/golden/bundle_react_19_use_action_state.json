@@ -3,14 +3,21 @@
   "bundleId": "bundle_react_19_use_action_state_001",
   "status": "VERIFIED",
   "description": "Migration from React 18 / Next.js useFormState to canonical React 19 useActionState hook.",
-  "tags": ["react", "react-dom", "react19", "useactionstate", "frontend"],
+  "tags": [
+    "react",
+    "react-dom",
+    "react19",
+    "useactionstate",
+    "frontend"
+  ],
   "scope": {
     "package": "react",
     "fromVersion": "18.3.1",
     "toVersion": "19.0.0",
     "runtime": "nodejs",
     "runtimeVersion": "22.0.0",
-    "platform": "all"
+    "platform": "all",
+    "affectedVersionRange": ">=19.0.0"
   },
   "fingerprint": {
     "errorSignature": "TypeError: useFormState is not a function (or deprecated export in react-dom)",

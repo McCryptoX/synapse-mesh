@@ -216,8 +216,16 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                 regex_pat = fp.get("regex", "")
                 sig_text = fp.get("errorSignature", "")
                 variants = fp.get("variants", [])
-                pkg = b.get("scope", {}).get("package", "").lower()
-                aff_versions = b.get("scope", {}).get("affectedVersionRange", ">=2.0.0")
+                scope = b.get("scope", {})
+                pkg = scope.get("package", "").lower()
+                aff_versions = scope.get("affectedVersionRange")
+                if not aff_versions:
+                    if scope.get("toVersion"):
+                        aff_versions = f">={scope.get('toVersion')}"
+                    elif scope.get("fromVersion"):
+                        aff_versions = f">={scope.get('fromVersion')}"
+                    else:
+                        aff_versions = ">=0.0.0"
 
                 # Package filter rule: if query has explicit package, bundle MUST match package!
                 if query_packages and pkg not in query_packages:

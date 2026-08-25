@@ -3,14 +3,20 @@
   "bundleId": "bundle_express_50_path_to_regexp_001",
   "status": "VERIFIED",
   "description": "Express 5.0 updates path-to-regexp from v0.1 to v8.0, requiring wildcard routes to use named parameter syntax (/{*splat}) instead of raw asterisks (*).",
-  "tags": ["express", "nodejs", "routing", "v50"],
+  "tags": [
+    "express",
+    "nodejs",
+    "routing",
+    "v50"
+  ],
   "scope": {
     "package": "express",
     "fromVersion": "4.19.2",
     "toVersion": "5.0.0",
     "runtime": "nodejs",
     "runtimeVersion": "22.0.0",
-    "platform": "all"
+    "platform": "all",
+    "affectedVersionRange": ">=5.0.0"
   },
   "fingerprint": {
     "errorSignature": "TypeError: Missing parameter name at 1: /*",

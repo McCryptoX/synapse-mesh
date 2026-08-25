@@ -15,7 +15,8 @@
     "toVersion": "2.10.6",
     "runtime": "python",
     "runtimeVersion": "3.12.13",
-    "platform": "all"
+    "platform": "all",
+    "affectedVersionRange": ">=2.0.0"
   },
   "fingerprint": {
     "errorSignature": "PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated.",

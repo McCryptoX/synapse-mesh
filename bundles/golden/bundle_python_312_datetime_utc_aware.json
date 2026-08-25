@@ -3,14 +3,20 @@
   "bundleId": "bundle_python_312_datetime_utc_aware_001",
   "status": "VERIFIED",
   "description": "Python 3.12 deprecates datetime.datetime.utcnow() and utcfromtimestamp() in favor of timezone-aware datetime.now(datetime.timezone.utc).",
-  "tags": ["python", "datetime", "python312", "deprecation"],
+  "tags": [
+    "python",
+    "datetime",
+    "python312",
+    "deprecation"
+  ],
   "scope": {
     "package": "python",
     "fromVersion": "3.11.0",
     "toVersion": "3.12.0",
     "runtime": "python",
     "runtimeVersion": "3.12.0",
-    "platform": "all"
+    "platform": "all",
+    "affectedVersionRange": ">=3.12.0"
   },
   "fingerprint": {
     "errorSignature": "DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).",

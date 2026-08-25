@@ -3,14 +3,20 @@
   "bundleId": "bundle_typescript_56_strict_map_lookup_001",
   "status": "VERIFIED",
   "description": "TypeScript 5.6+ with --noUncheckedIndexedAccess flags Map.get() as possibly undefined. Explicit nullish coalescing or undefined guarding is required.",
-  "tags": ["typescript", "nodejs", "type-system", "v56"],
+  "tags": [
+    "typescript",
+    "nodejs",
+    "type-system",
+    "v56"
+  ],
   "scope": {
     "package": "typescript",
     "fromVersion": "5.5.4",
     "toVersion": "5.6.2",
     "runtime": "nodejs",
     "runtimeVersion": "22.0.0",
-    "platform": "all"
+    "platform": "all",
+    "affectedVersionRange": ">=5.6.0"
   },
   "fingerprint": {
     "errorSignature": "TS2532: Object is possibly 'undefined' when accessing Map.get() result property",

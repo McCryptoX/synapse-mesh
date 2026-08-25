@@ -15,7 +15,8 @@
     "toVersion": "0.28.1",
     "runtime": "python",
     "runtimeVersion": "3.12.13",
-    "platform": "all"
+    "platform": "all",
+    "affectedVersionRange": ">=0.28.0"
   },
   "fingerprint": {
     "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",

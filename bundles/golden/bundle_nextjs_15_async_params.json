@@ -15,7 +15,8 @@
     "toVersion": "15.5.9",
     "runtime": "nodejs",
     "runtimeVersion": "22.23.2",
-    "platform": "darwin-arm64"
+    "platform": "darwin-arm64",
+    "affectedVersionRange": ">=15.0.0"
   },
   "fingerprint": {
     "errorSignature": "Type '{ params: { slug: string; }; }' does not satisfy the constraint 'PageProps'.",

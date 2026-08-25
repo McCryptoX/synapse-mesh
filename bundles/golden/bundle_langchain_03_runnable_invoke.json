@@ -3,14 +3,21 @@
   "bundleId": "bundle_langchain_03_runnable_invoke_001",
   "status": "VERIFIED",
   "description": "Migration from legacy LLMChain / Chain.run() to Runnable.invoke() in LangChain v0.3.",
-  "tags": ["langchain", "langchain-core", "lcel", "runnable", "python"],
+  "tags": [
+    "langchain",
+    "langchain-core",
+    "lcel",
+    "runnable",
+    "python"
+  ],
   "scope": {
     "package": "langchain-core",
     "fromVersion": "0.2.38",
     "toVersion": "0.3.0",
     "runtime": "python",
     "runtimeVersion": "3.12.0",
-    "platform": "all"
+    "platform": "all",
+    "affectedVersionRange": ">=0.3.0"
   },
   "fingerprint": {
     "errorSignature": "LangChainDeprecationWarning: LLMChain was removed in 0.3.0. Use invoke() on RunnableSequence instead.",

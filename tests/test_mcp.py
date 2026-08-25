@@ -323,6 +323,78 @@ async def test_mcp_semver_compound_interval_matrix():
             assert c["environmentConfidence"] == exp_env_conf, f"Failed for {req_ver}: expected envConf {exp_env_conf}, got {c['environmentConfidence']}"
 
 
+@pytest.mark.asyncio
+async def test_mcp_httpx_fastapi_python_version_awareness():
+    """
+    Verifies that httpx 0.28.1, FastAPI 0.115.0, and Python 3.12 match their exact
+    Golden Bundles with environmentStatus: MATCH and correct affectedVersions metadata.
+    """
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        import json
+
+        # 1. HTTPX 0.28.1
+        res1 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 201,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",
+                    "packages": {"httpx": "0.28.1"}
+                }
+            }
+        })
+        c1 = json.loads(res1.json()["result"]["content"][0]["text"])
+        assert c1["status"] == "VERIFIED_MATCH"
+        assert c1["environmentStatus"] == "MATCH"
+        assert c1["environmentConfidence"] == 1.0
+        assert c1["package"] == "httpx"
+        assert c1["affectedVersions"] == ">=0.28.0"
+        assert c1["recipeId"] == "bundle_httpx_028_asgi_transport_001"
+
+        # 2. FastAPI 0.115.0
+        res2 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 202,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.",
+                    "packages": {"fastapi": "0.115.0"}
+                }
+            }
+        })
+        c2 = json.loads(res2.json()["result"]["content"][0]["text"])
+        assert c2["status"] == "VERIFIED_MATCH"
+        assert c2["environmentStatus"] == "MATCH"
+        assert c2["environmentConfidence"] == 1.0
+        assert c2["package"] == "fastapi"
+        assert c2["affectedVersions"] == ">=0.115.0"
+
+        # 3. Python 3.12 utcnow
+        res3 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 203,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.",
+                    "packages": {"python": "3.12.0"}
+                }
+            }
+        })
+        c3 = json.loads(res3.json()["result"]["content"][0]["text"])
+        assert c3["status"] == "VERIFIED_MATCH"
+        assert c3["environmentStatus"] == "MATCH"
+        assert c3["environmentConfidence"] == 1.0
+        assert c3["package"] == "python"
+        assert c3["affectedVersions"] == ">=3.12.0"
+
+
+
 
 
 
