@@ -1,8 +1,12 @@
 """
 Synapse-Mesh Upstream Mining Engine (Zero-Token Autonomous Recipe Extractor)
 Extracts breaking changes, deprecation warnings, and migration patterns directly from
-upstream open-source repositories, changelogs, and release feeds, synthesizing fully
-tested 4-stage verified compatibility bundles without consuming LLM tokens.
+upstream open-source repositories, changelogs, and release feeds, synthesizing candidate
+draft bundles and verifying them via the 4-stage hermetic verification contract.
+
+SECURITY DIRECTIVE:
+Automated miners write strictly to `bundles/drafts/` with status DRAFT/UNVERIFIED until
+a 4-stage verification passes. `bundles/golden/` is an immutable, human/CI-curated store.
 """
 
 import asyncio
@@ -26,8 +30,9 @@ from app.models.bundle import (
 )
 
 logger = logging.getLogger("synapse.miner")
+DRAFTS_DIR = Path(__file__).resolve().parent.parent.parent / "bundles" / "drafts"
 
-# Well-known upstream framework registries for zero-token mining
+# Monitored upstream target repositories for zero-token mining
 KNOWN_UPSTREAM_TARGETS = [
     {"package": "sqlalchemy", "ecosystem": "pypi", "runtime": "python", "repo": "sqlalchemy/sqlalchemy"},
     {"package": "pydantic", "ecosystem": "pypi", "runtime": "python", "repo": "pydantic/pydantic"},
@@ -151,14 +156,12 @@ class BreakingChangeExtractor:
     @classmethod
     def extract_error_signature(cls, text: str) -> Optional[str]:
         """Extracts exact error signature pattern from changelog text."""
-        # 1. Match raise / raises / throws / direct Exception pattern in backticks or text
         match = re.search(r'(?:raise|raises|raising|throw|throws|threw|causes)?\s*`?([A-Za-z0-9_.]*(?:Exception|Error|Warning)[\w\s:()\'".,`\-]+)`?', text, re.IGNORECASE)
         if match:
             sig = match.group(1).strip("`\"' .")
             if len(sig) > 8:
                 return sig
 
-        # 2. Look for explicit DeprecationWarning
         match = re.search(r'(DeprecationWarning:[\w\s:()\'".,`\-]+)', text, re.IGNORECASE)
         if match:
             return match.group(1).strip("`\"' .")
@@ -230,7 +233,7 @@ class BreakingChangeExtractor:
 
 
 class BundleSynthesizer:
-    """Synthesizes fully valid CompatibilityBundle objects conforming to Schema v1.0.0."""
+    """Synthesizes candidate CompatibilityBundle draft objects conforming to Schema v1.0.0."""
 
     @classmethod
     def synthesize_bundle(cls, raw_entry: Dict[str, Any]) -> Optional[CompatibilityBundle]:
@@ -254,11 +257,10 @@ class BundleSynthesizer:
         pins = BreakingChangeExtractor.extract_pins(notes, pkg)
         do_not = BreakingChangeExtractor.extract_do_not(notes)
 
-        # Stable, deterministic bundle ID based on SHA256 of package + version + signature
         sig_hash = hashlib.sha256(f"{pkg}_{ver}_{err_sig}".encode("utf-8")).hexdigest()[:8]
         clean_pkg = re.sub(r'[^a-zA-Z0-9]', '', pkg).lower()
         clean_ver = re.sub(r'[^a-zA-Z0-9]', '', ver).lower()
-        bundle_id = f"bundle_{clean_pkg}_{clean_ver}_{sig_hash}"
+        bundle_id = f"draft_{clean_pkg}_{clean_ver}_{sig_hash}"
 
         repro_script = f"""# Stage 1: Reproduction script
 {before_code}
@@ -279,8 +281,8 @@ print("VERIFICATION_PASSED_STAGE_3")
         bundle = CompatibilityBundle(
             schemaVersion="1.0.0",
             bundleId=bundle_id,
-            status="VERIFIED",
-            description=f"Automated compatibility bundle for {pkg} {ver} migration.",
+            status="DRAFT",  # All mined bundles start as DRAFT until full 4-stage pass
+            description=f"Draft compatibility bundle for {pkg} {ver} migration.",
             tags=[pkg, rt, "upstream-mined", f"v{ver}"],
             scope=BundleScope(
                 package=pkg,
@@ -320,11 +322,19 @@ print("VERIFICATION_PASSED_STAGE_3")
 
 
 class UpstreamMiningEngine:
-    """Top-level autonomous worker executing zero-token upstream mining and verification."""
+    """Top-level autonomous worker executing zero-token upstream mining and sandbox verification."""
 
     @classmethod
-    async def mine_and_verify_all(cls, persist_to_disk: bool = True) -> List[CompatibilityBundle]:
-        """Runs autonomous mining pipeline across all seed and live upstream registries."""
+    async def mine_and_verify_all(
+        cls,
+        persist_to_disk: bool = False,
+        destination_dir: Optional[Path] = None
+    ) -> List[CompatibilityBundle]:
+        """
+        Runs autonomous mining pipeline across all seed and live upstream registries.
+        Persists strictly to `bundles/drafts/` with status DRAFT or VERIFIED (if 4 stages pass).
+        NEVER writes directly to `bundles/golden/`.
+        """
         candidates = []
         
         # 1. Gather upstream changelogs
@@ -336,19 +346,35 @@ class UpstreamMiningEngine:
                 seed_data.extend(live_res)
 
         # 2. Extract & Synthesize
+        from scripts.synapse_reverify import verify_golden_bundle
+
         for entry in seed_data:
             bundle = BundleSynthesizer.synthesize_bundle(entry)
-            if bundle:
-                candidates.append(bundle)
+            if not bundle:
+                continue
 
-        # 3. Persist to golden bundles storage
+            # 3. Execute 4-stage verification in sandbox
+            bundle_dict = bundle.model_dump()
+            try:
+                ver_res = verify_golden_bundle(bundle_dict)
+                if ver_res.get("verified") is True:
+                    bundle.status = "VERIFIED"
+                else:
+                    bundle.status = "UNVERIFIED"
+            except Exception as e:
+                logger.debug(f"4-stage test execution for {bundle.bundleId} skipped or failed: {e}")
+                bundle.status = "DRAFT"
+
+            candidates.append(bundle)
+
+        # 4. Persist strictly to drafts directory (never golden)
         if persist_to_disk:
-            golden_dir = Path(__file__).resolve().parent.parent.parent / "bundles" / "golden"
-            golden_dir.mkdir(parents=True, exist_ok=True)
+            target_dir = destination_dir or DRAFTS_DIR
+            target_dir.mkdir(parents=True, exist_ok=True)
             
             for b in candidates:
-                out_path = golden_dir / f"{b.bundleId}.json"
+                out_path = target_dir / f"{b.bundleId}.json"
                 out_path.write_text(json.dumps(b.model_dump(), indent=2), encoding="utf-8")
-                logger.info(f"Persisted mined compatibility bundle: {b.bundleId}")
+                logger.info(f"Persisted draft bundle: {b.bundleId} (Status: {b.status})")
 
         return candidates

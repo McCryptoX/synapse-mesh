@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from app.main import app
+from app.config import settings
 from app.core.upstream_miner import (
     UpstreamReleaseFetcher,
     BreakingChangeExtractor,
@@ -49,7 +50,7 @@ Do Not: Do not monkeypatch np.NAN on numpy module; do not silence AttributeError
     assert "+x = np.nan" in diff
 
 
-def test_bundle_synthesizer():
+def test_bundle_synthesizer_creates_draft():
     entry = {
         "package": "duckdb",
         "version": "0.10.0",
@@ -72,9 +73,9 @@ Do Not: Do not pass string literals for offsets.
     }
     bundle = BundleSynthesizer.synthesize_bundle(entry)
     assert bundle is not None
-    assert bundle.bundleId.startswith("bundle_duckdb_0100_")
+    assert bundle.bundleId.startswith("draft_duckdb_0100_")
     assert bundle.scope.package == "duckdb"
-    assert bundle.status == "VERIFIED"
+    assert bundle.status == "DRAFT"  # Must start as DRAFT
     assert "duckdb.BinderException" in bundle.fingerprint.errorSignature
     assert "client.py" in bundle.patch.targetFile
     assert len(bundle.verification.mutations) > 0
@@ -91,17 +92,27 @@ async def test_upstream_mining_engine_execution():
 
 
 @pytest.mark.asyncio
-async def test_miner_api_endpoints():
+async def test_miner_api_requires_admin_key():
+    settings.admin_token = "test_miner_admin_secret_key"
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # Public targets list
         res_targets = await ac.get("/api/v1/miner/targets")
         assert res_targets.status_code == 200
         data_targets = res_targets.json()
         assert data_targets["count"] > 0
         assert data_targets["tokenCost"] == 0
 
-        res_run = await ac.post("/api/v1/miner/run?persist=false")
-        assert res_run.status_code == 200
-        data_run = res_run.json()
+        # Unauthenticated mining run MUST fail with 403 Forbidden
+        res_unauth = await ac.post("/api/v1/miner/run?persist=false")
+        assert res_unauth.status_code == 403
+
+        # Authenticated mining run succeeds
+        res_auth = await ac.post(
+            "/api/v1/miner/run?persist=false",
+            headers={"X-Synapse-Admin-Key": "test_miner_admin_secret_key"}
+        )
+        assert res_auth.status_code == 200
+        data_run = res_auth.json()
         assert data_run["status"] == "COMPLETED"
         assert data_run["minedCount"] >= 3
         assert data_run["tokenCost"] == 0

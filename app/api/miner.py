@@ -18,13 +18,19 @@ class MiningRunResponse(BaseModel):
 
 @router.post("/run", response_model=MiningRunResponse)
 async def trigger_upstream_mining(
-    persist: bool = True,
+    persist: bool = False,
     x_admin_key: Optional[str] = Header(None, alias="X-Synapse-Admin-Key")
 ):
-    """Executes zero-token autonomous upstream changelog and git mining."""
-    if settings.admin_token and x_admin_key != settings.admin_token:
-        # If admin token is configured, enforce auth for server-side persistence
-        raise HTTPException(status_code=403, detail="Forbidden: Admin key required to persist mined bundles.")
+    """
+    Authenticated endpoint for executing upstream mining.
+    STRICT SECURITY GATE: Requires a valid non-empty X-Synapse-Admin-Key matching settings.admin_token.
+    Output is strictly stored in `bundles/drafts/` with DRAFT/UNVERIFIED status (never golden).
+    """
+    if not settings.admin_token or not x_admin_key or x_admin_key != settings.admin_token:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Triggering upstream mining runs requires a valid X-Synapse-Admin-Key."
+        )
 
     mined = await UpstreamMiningEngine.mine_and_verify_all(persist_to_disk=persist)
     return MiningRunResponse(

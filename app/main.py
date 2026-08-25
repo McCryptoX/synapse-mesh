@@ -1,25 +1,9 @@
-import asyncio
-from app.core.upstream_miner import UpstreamMiningEngine
-
-async def background_mining_worker():
-    """Autonomous background worker executing periodic upstream mining with 0 tokens."""
-    logger.info("Autonomous Upstream Mining Worker loop initialized.")
-    while True:
-        try:
-            # Run every 6 hours
-            await asyncio.sleep(21600)
-            logger.info("Executing scheduled zero-token upstream mining cycle...")
-            mined = await UpstreamMiningEngine.mine_and_verify_all(persist_to_disk=True)
-            logger.info(f"Scheduled mining cycle completed: {len(mined)} bundle(s) processed.")
-        except asyncio.CancelledError:
-            break
-        except Exception as e:
-            logger.error(f"Error in background mining worker cycle: {e}")
-
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+
 from app.config import settings
 from app.database import init_db
 from app.api import health_router, discovery_router, recipes_router, bundles_router, miner_router
@@ -37,15 +21,9 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Initializing Synapse-Mesh Engine...")
     await init_db()
-    worker_task = asyncio.create_task(background_mining_worker())
     logger.info("Synapse-Mesh Engine is ready to serve agents.")
     yield
     # Shutdown
-    worker_task.cancel()
-    try:
-        await worker_task
-    except asyncio.CancelledError:
-        pass
     logger.info("Shutting down Synapse-Mesh Engine.")
 
 
@@ -58,9 +36,6 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
-
-from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi import Request
 
 # CORS Middleware
 app.add_middleware(
