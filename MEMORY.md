@@ -1,6 +1,6 @@
 # Projekt-Gedächtnis & Vision: Synapse-Mesh (Exocortex)
 
-> **Status:** Live-Produktion & Wissenschaftliche Benchmark-Vorbereitung  
+> **Status:** Live-Produktion & Wissenschaftliche Benchmark-Vorbereitung (Suite v2)  
 > **Kontext:** Agenten-native Wissens- und Verifikations-Infrastruktur für autonome KIs (Gemini, ChatGPT, Claude, Grok, Coding-Agents).  
 > **Kernversprechen:** `Problem → Reproduzierbarer Test (Sandbox) → Verifizierte Lösung → Strukturierte Maschinenantwort`  
 > **Rechtlicher Rahmen:** EU AI Act, DSGVO, deutsches Recht (§ 5 DDG, Zero-PII by Design, § 44b UrhG TDM).
@@ -22,49 +22,73 @@ Treffer vorhanden?
 
 ---
 
-## 2. Epistemische Hierarchie & 4-Stufen-Verifikation
-Ein Konsens unter KIs ist kein Wahrheitsbeweis. Synapse-Mesh folgt einer strikten Beweishierarchie:
+## 2. Der Gefrorene Benchmark-Kern: `Suite v2-runtime-9`
+Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).  
+**Manifest SHA-256:** `a076cff87dcf201aaeb6bf7931f1d05ea77f0da64a4a6a95a166067071ef018a`
 
-$$\text{Reproduzierbarer Sandbox-Test} > \text{Primärquelle/Offizielle Docs} > \text{Unabhängige Quellen} > \text{Agenten-Konsens}$$
+### Die 9 freigegebenen Primär-Fälle (0 Mocks, echte Compiler/Engines):
+1. **P1 (NumPy 2.0):** API-Alias-Entfernung (`np.NAN`) unter NumPy 2.5.2 C-Extension (1106 ms).
+2. **P2 (HTTPX 0.28):** Starlette ASGI Transport Loopback (`httpx>=0.28.1`, `starlette>=0.37.2`) (1214 ms).
+3. **P3 (Python 3.12):** `datetime.utcnow()` unter `-W error::DeprecationWarning` (85 ms).
+4. **N1 (Node 22):** V8 Import Attributes (`with { type: 'json' }`) (190 ms).
+5. **N2 (TypeScript):** `tsc --strict --noUncheckedIndexedAccess` Optional Map Lookups (2579 ms).
+6. **N3 (Express 5.0.1):** path-to-regexp v8 Brace Wildcard Routing (`/{*splat}`) (985 ms).
+7. **R1 (Cargo 1.80):** `build.rs` `cargo::rustc-check-cfg` deklarativer Cargo-Workspace (2522 ms).
+8. **R3 (Rust 2024):** `rustc --edition 2024` Keyword Reservation `gen` (589 ms).
+9. **S1 (DuckDB 0.10):** C++ Engine `duckdb.BinderException` bei Substring (723 ms).
 
-### Die 4 Prüfstufen des Evaluators:
-1. **Pre-Fail Validation:** Echtes Repro-Skript muss fehlschlagen und echte Error-Signature (Regex) in stderr werfen.
-2. **Patch Application:** Echtes Schreiben der Unified-Diff-Datei in ein isoliertes Workspace-Verzeichnis.
-3. **Post-Pass Execution:** Hermetischer Durchlauf der Ground-Truth-Testsuite mit Exit Code 0.
-4. **Multi-Mutation Sanity:** Alle Top-Web-Fehlfixes (mindestens 3 pro Fall) müssen in der Sandbox scheitern.
-
----
-
-## 3. Protokolle, Schnittstellen & Discovery
-- **MCP (Model Context Protocol):** Moderne **Streamable HTTP**- (`https://mcp.synapsemesh.dev`) & **stdio**-Transports (Spezifikation `2026-07-28`).
-- **A2A (Agent-to-Agent Protocol):** Standardisierte Inter-Agenten-Kommunikation und Peer-Verification.
-- **Automated Agent Discovery:**
-  - `https://synapsemesh.dev/.well-known/mcp.json`
-  - `https://synapsemesh.dev/.well-known/agent.json`
-- **REST / OpenAPI 3.1:** `https://api.synapsemesh.dev` & `https://docs.synapsemesh.dev`.
-
----
-
-## 4. Aktueller System- und Datenbestand (Stand: 24. August 2026)
-- **Live-Lösungen:** 50 verifizierte Living Solutions (92.6% Pass-Ratio) in der SQLite WAL-Datenbank auf dem VPS.
-- **24/7 Autonomer Harvester:** Läuft 2x täglich per Cron (`/etc/cron.d/synapse_harvester` um 03:00 & 15:00 UTC) und sammelt Breaking Changes der Top-12 Open-Source-Repos.
-- **Multi-Runtime Container:** Docker-Image auf dem Server unterstützt nativ **Python 3.12 und Node.js 22 LTS (v22.23.2)** mit Express 5.0.1, Supertest, HTTPX 0.28.1 und Starlette 0.37.2.
-- **Gehärtete Benchmark-Fälle:** P2 (HTTPX 0.28), N1 (Node 22 Import Attributes), N3 (Express 5.1 Wildcard) sind 100% verifiziert und töten 9 von 9 echten Web-Fehlfixes in echten Dateisystem-Workspaces.
+### Ergänzende semantische Orakel (6 Fälle, separat ausgewiesen):
+- **R2:** Cargo Lockfile v4 Format Invariant (`toolchain_syntax_oracle`).
+- **S2:** MySQL 8.4 `caching_sha2_password` Invariant (`static_semantic_oracle`).
+- **S3:** SQLite 3.45+ JSONB BLOB Native Representation (`static_semantic_oracle`).
+- **D1:** Compose V2 Top-Level `version` Deprecation (`static_semantic_oracle`).
+- **D2:** BuildKit Persistent Cache Mount Spec (`static_semantic_oracle`).
+- **D3:** Ubuntu 24.04 PEP 668 Environment Policy (`static_semantic_oracle`).
 
 ---
 
-## 5. Domain, Hosting & Infrastruktur
-- **Domain:** `synapsemesh.dev` – Live via IONOS mit automatischem TLS/SSL (Caddy).
-- **Subdomains:** `api.synapsemesh.dev`, `docs.synapsemesh.dev`, `mcp.synapsemesh.dev`, `status.synapsemesh.dev`.
-- **VPS:** IONOS VPS M+ (4 vCores, 4 GB RAM, Ubuntu 26.04 + Docker in Frankfurt).
-- **GitHub MCP Client:** `https://github.com/McCryptoX/synapse-mesh-mcp`.
+## 3. Multi-Treatment Agent Orchestrator (A/B/C)
+Implementiert in `benchmark/agent_orchestrator.py`:
+- **Gruppe A (Baseline):** Isoliertes LLM ohne externe Retrieval-Tools.
+- **Gruppe B (Web Search):** LLM mit kontrolliertem Web-/Dokumentations-Suchtool (kein Zugriff auf synapsemesh.dev).
+- **Gruppe C (Synapse MCP):** LLM mit `find_solution` Tool gegen die Synapse-Mesh API.
+- **Strict Retrieval Gate:** Gruppe C erhält bei fehlendem Rezept keinen Ground-Truth-Fallback, sondern liefert `// MCP_NO_SOLUTION_FOUND` und scheitert am Hidden Judge.
+- **Isolierter Hidden Judge:** Ausführung der Patches in separaten Subprozessen zur Verhinderung von Exit-Bypasses.
+- **Demonstrator-Transparenz:** Nicht-empirische Probeläufe werden im JSON-Artefakt explizit als `executionType: "Deterministic_Demonstrator"` geführt.
 
 ---
 
-## 6. Agenda & Fahrplan für morgen (25. August 2026)
-1. **Instrumentierter 5er-Shakedown:** Durchlauf je eines echten Cases pro Ökosystem (Python, Node, Rust, Docker, SQL).
-2. **Hidden Judge Prozess-Isolation:** Sicherstellen, dass Judge-Assertions in einem unabhängigen Prozess laufen.
-3. **Erweiterung auf die 15 Kernfälle:** Fertigstellung der verbleibenden Case-Workspaces mit vorregistrierten Hashes.
-4. **Vorbereitung des echten A/B/C-Orchestrators:** Anbindung echter LLM-Aufrufe mit fixierten Token-Budgets und Freeze-Snapshot.
+## 4. Testsuite & CI/CD Hygiene
+- **Parametrisierte Testsuite (`tests/test_benchmark_evaluator.py`):** 30 eigenständige Test-Items via `@pytest.mark.parametrize`.
+- **Explizite Pytest-Skips:** Fehlende lokale Runtimes überspringen nur den betroffenen Fall (`pytest.skip(...)`) statt stiller Erfolgsmeldungen.
+- **VPS Container Ergebnis:** **30 passed in 11.55s** (100% grün).
 
-*Zuletzt aktualisiert: 24. August 2026, 23:56 Uhr*
+---
+
+## 5. Live-Plattform & Infrastruktur (Stand: 25. August 2026)
+- **Live-Lösungen:** 64 Datensätze (60 `VERIFIED`, gerundete Pass-Ratio 93.75%) auf der SQLite WAL-Datenbank des VPS.
+- **Frontend & UI:** Mission-Control Dashboard auf `https://synapsemesh.dev/` mit Top-5-Vorschau und Laufzeit-Filtern.
+- **Anti-Leakage (Go-Gate 10):** Rohtext-Suchabfragen wurden aus den öffentlichen Telemetrie-Endpunkten (`/api/v1/recipes/stats`) entfernt.
+- **Produktiv-Toolchain im Docker-Container:**
+  - Python 3.12.14 mit NumPy 2.5.2 & DuckDB 1.5.5
+  - Node.js 22 LTS (v22.23.2) mit TypeScript (`tsc 7.0.2`), Express 5.0.1, Supertest
+  - Rust 1.85.0 & Cargo 1.85.0
+- **Hosting & Domains:** IONOS VPS M+ (IP `217.160.170.209`), automatische TLS-Zertifikate via Caddy, Domain `synapsemesh.dev`.
+
+---
+
+## 6. Die 12 Verbindlichen Go-Gates
+1. [x] **Suite v2 Preregistration:** `benchmark/hardened_cases.json` gehasht (`a076cff8...`).
+2. [x] **Echte Runtimes (Primary Core):** 9 Fälle laufen über native Compiler/Engines (0 Mocks).
+3. [x] **Reproduzierbare Umgebungen:** Toolchain-Versionen im Docker-Image gepinnt.
+4. [x] **Authentischer Pre-Fail:** Fehlersignaturen werden direkt von den Compilern emittiert.
+5. [x] **Isolierter Hidden Judge:** Subprozess-Isolation gegen Exit-Code-0-Bypasses.
+6. [x] **Kuratierte Mutation Kill Rate (27/27 im Primary Core):** Alle Web-Fehlfixes deterministisch abgewiesen.
+7. [x] **Harter CI-Check:** Parametrisierte Pytest-Suite mit expliziten Skips.
+8. [x] **Multi-Treatment Orchestrator:** Dry-Run Demonstrator und Live-LLM-Harness implementiert.
+9. [x] **Eingefrorener Index & Retrieval-Snapshot:** `data/benchmark_results/run_primary_*.json`.
+10. [x] **Zero-Leakage Garantie:** Keine Query-Leaks in öffentlichen Endpunkten.
+11. [x] **Append-Only Logging:** Maschinenlesbare JSON-Artefakte mit Platform- und Tool-Versionen.
+12. [x] **Präregistrierter Auswertungsplan:** *First Hidden-Judge Submission Pass Rate*.
+
+*Zuletzt aktualisiert: 25. August 2026, 06:59 Uhr*
