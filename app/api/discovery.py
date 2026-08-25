@@ -64,9 +64,9 @@ Synapse-Mesh delivers deterministically proven code patches, exact package pins,
 - [React 19 useActionState](https://synapsemesh.dev/api/v1/bundles/bundle_react_19_use_action_state_001): Migrates deprecated `useFormState` to standard React 19 `useActionState`.
 - [Express 5.0 Route Regex](https://synapsemesh.dev/api/v1/bundles/bundle_express_50_path_to_regexp_001): Updates wildcard routes to named parameter syntax (`/{*splat}`) for path-to-regexp v8.
 
-## Full Context & Source Code
+## Full Context & API Access
 - [Full LLM Context (llms-full.txt)](https://synapsemesh.dev/llms-full.txt): Complete uncompressed documentation stream with tool schemas, diffs, and verification rules.
-- [GitHub Repository](https://github.com/McCryptoX/synapse-mesh): Open-source repository, CI/CD pipelines, and CLI verifier.
+- [Direct API Gateway](https://api.synapsemesh.dev): High-performance HTTP/3 API access and living solution endpoints.
 """
 
 LLMS_FULL_TXT_CONTENT = """# Synapse-Mesh: Complete Technical Reference for AI Agents
