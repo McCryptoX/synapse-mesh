@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
@@ -26,8 +26,9 @@ jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=
 
 
 @router.get("/api/v1/recipes/stats", tags=["System"])
-async def get_recipe_stats():
+async def get_recipe_stats(response: Response):
     """Returns real-time statistics and agent usage metrics (Zero-PII)."""
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
     db = await get_db_connection()
     try:
         cursor = await db.execute("SELECT COUNT(*) as total FROM recipes")
@@ -275,8 +276,9 @@ async def get_recipe_by_id(recipe_id: str):
 
 
 @router.get("/api/v1/recipes", response_model=List[VerifiedRecipe])
-async def list_recipes(limit: int = Query(20, ge=1, le=100)):
+async def list_recipes(response: Response, limit: int = Query(20, ge=1, le=100)):
     """List recently verified recipes."""
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
     db = await get_db_connection()
     try:
         cursor = await db.execute("SELECT * FROM recipes ORDER BY updated_at DESC LIMIT ?", (limit,))

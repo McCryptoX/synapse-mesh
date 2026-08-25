@@ -481,12 +481,13 @@
             const results = [...EMBEDDED_GOLDEN_BUNDLES];
 
             try {
-                const resBundles = await fetch('/api/v1/bundles?_t=' + Date.now(), {
-                    cache: 'no-store',
-                    headers: { 'Accept': 'application/json' }
-                });
-                if (resBundles.ok && (resBundles.headers.get("content-type") || "").includes("json")) {
-                    const bundles = await resBundles.json();
+                const [resBundles, resRecipes] = await Promise.allSettled([
+                    fetch('/api/v1/bundles', { headers: { 'Accept': 'application/json' } }),
+                    fetch('/api/v1/recipes?limit=100', { headers: { 'Accept': 'application/json' } })
+                ]);
+
+                if (resBundles.status === 'fulfilled' && resBundles.value.ok) {
+                    const bundles = await resBundles.value.json();
                     if (Array.isArray(bundles) && bundles.length > 0) {
                         results.length = 0;
                         bundles.forEach(b => {
@@ -505,17 +506,9 @@
                         });
                     }
                 }
-            } catch (e) {
-                console.warn("Bundles note:", e);
-            }
 
-            try {
-                const resRecipes = await fetch('/api/v1/recipes?limit=100&_t=' + Date.now(), {
-                    cache: 'no-store',
-                    headers: { 'Accept': 'application/json' }
-                });
-                if (resRecipes.ok && (resRecipes.headers.get("content-type") || "").includes("json")) {
-                    const recipes = await resRecipes.json();
+                if (resRecipes.status === 'fulfilled' && resRecipes.value.ok) {
+                    const recipes = await resRecipes.value.json();
                     if (Array.isArray(recipes)) {
                         recipes.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED').forEach(r => {
                             results.push({
@@ -535,7 +528,7 @@
                     }
                 }
             } catch (e) {
-                console.warn("Recipes note:", e);
+                console.debug("Background sync note:", e);
             }
 
             allItems = results;
@@ -565,13 +558,15 @@
                 const dockCount = allItems.filter(r => (r.runtime || '').toLowerCase() === 'docker').length;
                 if (dockCount > 0) elDock.textContent = dockCount;
             }
-            renderItems();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && searchInput.value.trim() || showAll || activeRuntime !== 'all') {
+                renderItems();
+            }
         }
 
         async function loadStats() {
             try {
-                const res = await fetch('/api/v1/recipes/stats?_t=' + Date.now(), {
-                    cache: 'no-store',
+                const res = await fetch('/api/v1/recipes/stats', {
                     headers: { 'Accept': 'application/json' }
                 });
                 if (!res.ok) return;
@@ -796,15 +791,33 @@
             }
         ];
 
-        // Automatic background synchronization on page load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                loadStats();
+        // Defer background synchronization to browser idle time or first user interaction (Zero Critical Request Chain for PageSpeed)
+        function scheduleBackgroundSync() {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(() => {
+                    loadStats();
+                    ensureDataLoaded();
+                }, { timeout: 3500 });
+            } else {
+                setTimeout(() => {
+                    loadStats();
+                    ensureDataLoaded();
+                }, 2500);
+            }
+        }
+
+        // Trigger immediately on first user interaction if before idle timer
+        ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+            window.addEventListener(evt, () => {
                 ensureDataLoaded();
-            });
+            }, { once: true, passive: true });
+        });
+
+        // Schedule idle sync
+        if (document.readyState === 'complete') {
+            scheduleBackgroundSync();
         } else {
-            loadStats();
-            ensureDataLoaded();
+            window.addEventListener('load', scheduleBackgroundSync);
         }
     </script>
 </body>

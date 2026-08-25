@@ -2,7 +2,7 @@ import json
 import re
 from pathlib import Path
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic import BaseModel
 
 from app.models.bundle import CompatibilityBundle
@@ -25,8 +25,9 @@ def load_all_golden_bundles() -> List[dict]:
 
 
 @router.get("", response_model=List[CompatibilityBundle])
-async def list_bundles(runtime: Optional[str] = None):
+async def list_bundles(response: Response, runtime: Optional[str] = None):
     """Lists all verified Compatibility Bundles."""
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
     all_b = load_all_golden_bundles()
     if runtime:
         all_b = [b for b in all_b if b.get("scope", {}).get("runtime", "").lower() == runtime.lower()]
