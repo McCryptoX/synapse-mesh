@@ -17,12 +17,12 @@
         .badge-draft { background-color: rgba(120, 53, 15, 0.5); color: #fbbf24; border: 1px solid rgba(217, 119, 6, 0.5); }
         .badge-failed { background-color: rgba(76, 5, 25, 0.6); color: #f43f5e; border: 1px solid rgba(225, 29, 72, 0.5); }
         .badge-pill { background-color: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
-        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.6rem 1.2rem; border-radius: 0.625rem; font-weight: 600; font-size: 0.875rem; font-family: ui-monospace, monospace; cursor: pointer; transition: all 0.15s ease; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.55rem 1.1rem; border-radius: 0.625rem; font-weight: 600; font-size: 0.825rem; font-family: ui-monospace, monospace; cursor: pointer; transition: all 0.15s ease; white-space: nowrap; }
         .btn-brand { background-color: #0d9488; color: #020617; border: 1px solid #14b8a6; }
         .btn-brand:hover { background-color: #14b8a6; color: #000; box-shadow: 0 0 15px rgba(20, 184, 166, 0.4); }
         .btn-secondary { background-color: #1e293b; color: #e2e8f0; border: 1px solid #334155; }
         .btn-secondary:hover { background-color: #334155; color: #fff; }
-        .btn-filter { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: 0.5rem; }
+        .btn-filter { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.15s ease; white-space: nowrap; }
         .btn-filter.active { background-color: #0d9488; color: #020617; font-weight: bold; border-color: #14b8a6; }
         .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .pulse-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #34d399; display: inline-block; animation: pulse 2s infinite; }
@@ -32,6 +32,11 @@
         .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 50; padding: 1rem; }
         .input-text { width: 100%; background: #020617; border: 1px solid #334155; padding: 0.6rem 0.8rem; border-radius: 0.5rem; color: #fff; font-size: 0.85rem; font-family: ui-monospace, monospace; outline: none; margin-top: 0.25rem; margin-bottom: 0.75rem; }
         .input-text:focus { border-color: #14b8a6; }
+        .search-bar { width: 100%; background: #020617; border: 1px solid #334155; padding: 0.65rem 1rem 0.65rem 2.75rem; border-radius: 0.625rem; color: #fff; font-size: 0.85rem; font-family: ui-monospace, monospace; outline: none; transition: border-color 0.15s ease; }
+        .search-bar:focus { border-color: #14b8a6; }
+        .telemetry-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-family: ui-monospace, monospace; overflow-x: auto; padding-bottom: 0.25rem; }
+        .telemetry-row::-webkit-scrollbar { height: 4px; }
+        .telemetry-row::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -48,9 +53,9 @@
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
                 <button id="triggerBtn" onclick="runManualSweep()" class="btn btn-brand">&#9889; Run Verification Sweep Now</button>
-                <button onclick="togglePasswordModal(true)" class="btn btn-secondary" style="font-size: 0.75rem;">&#128273; Change Password</button>
-                <a href="/" style="color: #94a3b8; font-size: 0.8rem; text-decoration: underline; font-family: monospace;">Public Registry &rarr;</a>
-                <a href="/ops/logout" style="color: #f43f5e; font-size: 0.8rem; text-decoration: underline; font-family: monospace;">Logout</a>
+                <button onclick="togglePasswordModal(true)" class="btn btn-secondary">&#128273; Change Password</button>
+                <a href="/" style="color: #94a3b8; font-size: 0.8rem; text-decoration: underline; font-family: monospace; white-space: nowrap;">Public Registry &rarr;</a>
+                <a href="/ops/logout" style="color: #f43f5e; font-size: 0.8rem; text-decoration: underline; font-family: monospace; white-space: nowrap;">Logout</a>
             </div>
         </header>
 
@@ -90,35 +95,45 @@
             </div>
         </div>
 
-        <!-- Filter & Search Controls -->
-        <div class="card" style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-                <span style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">STATUS:</span>
-                <button class="btn-filter active" onclick="setFilter('status', 'all', this)">All ({{ total }})</button>
-                <button class="btn-filter" onclick="setFilter('status', 'VERIFIED', this)">Verified ({{ verified }})</button>
-                <button class="btn-filter" onclick="setFilter('status', 'DRAFT', this)">Drafts ({{ draft }})</button>
-                <button class="btn-filter" onclick="setFilter('status', 'FAILED', this)">Failed ({{ failed }})</button>
+        <!-- Filter & Search Controls (Clean 2-Tier Structured Layout) -->
+        <div class="card" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+                <!-- Status Filters -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                    <span style="font-size: 0.75rem; color: #94a3b8; font-family: monospace; font-weight: 700;">STATUS:</span>
+                    <button class="btn-filter active" onclick="setFilter('status', 'all', this)">All ({{ total }})</button>
+                    <button class="btn-filter" onclick="setFilter('status', 'VERIFIED', this)">Verified ({{ verified }})</button>
+                    <button class="btn-filter" onclick="setFilter('status', 'DRAFT', this)">Drafts ({{ draft }})</button>
+                    <button class="btn-filter" onclick="setFilter('status', 'FAILED', this)">Failed ({{ failed }})</button>
+                </div>
+                <!-- Runtime Filters -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+                    <span style="font-size: 0.75rem; color: #94a3b8; font-family: monospace; font-weight: 700;">RUNTIME:</span>
+                    <button class="btn-filter active" onclick="setFilter('runtime', 'all', this)">All</button>
+                    <button class="btn-filter" onclick="setFilter('runtime', 'python', this)">Python ({{ by_runtime.get('python', 0) }})</button>
+                    <button class="btn-filter" onclick="setFilter('runtime', 'nodejs', this)">Node.js ({{ by_runtime.get('nodejs', 0) }})</button>
+                    <button class="btn-filter" onclick="setFilter('runtime', 'docker', this)">Docker ({{ by_runtime.get('docker', 0) }})</button>
+                </div>
             </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-                <span style="font-size: 0.75rem; color: #94a3b8; font-family: monospace;">RUNTIME:</span>
-                <button class="btn-filter active" onclick="setFilter('runtime', 'all', this)">All</button>
-                <button class="btn-filter" onclick="setFilter('runtime', 'python', this)">Python ({{ by_runtime.get('python', 0) }})</button>
-                <button class="btn-filter" onclick="setFilter('runtime', 'nodejs', this)">Node.js ({{ by_runtime.get('nodejs', 0) }})</button>
-                <button class="btn-filter" onclick="setFilter('runtime', 'docker', this)">Docker ({{ by_runtime.get('docker', 0) }})</button>
-            </div>
-            <div style="flex: 1; min-width: 15rem;">
-                <input type="text" id="filterSearch" placeholder="Filter by ID, Package or Error Signature..." oninput="applyFilters()" style="width: 100%; background: #020617; border: 1px solid #334155; padding: 0.5rem 0.8rem; border-radius: 0.5rem; color: #fff; font-size: 0.8rem; font-family: monospace;">
+            <!-- Search Bar Input Row -->
+            <div style="position: relative; width: 100%;">
+                <svg style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); width: 1.15rem; height: 1.15rem; color: #64748b; pointer-events: none;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="filterSearch" class="search-bar" placeholder="Filter by ID, Package name, or Error Signature..." oninput="applyFilters()">
             </div>
         </div>
 
         <!-- Feedback Banner for Live Sweeps -->
         <div id="sweepFeedback" style="display: none; padding: 0.875rem 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-family: monospace; font-size: 0.85rem;"></div>
 
-        <!-- Recipe Items List -->
+        <!-- Recipe Items List (Clean Structured Cards) -->
         <div id="itemsContainer" style="display: flex; flex-direction: column; gap: 1rem;">
             {% for item in items %}
-            <div class="card recipe-row" data-status="{{ item.status }}" data-runtime="{{ item.runtime }}" data-search="{{ (item.id + ' ' + item.errorSignature + ' ' + item.summary + ' ' + item.runtime)|lower }}">
-                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <div class="card recipe-row" data-status="{{ item.status }}" data-runtime="{{ item.runtime }}" data-search="{{ (item.id + ' ' + item.errorSignature + ' ' + item.summary + ' ' + item.runtime)|lower }}" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                
+                <!-- Tier 1: Badges & Telemetry Header -->
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                         <span class="badge badge-pill">{{ item.runtime }}</span>
                         {% if item.status == 'VERIFIED' %}
@@ -128,7 +143,6 @@
                         {% else %}
                         <span class="badge badge-failed">&#10007; REJECTED / FAILED</span>
                         {% endif %}
-                        <span class="font-mono" style="font-size: 0.85rem; font-weight: 700; color: #fff;">{{ item.id }}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #94a3b8; font-family: monospace;">
                         <span>Confidence: <strong style="color: #2dd4bf;">{{ item.confidenceScore }}</strong></span>
@@ -137,40 +151,48 @@
                     </div>
                 </div>
 
-                <!-- Error Signature -->
-                <div style="background-color: rgba(2, 6, 23, 0.7); border: 1px solid #1e293b; padding: 0.6rem 0.75rem; border-radius: 0.375rem; margin-bottom: 0.5rem;">
-                    <div style="font-size: 0.75rem; color: #f43f5e; font-family: monospace; font-weight: 600;">
+                <!-- Tier 2: Monospace Bold Recipe ID -->
+                <div class="font-mono" style="font-size: 0.95rem; font-weight: 700; color: #fff; letter-spacing: 0.01em; word-break: break-all;">
+                    {{ item.id }}
+                </div>
+
+                <!-- Tier 3: Error Signature Callout -->
+                <div style="background-color: rgba(2, 6, 23, 0.75); border: 1px solid #1e293b; padding: 0.75rem; border-radius: 0.5rem;">
+                    <div style="font-size: 0.75rem; color: #f43f5e; font-family: monospace; font-weight: 600; word-break: break-word;">
                         {{ item.errorSignature }}
                     </div>
                     {% if item.summary %}
-                    <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 0.3rem;">
+                    <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 0.35rem;">
                         <strong>Solution:</strong> {{ item.summary }}
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- 4-Stage Telemetry Bar -->
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; font-size: 0.75rem; font-family: monospace;">
-                    <span style="color: #94a3b8;">4-Stage Telemetry:</span>
-                    {% if item.status == 'VERIFIED' %}
-                    <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4);">1. Pre-Fail: Exit 1 &check;</span>
-                    <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4);">2. Diff-Apply: AST OK &check;</span>
-                    <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4);">3. Post-Pass: Exit 0 &check;</span>
-                    <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4);">4. Mutants: 2/2 Killed &check;</span>
-                    {% elif item.status == 'DRAFT' %}
-                    <span style="background: rgba(120, 53, 15, 0.3); color: #fbbf24; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(217, 119, 6, 0.3);">1. Pre-Fail: Queued &#9203;</span>
-                    <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4);">2. Diff-Apply: Validated &check;</span>
-                    <span style="background: rgba(120, 53, 15, 0.3); color: #fbbf24; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(217, 119, 6, 0.3);">3. Post-Pass: Queued &#9203;</span>
-                    <span style="background: rgba(120, 53, 15, 0.3); color: #fbbf24; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(217, 119, 6, 0.3);">4. Mutants: Queued &#9203;</span>
-                    {% else %}
-                    <span style="background: rgba(76, 5, 25, 0.4); color: #f43f5e; padding: 0.15rem 0.4rem; border-radius: 0.25rem; border: 1px solid rgba(225, 29, 72, 0.4);">Sandbox Error: Exit {{ item.postExit }} &#10007;</span>
-                    {% endif %}
+                <!-- Tier 4: Telemetry Pills & Action Bar -->
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; padding-top: 0.25rem;">
+                    <div class="telemetry-row">
+                        <span style="color: #94a3b8; white-space: nowrap;">4-Stage Telemetry:</span>
+                        {% if item.status == 'VERIFIED' %}
+                        <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4); white-space: nowrap;">1. Pre-Fail: Exit 1 &check;</span>
+                        <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4); white-space: nowrap;">2. Diff-Apply: AST OK &check;</span>
+                        <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4); white-space: nowrap;">3. Post-Pass: Exit 0 &check;</span>
+                        <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4); white-space: nowrap;">4. Mutants: 2/2 Killed &check;</span>
+                        {% elif item.status == 'DRAFT' %}
+                        <span style="background: rgba(120, 53, 15, 0.3); color: #fbbf24; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(217, 119, 6, 0.3); white-space: nowrap;">1. Pre-Fail: Queued &#9203;</span>
+                        <span style="background: rgba(6, 78, 59, 0.4); color: #34d399; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(5, 150, 105, 0.4); white-space: nowrap;">2. Diff-Apply: Validated &check;</span>
+                        <span style="background: rgba(120, 53, 15, 0.3); color: #fbbf24; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(217, 119, 6, 0.3); white-space: nowrap;">3. Post-Pass: Queued &#9203;</span>
+                        <span style="background: rgba(120, 53, 15, 0.3); color: #fbbf24; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(217, 119, 6, 0.3); white-space: nowrap;">4. Mutants: Queued &#9203;</span>
+                        {% else %}
+                        <span style="background: rgba(76, 5, 25, 0.4); color: #f43f5e; padding: 0.15rem 0.45rem; border-radius: 0.25rem; border: 1px solid rgba(225, 29, 72, 0.4); white-space: nowrap;">Sandbox Error: Exit {{ item.postExit }} &#10007;</span>
+                        {% endif %}
+                    </div>
 
                     {% if item.codeDiff %}
-                    <button onclick="toggleDiff('{{ item.id }}')" style="margin-left: auto; background: transparent; color: #38bdf8; font-size: 0.75rem; text-decoration: underline; cursor: pointer;">Show Diff &darr;</button>
+                    <button onclick="toggleDiff('{{ item.id }}')" style="background: transparent; color: #38bdf8; font-size: 0.75rem; font-family: monospace; text-decoration: underline; cursor: pointer; white-space: nowrap;">Show Diff &darr;</button>
                     {% endif %}
                 </div>
 
+                <!-- Expandable Unified Diff Box -->
                 {% if item.codeDiff %}
                 <div id="diff-{{ item.id }}" class="diff-box" style="display: none;">
                     <pre><code>{{ item.codeDiff }}</code></pre>
@@ -243,7 +265,7 @@
                 const matchesSearch = (!search || text.includes(search));
 
                 if (matchesStatus && matchesRuntime && matchesSearch) {
-                    row.style.display = 'block';
+                    row.style.display = 'flex';
                 } else {
                     row.style.display = 'none';
                 }
