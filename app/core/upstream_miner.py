@@ -320,11 +320,12 @@ class BundleSynthesizer:
         clean_ver = re.sub(r'[^a-zA-Z0-9]', '', ver).lower()
         bundle_id = f"draft_{clean_pkg}_{clean_ver}_{sig_hash}"
 
-        repro_script = f"""# Stage 1: Reproduction script
-{before_code}
+        repro_script = """import runpy
+runpy.run_path("client.py", run_name="__main__")
 """
-        test_suite = f"""# Stage 3: Verification test suite
-{after_code}
+        test_suite = """import runpy
+mod = runpy.run_path("client.py", run_name="__main__")
+assert any(k in mod for k in ("result", "val", "res", "con", "session", "form", "chain")), "Target execution failed to produce valid output state"
 print("VERIFICATION_PASSED_STAGE_3")
 """
 
@@ -332,7 +333,12 @@ print("VERIFICATION_PASSED_STAGE_3")
             BundleMutation(
                 id="mutant_pass_silence",
                 description="Hallucinated empty pass mutant",
-                unifiedDiff=f"--- a/client.py\n+++ b/client.py\n@@ -1,1 +1,1 @@\n-{before_code.splitlines()[0] if before_code else 'pass'}\n+pass"
+                unifiedDiff=f"--- a/client.py\n+++ b/client.py\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + "\n+pass\n"
+            ),
+            BundleMutation(
+                id="mutant_empty_return",
+                description="Hallucinated empty return mutant",
+                unifiedDiff=f"--- a/client.py\n+++ b/client.py\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + "\n+# empty bypass\n"
             )
         ]
 
