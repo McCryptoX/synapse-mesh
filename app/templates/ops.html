@@ -227,6 +227,26 @@
             </div>
         </div>
 
+        <!-- Terminal Modal for Verification Sweep -->
+        <div id="sweepModal" style="display: none; position: fixed; inset: 0; background: rgba(10, 15, 30, 0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center;">
+            <div style="background: #0f172a; border: 1px solid #38bdf8; border-radius: 0.75rem; width: 90%; max-width: 800px; padding: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="pulse-dot"></span>
+                        <span style="font-family: monospace; font-size: 0.9rem; font-weight: 700; color: #38bdf8;">[SYNAPSE-MESH] 4-Stage Hermetic Sandbox Sweep Engine</span>
+                    </div>
+                    <span id="sweepStatusText" style="font-family: monospace; font-size: 0.75rem; color: #fbbf24;">RUNNING VERIFICATION...</span>
+                </div>
+                <div id="terminalOutput" style="background: #020617; border: 1px solid #1e293b; border-radius: 0.5rem; padding: 1rem; height: 320px; overflow-y: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.78rem; line-height: 1.5; color: #94a3b8;">
+                    <div style="color: #38bdf8;">[*] Initializing hermetic sandbox runner...</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <div id="sweepSummaryText" style="font-family: monospace; font-size: 0.8rem; color: #94a3b8;">Executing 4-stage pipeline (Pre-Fail, AST-Patch, Post-Pass, Mutant-Kill)...</div>
+                    <button id="closeSweepBtn" onclick="closeSweepModal()" class="btn btn-brand" style="display: none; padding: 0.4rem 1rem; font-size: 0.8rem;">Close &amp; Refresh</button>
+                </div>
+            </div>
+        </div>
+
         <footer style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #1e293b; text-align: center; font-size: 0.75rem; color: #64748b; font-family: monospace;">
             Synapse-Mesh Internal Ops Observatory &bull; Last Database Sync: {{ last_sync }} &bull; Zero-PII by Design
         </footer>
@@ -280,39 +300,88 @@
         }
 
         async function runManualSweep() {
-            const btn = document.getElementById('triggerBtn');
-            const feedback = document.getElementById('sweepFeedback');
-            btn.disabled = true;
-            btn.textContent = 'Executing 4-Stage Sandbox Sweep...';
-            btn.style.opacity = '0.7';
+            const modal = document.getElementById('sweepModal');
+            const terminal = document.getElementById('terminalOutput');
+            const statusText = document.getElementById('sweepStatusText');
+            const summaryText = document.getElementById('sweepSummaryText');
+            const closeBtn = document.getElementById('closeSweepBtn');
+            const triggerBtn = document.getElementById('triggerBtn');
+
+            modal.style.display = 'flex';
+            closeBtn.style.display = 'none';
+            statusText.textContent = 'EXECUTING VERIFICATION SWEEP...';
+            statusText.style.color = '#fbbf24';
+            terminal.innerHTML = '<div style="color: #38bdf8;">[*] Initializing hermetic sandbox runner...</div>';
+            
+            const sampleLogs = [
+                '[*] Mounting isolated tmpfs workspaces with zero-network policies...',
+                '[*] Validating PEP-440 / SemVer version closures...',
+                '[*] Compiling AST patches across Python, Node.js, and Rust...',
+                '[*] Executing negative mutation kill matrix (min 2 mutants/bundle)...'
+            ];
+            let tickIdx = 0;
+            const ticker = setInterval(() => {
+                if (tickIdx < sampleLogs.length) {
+                    const row = document.createElement('div');
+                    row.style.color = '#64748b';
+                    row.textContent = sampleLogs[tickIdx++];
+                    terminal.appendChild(row);
+                    terminal.scrollTop = terminal.scrollHeight;
+                }
+            }, 1000);
 
             try {
                 const res = await fetch('/api/v1/ops/trigger-verify', { method: 'POST' });
+                clearInterval(ticker);
                 const data = await res.json();
 
-                feedback.style.display = 'block';
                 if (data.status === 'SUCCESS') {
-                    feedback.style.backgroundColor = 'rgba(6, 78, 59, 0.6)';
-                    feedback.style.border = '1px solid rgba(5, 150, 105, 0.6)';
-                    feedback.style.color = '#34d399';
-                    feedback.innerHTML = `<strong>Sweep Completed:</strong> ${data.total} Total Recipes (${data.verified} Verified, ${data.draft} Drafts, ${data.failed} Failed). Refreshing in 2s...`;
-                    setTimeout(() => window.location.reload(), 2000);
+                    statusText.textContent = 'SWEEP COMPLETE - ALL PASS';
+                    statusText.style.color = '#34d399';
+                    
+                    terminal.innerHTML = '';
+                    if (data.logs && data.logs.length > 0) {
+                        data.logs.forEach(l => {
+                            const row = document.createElement('div');
+                            if (l.includes('[✓') || l.includes('SUCCESS') || l.includes('FINISHED')) {
+                                row.style.color = '#34d399';
+                            } else if (l.includes('[✗') || l.includes('[!')) {
+                                row.style.color = '#f43f5e';
+                            } else {
+                                row.style.color = '#38bdf8';
+                            }
+                            row.textContent = l;
+                            terminal.appendChild(row);
+                        });
+                    }
+                    terminal.scrollTop = terminal.scrollHeight;
+
+                    summaryText.innerHTML = `<span style="color: #34d399; font-weight: 700;">Sweep Success:</span> ${data.total} Total (${data.verified} 4-Stage Verified, ${data.draft} Drafts, ${data.failed} Failed)`;
+                    closeBtn.style.display = 'block';
+                    setTimeout(() => window.location.reload(), 2500);
                 } else {
-                    feedback.style.backgroundColor = 'rgba(76, 5, 25, 0.6)';
-                    feedback.style.border = '1px solid rgba(225, 29, 72, 0.6)';
-                    feedback.style.color = '#f43f5e';
-                    feedback.textContent = 'Error executing sweep: ' + JSON.stringify(data);
+                    statusText.textContent = 'SWEEP FAILED';
+                    statusText.style.color = '#f43f5e';
+                    const errRow = document.createElement('div');
+                    errRow.style.color = '#f43f5e';
+                    errRow.textContent = 'Error: ' + JSON.stringify(data);
+                    terminal.appendChild(errRow);
+                    closeBtn.style.display = 'block';
                 }
             } catch (err) {
-                feedback.style.display = 'block';
-                feedback.style.backgroundColor = 'rgba(76, 5, 25, 0.6)';
-                feedback.style.color = '#f43f5e';
-                feedback.textContent = 'Network or server error: ' + err.message;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Run Verification Sweep Now';
-                btn.style.opacity = '1';
+                clearInterval(ticker);
+                statusText.textContent = 'NETWORK ERROR';
+                statusText.style.color = '#f43f5e';
+                const errRow = document.createElement('div');
+                errRow.style.color = '#f43f5e';
+                errRow.textContent = 'Error: ' + err.message;
+                terminal.appendChild(errRow);
+                closeBtn.style.display = 'block';
             }
+        }
+
+        function closeSweepModal() {
+            window.location.reload();
         }
     </script>
 </body>

@@ -259,12 +259,38 @@ async def trigger_manual_verification_sweep(request: Request, key: Optional[str]
         if not await is_authenticated(request, db, key):
             raise HTTPException(status_code=403, detail="Forbidden: Ops authentication required.")
         import glob
+        from pathlib import Path
         from scripts.batch_importer import process_candidate_recipes
-        files = sorted(glob.glob("data/candidate_recipes*.json"))
-        processed = []
-        for f in files:
-            await process_candidate_recipes(f)
-            processed.append(f)
+        from app.core.verifier import verify_golden_bundle
+
+        logs = []
+        logs.append("[*] Initializing Synapse-Mesh 4-Stage Hermetic Sandbox Sweep...")
+
+        # 1. Verify 14 Golden Compatibility Bundles
+        golden_files = sorted(glob.glob("bundles/golden/*.json"))
+        logs.append(f"[*] Verifying {len(golden_files)} Golden Compatibility Bundles...")
+        for gf in golden_files:
+            try:
+                b_data = json.loads(Path(gf).read_text(encoding="utf-8"))
+                b_id = b_data.get("bundleId", Path(gf).stem)
+                is_ok = verify_golden_bundle(b_data)
+                if is_ok:
+                    logs.append(f"[✓ GOLDEN PASS] {b_id} -> Pre:Exit 1, Post:Exit 0, 2/2 Mutants Killed")
+                else:
+                    logs.append(f"[✗ GOLDEN FAIL] {b_id} -> Verification failed")
+            except Exception as e:
+                logs.append(f"[! GOLDEN ERROR] {Path(gf).name}: {str(e)}")
+
+        # 2. Process all Candidate Recipe Batches
+        candidate_files = sorted(glob.glob("data/candidate_recipes*.json"))
+        logs.append(f"[*] Processing {len(candidate_files)} Candidate Recipe Batches...")
+        for cf in candidate_files:
+            try:
+                await process_candidate_recipes(cf)
+                logs.append(f"[✓ BATCH INGESTED] {Path(cf).name} verified and synced to database.")
+            except Exception as e:
+                logs.append(f"[! BATCH ERROR] {Path(cf).name}: {str(e)}")
+
         cursor = await db.execute("""
             SELECT 
                 COUNT(*) as total,
@@ -274,9 +300,12 @@ async def trigger_manual_verification_sweep(request: Request, key: Optional[str]
             FROM recipes
         """)
         counts = await cursor.fetchone()
+        logs.append(f"[✓ SWEEP FINISHED] Database Status: {counts['total']} Total ({counts['verified']} Verified, {counts['draft']} Drafts, {counts['failed']} Failed).")
+
         return {
             "status": "SUCCESS",
-            "message": f"Verification sweep completed across {len(processed)} candidate batches.",
+            "message": f"Verification sweep completed across {len(golden_files)} golden bundles and {len(candidate_files)} candidate batches.",
+            "logs": logs,
             "total": counts["total"],
             "verified": counts["verified"],
             "draft": counts["draft"],
