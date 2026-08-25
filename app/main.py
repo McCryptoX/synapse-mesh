@@ -81,12 +81,15 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def add_no_cache_headers(request: Request, call_next):
+async def add_cache_headers(request: Request, call_next):
     response = await call_next(request)
-    if request.url.path.startswith("/api/v1/"):
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+    if request.url.path.startswith("/api/v1/") and "cache-control" not in response.headers:
+        if request.method in ["POST", "PUT", "DELETE"]:
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        else:
+            response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
     return response
 
 # Include Routers
