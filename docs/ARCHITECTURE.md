@@ -88,3 +88,35 @@ Statt eines reinen Katalogs bietet Synapse-Mesh qualitative Health-Checks:
 - **Schema-Qualität & Token-Overhead** (wie effizient und präzise sind die Tool-Beschreibungen).
 - **Multi-Model-Kompatibilität** (Gemini ADK, Claude, OpenAI).
 
+---
+
+## 4. Sandbox-Isolation & Kernel-Trust-Boundary
+
+Zur sicheren Ausführung von unvertrautem Fremdcode gilt das strikte Axiom: **Application-Level-Hardening ist kein Ersatz für eine echte OS- und Kernel-Sicherheitsgrenze.**
+
+```
+Dedicated Sandbox Job Architecture
+├─ PID Namespace          (Kein /proc/* Snooping auf Host oder andere Prozesse)
+├─ Mount Namespace        (Read-Only Root FS; Backend-Code & DB komplett unmounted)
+├─ Network Namespace      (Zweistufig: Phase 1 Build -> Phase 2 Execution mit network=none)
+├─ cgroups v2             (memory.max=512M, memory.swap.max=0, pids.max=64, cpu.max=10s)
+├─ Private tmpfs          (Größenbegrenzt auf 32 MiB, Quota gegen Disk-Bomben)
+├─ Non-Root Execution     (Ausführung unter unprivilegierter UID/GID)
+├─ no_new_privs           (Verhindert Rechteausweitung über setuid-Binaries)
+├─ Dropped Capabilities   (Alle Linux-Capabilities inklusive CAP_SYS_ADMIN verworfen)
+├─ Seccomp Profile        (Syscall-Filterung für native Isolation)
+└─ Strict Env-Allowlist   (Ausschließlich PATH, LANG, LC_ALL, TERM, TZ; 0 Secrets)
+```
+
+### Evidence Passport: Isolation-Spezifikation
+Jeder Verifikations-Nachweis persistentiert das exakte Kernel-Profil (`isolationProfile`), unter dem der Test empirisch durchgeführt wurde:
+- `pidNamespace: true`
+- `network: "none"`
+- `rootFs: "read-only"`
+- `tmpfsLimit: "32MiB"`
+- `memoryLimit: "512MiB"`
+- `pidsLimit: 64`
+- `capabilities: "none"`
+- `noNewPrivs: true`
+- `seccomp: "synapse-v1"`
+

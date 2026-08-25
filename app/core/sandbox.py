@@ -32,35 +32,28 @@ def kill_process_tree(process_or_pid):
 
 
 def sandbox_preexec_limits():
-    """Applies strict POSIX resource limits (RAM, CPU, Filesize, Process Count) to child process."""
-    # 1. Limit Virtual Memory to 512 MiB (prevents memory bombs)
-    max_mem = 512 * 1024 * 1024
-    try:
-        resource.setrlimit(resource.RLIMIT_AS, (max_mem, max_mem))
-    except BaseException:
-        pass
-
-    # 2. Limit Max Created File Size to 10 MiB (prevents disk filling /tmp bombs)
+    """Applies strict POSIX resource limits (CPU, Filesize, Process Count) to child process."""
+    # 1. Limit Max Created File Size to 10 MiB (prevents disk filling /tmp bombs)
     max_file = 10 * 1024 * 1024
     try:
         resource.setrlimit(resource.RLIMIT_FSIZE, (max_file, max_file))
     except BaseException:
         pass
 
-    # 3. Limit Max CPU Time to 10s (prevents CPU starvation)
+    # 2. Limit Max CPU Time to 10s (prevents CPU starvation)
     try:
         resource.setrlimit(resource.RLIMIT_CPU, (10, 12))
     except BaseException:
         pass
 
-    # 4. Limit Max Processes/Threads (prevents fork bombs)
+    # 3. Limit Max Processes/Threads (prevents fork bombs)
     try:
         if hasattr(resource, "RLIMIT_NPROC"):
             resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))
     except BaseException:
         pass
 
-    # 5. Linux-specific: Ensure death signal is sent if parent dies
+    # 4. Linux-specific: Ensure death signal is sent if parent dies
     if sys.platform.startswith("linux"):
         try:
             import ctypes
@@ -154,7 +147,7 @@ class SandboxRunner:
                         "stderr": "UNVERIFIED: node runtime executable not found on host",
                         "unverified": True
                     }
-                args = [executable, entrypoint]
+                args = [executable, "--max-old-space-size=256", entrypoint]
             elif rt == "rust":
                 cargo_bin = shutil.which("cargo")
                 if not cargo_bin:

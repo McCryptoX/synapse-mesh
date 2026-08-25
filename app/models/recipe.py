@@ -48,6 +48,20 @@ class EvidenceDefinition(BaseModel):
     mutationsKilled: str = Field(default="3/3", description="Ratio of rejected web-fehlfix mutants")
     toolchainVersions: Dict[str, str] = Field(default_factory=dict, description="Exact runtime and compiler versions")
     badges: List[str] = Field(default_factory=lambda: ["VERIFIED_SANDBOX", "SOURCE_BACKED", "ZERO_PII_AUDITED"])
+    isolationProfile: Dict[str, Any] = Field(
+        default_factory=lambda: {
+            "pidNamespace": True,
+            "network": "none",
+            "rootFs": "read-only",
+            "tmpfsLimit": "32MiB",
+            "memoryLimit": "512MiB",
+            "pidsLimit": 64,
+            "capabilities": "none",
+            "noNewPrivs": True,
+            "seccomp": "synapse-v1"
+        },
+        description="Empirical sandbox kernel security and isolation profile"
+    )
     primarySource: Optional[str] = Field(None, description="Official documentation, release notes or issue link")
 
 
