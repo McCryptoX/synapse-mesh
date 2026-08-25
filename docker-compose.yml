@@ -11,7 +11,7 @@ services:
       - ./app:/app/app:ro
       - ./scripts:/app/scripts:ro
       - ./synapse_cli:/app/synapse_cli:ro
-      - ./bundles:/app/bundles:ro
+      - ./bundles:/app/bundles
       - ./benchmark:/app/benchmark:ro
       - ./tests:/app/tests:ro
     environment:

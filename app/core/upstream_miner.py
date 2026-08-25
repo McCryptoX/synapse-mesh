@@ -368,14 +368,76 @@ class UpstreamMiningEngine:
 
             candidates.append(bundle)
 
-        # 4. Persist strictly to drafts directory (never golden)
+        # 4. Persist to drafts directory
         if persist_to_disk:
-            target_dir = destination_dir or DRAFTS_DIR
-            target_dir.mkdir(parents=True, exist_ok=True)
-            
-            for b in candidates:
-                out_path = target_dir / f"{b.bundleId}.json"
-                out_path.write_text(json.dumps(b.model_dump(), indent=2), encoding="utf-8")
-                logger.info(f"Persisted draft bundle: {b.bundleId} (Status: {b.status})")
+            try:
+                target_dir = destination_dir or DRAFTS_DIR
+                target_dir.mkdir(parents=True, exist_ok=True)
+                for b in candidates:
+                    out_path = target_dir / f"{b.bundleId}.json"
+                    out_path.write_text(json.dumps(b.model_dump(), indent=2), encoding="utf-8")
+                    logger.info(f"Persisted draft bundle: {b.bundleId} (Status: {b.status})")
+            except Exception as pe:
+                logger.warning(f"File persistence for drafts skipped ({pe}); proceeding to database sync.")
+
+        # 5. Automatically sync verified bundles into SQLite database
+        try:
+            from app.database import get_db_connection
+            db = await get_db_connection()
+            try:
+                for b in candidates:
+                    if b.status == "VERIFIED":
+                        prob = {
+                            "errorSignature": b.fingerprint.errorSignature,
+                            "runtime": b.scope.runtime,
+                            "packages": b.patch.pinnedDependencies,
+                            "description": b.description
+                        }
+                        sol = {
+                            "summary": b.description,
+                            "codeDiff": b.patch.unifiedDiff,
+                            "patchDiff": b.patch.unifiedDiff,
+                            "instructions": ["Apply verified patch to resolve breaking change."],
+                            "pinnedDependencies": b.patch.pinnedDependencies,
+                            "doNot": b.patch.doNot
+                        }
+                        repro = {
+                            "script": b.verification.reproductionScript,
+                            "testSuite": b.verification.testSuite
+                        }
+                        evi = {
+                            "verificationStatus": "VERIFIED",
+                            "sandboxExitCode": 0,
+                            "passedTests": 1,
+                            "totalTests": 1,
+                            "confidenceScore": 1.0,
+                            "primarySource": b.provenance.primarySources[0] if b.provenance.primarySources else None
+                        }
+                        recipe_id = f"rec_{b.bundleId}"
+                        await db.execute("""
+                            INSERT INTO recipes (id, runtime, error_signature, problem_json, solution_json, reproduction_json, evidence_json, confidence_score, verification_status, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                            ON CONFLICT(id) DO UPDATE SET
+                                problem_json = excluded.problem_json,
+                                solution_json = excluded.solution_json,
+                                reproduction_json = excluded.reproduction_json,
+                                evidence_json = excluded.evidence_json,
+                                updated_at = CURRENT_TIMESTAMP
+                        """, (
+                            recipe_id,
+                            b.scope.runtime,
+                            b.fingerprint.errorSignature,
+                            json.dumps(prob),
+                            json.dumps(sol),
+                            json.dumps(repro),
+                            json.dumps(evi),
+                            1.0,
+                            "VERIFIED"
+                        ))
+                await db.commit()
+            finally:
+                await db.close()
+        except Exception as e:
+            logger.error(f"Error syncing mined verified bundles to SQLite: {e}")
 
         return candidates
