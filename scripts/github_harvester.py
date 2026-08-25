@@ -1,4 +1,5 @@
 import asyncio
+import glob
 import httpx
 import json
 import logging
@@ -12,15 +13,7 @@ from typing import List, Dict, Any, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.database import init_db, get_db_connection
-from app.models.recipe import (
-    VerifiedRecipe,
-    ProblemDefinition,
-    SolutionDefinition,
-    ReproductionDefinition,
-    EvidenceDefinition
-)
-from app.core.sanitizer import ZeroPiiSanitizer
-from app.core.sandbox import SandboxRunner
+from scripts.batch_importer import process_candidate_recipes
 
 logging.basicConfig(level="INFO", format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("github_harvester")
@@ -46,7 +39,7 @@ TARGET_REPOSITORIES = [
 
 
 class GitHubReleaseHarvester:
-    """Automated, rate-limited release notes and breaking changes crawler."""
+    """Automated, rate-limited release notes crawler and batch verification ingester."""
 
     def __init__(self, github_token: Optional[str] = None):
         self.headers = {
@@ -102,34 +95,41 @@ class GitHubReleaseHarvester:
 
         return sections
 
-    async def harvest_all(self, max_recipes: int = 20):
-        """Runs the harvest pipeline across target repositories and feeds the sandbox."""
+    async def harvest_and_ingest(self):
+        """Runs the harvest pipeline and executes automated sandbox verification across all candidate batches."""
         await init_db()
-        logger.info(f"Starting GitHub Release Harvester across {len(TARGET_REPOSITORIES)} repositories...")
+        logger.info(f"=== 1. Starting GitHub Release Scan across {len(TARGET_REPOSITORIES)} repositories ===")
 
         total_extracted = 0
 
         for target in TARGET_REPOSITORIES:
             owner, repo, runtime = target["owner"], target["repo"], target["runtime"]
-            logger.info(f"Fetching releases for {owner}/{repo} ({runtime})...")
-            releases = await self.fetch_releases(owner, repo, limit=5)
+            logger.info(f"Scanning releases for {owner}/{repo} ({runtime})...")
+            releases = await self.fetch_releases(owner, repo, limit=3)
             
             for rel in releases:
                 tag = rel.get("tag_name", "unknown")
-                html_url = rel.get("html_url", f"https://github.com/{owner}/{repo}")
                 body = rel.get("body", "")
-                
                 sections = self.extract_breaking_sections(body)
                 if sections:
-                    logger.info(f"  ✓ Found {len(sections)} breaking/change sections in {repo} {tag}")
                     total_extracted += len(sections)
 
-            # Brief pause to respect API rate limits
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(0.3)
 
-        logger.info(f"=== Harvester Finished: Scanned {len(TARGET_REPOSITORIES)} Repos, Found {total_extracted} Change Sections ===")
+        logger.info(f"Scan complete: Found {total_extracted} breaking change sections.")
+
+        # 2. Process and verify all candidate batches into database
+        logger.info("=== 2. Running Automated Sandbox Verification & Batch Ingestion ===")
+        data_dir = Path("data")
+        batch_files = sorted(glob.glob(str(data_dir / "candidate_recipes*.json")))
+        
+        for batch_file in batch_files:
+            logger.info(f"Processing candidate batch: {batch_file}")
+            await process_candidate_recipes(batch_file)
+
+        logger.info("=== Harvester & Verification Pipeline Complete! ===")
 
 
 if __name__ == "__main__":
     harvester = GitHubReleaseHarvester()
-    asyncio.run(harvester.harvest_all())
+    asyncio.run(harvester.harvest_and_ingest())
