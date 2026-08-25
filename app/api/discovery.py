@@ -10,9 +10,10 @@ async def get_mcp_manifest():
     return McpManifest()
 
 
+@router.get("/.well-known/agent-card.json", tags=["Discovery"], response_model=AgentManifest)
 @router.get("/.well-known/agent.json", tags=["Discovery"], response_model=AgentManifest)
 async def get_agent_manifest():
-    """A2A (Agent-to-Agent) discovery descriptor."""
+    """A2A (Agent-to-Agent) discovery descriptor conforming to A2A standard."""
     return AgentManifest()
 
 from fastapi.responses import PlainTextResponse

@@ -47,3 +47,12 @@ async def test_install_script_endpoint():
         assert res.status_code == 200
         assert "Synapse-Mesh" in res.text
         assert "claude_desktop_config.json" in res.text
+
+@pytest.mark.asyncio
+async def test_well_known_agent_card_standard():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/.well-known/agent-card.json")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["agentName"] == "Synapse-Mesh-Exocortex"
+        assert data["evidenceFirst"] is True

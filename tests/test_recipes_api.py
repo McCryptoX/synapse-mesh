@@ -22,7 +22,7 @@ async def test_submit_and_search_recipe():
             },
             "reproduction": {
                 "script": "res = 5 + 'test'",
-                "testSuite": "def test_fix(): assert str(5) + 'test' == '5test'"
+                "testSuite": "assert str(5) + 'test' == '5test'\nprint('ALL TESTS PASSED')"
             },
             "primarySource": "https://docs.python.org/3/library/functions.html#func-str"
         }

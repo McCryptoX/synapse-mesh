@@ -53,3 +53,17 @@ async def test_mcp_tool_call_find_solution():
     data = res.json()
     assert "content" in data["result"]
     assert len(data["result"]["content"]) > 0
+
+@pytest.mark.asyncio
+async def test_mcp_server_discover():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "server/discover",
+            "params": {}
+        })
+    assert res.status_code == 200
+    data = res.json()
+    assert "tools" in data["result"]
+    assert data["result"]["serverInfo"]["name"] == "Synapse-Mesh-Exocortex"

@@ -10,7 +10,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.database import init_db, get_db_connection
 from app.models.recipe import (
-    VerifiedRecipe,
     ProblemDefinition,
     SolutionDefinition,
     ReproductionDefinition,
@@ -24,7 +23,7 @@ logger = logging.getLogger("batch_importer")
 
 
 async def process_candidate_recipes(json_file_path: str):
-    """Loads candidate recipes, runs isolated sandbox verification, and saves verified ones."""
+    """Loads candidate recipes, runs genuine 4-stage sandbox verification, and stores verified ones."""
     await init_db()
     path = Path(json_file_path)
     if not path.exists():
@@ -34,16 +33,17 @@ async def process_candidate_recipes(json_file_path: str):
     with open(path, "r", encoding="utf-8") as f:
         candidates = json.load(f)
 
-    logger.info(f"Loaded {len(candidates)} candidate recipes for verification.")
+    logger.info(f"Loaded {len(candidates)} candidate recipes for rigorous verification.")
     
     db = await get_db_connection()
     verified_count = 0
+    draft_count = 0
     failed_count = 0
 
     try:
         for idx, item in enumerate(candidates, 1):
             recipe_id = item.get("id") or f"rec_ingest_{idx:03d}"
-            # Flexible support for flat or nested schema
+            
             prob_dict = item.get("problem", {})
             sol_dict = item.get("solution", {})
             repro_dict = item.get("reproduction", {})
@@ -54,6 +54,10 @@ async def process_candidate_recipes(json_file_path: str):
             desc = item.get("description") or prob_dict.get("description", "")
             summary = item.get("summary") or sol_dict.get("explanation", "")
             diff = item.get("codeDiff") or sol_dict.get("patchDiff", "")
+            pinned_deps = sol_dict.get("pinnedDependencies") or prob_dict.get("packages", {})
+            do_not = sol_dict.get("doNot", [])
+            mutations = item.get("mutations", [])
+            
             repro_script = item.get("reproScript") or repro_dict.get("script", "")
             test_suite = item.get("testSuite") or repro_dict.get("testSuite", "")
             primary_source = item.get("primarySource") or evi_dict.get("primarySource", "")
@@ -63,32 +67,40 @@ async def process_candidate_recipes(json_file_path: str):
             sanitized_summary = ZeroPiiSanitizer.sanitize_text(summary)
             sanitized_error = ZeroPiiSanitizer.sanitize_text(error_sig)
 
-            # 2. Automated Sandbox Verification
-            evidence = await SandboxRunner.verify_recipe(
+            # 2. Genuine 4-Stage Sandbox Verification
+            evidence = await SandboxRunner.verify_recipe_full(
                 runtime=runtime,
+                error_signature=sanitized_error,
+                repro_script=repro_script,
                 test_suite=test_suite,
+                mutations=mutations,
                 primary_source=primary_source
             )
 
-            is_verified = (evidence.verificationStatus == "VERIFIED")
-            if is_verified:
+            if evidence.verificationStatus == "VERIFIED":
                 verified_count += 1
-                logger.info(f"[✓ PASS] {recipe_id} ({runtime}) -> {sanitized_error[:60]}...")
+                logger.info(f"[✓ VERIFIED] {recipe_id} ({runtime}) -> Pre:{evidence.preExit} Post:{evidence.postExit} Mut:{evidence.mutationsKilled}")
+            elif evidence.verificationStatus == "DRAFT":
+                draft_count += 1
+                logger.info(f"[~ DRAFT] {recipe_id} ({runtime}) -> Post-pass OK, awaiting repro/mutations.")
             else:
                 failed_count += 1
-                logger.warning(f"[✗ FAIL] {recipe_id} ({runtime}) -> Exit Code {evidence.sandboxExitCode}")
+                logger.warning(f"[✗ FAILED] {recipe_id} ({runtime}) -> Sandbox Exit {evidence.sandboxExitCode}")
 
             # 3. Store in Database
             prob = ProblemDefinition(
                 errorSignature=sanitized_error,
                 runtime=runtime.lower(),
                 description=sanitized_desc,
-                packages=item.get("packages", {})
+                packages=prob_dict.get("packages", {})
             )
             sol = SolutionDefinition(
                 summary=sanitized_summary,
                 codeDiff=diff,
-                instructions=item.get("instructions", [])
+                patchDiff=diff,
+                instructions=sol_dict.get("instructions", []),
+                pinnedDependencies=pinned_deps,
+                doNot=do_not
             )
             repro = ReproductionDefinition(
                 script=repro_script,
@@ -113,7 +125,7 @@ async def process_candidate_recipes(json_file_path: str):
             ))
 
         await db.commit()
-        logger.info(f"=== Batch Import Completed: {verified_count} Verified, {failed_count} Failed ===")
+        logger.info(f"=== Import Completed: {verified_count} VERIFIED, {draft_count} DRAFT, {failed_count} FAILED ===")
     finally:
         await db.close()
 

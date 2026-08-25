@@ -130,10 +130,12 @@ async def submit_recipe(req: RecipeSubmitRequest):
     sanitized_sol = ZeroPiiSanitizer.sanitize_data(req.solution.model_dump())
     sanitized_repro = ZeroPiiSanitizer.sanitize_data(req.reproduction.model_dump())
     
-    # 2. Automated Sandbox Verification
-    evidence = await SandboxRunner.verify_recipe(
+    # 2. Automated Sandbox Verification (Full 4-Stage)
+    evidence = await SandboxRunner.verify_recipe_full(
         runtime=sanitized_prob["runtime"],
-        test_suite=sanitized_repro["testSuite"],
+        error_signature=sanitized_prob.get("errorSignature", ""),
+        repro_script=sanitized_repro.get("script", ""),
+        test_suite=sanitized_repro.get("testSuite", ""),
         primary_source=req.primarySource
     )
     
@@ -184,9 +186,11 @@ async def verify_recipe_by_id(recipe_id: str):
         repro = json.loads(row["reproduction_json"])
         evi = json.loads(row["evidence_json"])
         
-        new_evidence = await SandboxRunner.verify_recipe(
+        new_evidence = await SandboxRunner.verify_recipe_full(
             runtime=prob["runtime"],
-            test_suite=repro["testSuite"],
+            error_signature=prob.get("errorSignature", ""),
+            repro_script=repro.get("script", ""),
+            test_suite=repro.get("testSuite", ""),
             primary_source=evi.get("primarySource")
         )
         

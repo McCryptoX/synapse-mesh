@@ -124,8 +124,8 @@ async def mcp_json_rpc(request: Request):
         return JSONResponse(status_code=400, content={"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32600, "message": "Missing method"}})
 
     # Method Dispatch
-    if method == "initialize":
-        await log_agent_access("mcp_call", "initialize", "", request)
+    if method in ("initialize", "server/discover"):
+        await log_agent_access("mcp_call", method.replace("/", "_"), "", request)
         return {
             "jsonrpc": "2.0",
             "id": msg_id,
@@ -138,7 +138,8 @@ async def mcp_json_rpc(request: Request):
                 "serverInfo": {
                     "name": "Synapse-Mesh-Exocortex",
                     "version": settings.app_version
-                }
+                },
+                "tools": MCP_TOOLS
             }
         }
 
