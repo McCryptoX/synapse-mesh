@@ -499,8 +499,15 @@ async def handle_mcp_get(request: Request):
     }
 
 
+MAX_MCP_PAYLOAD_BYTES = 1_000_000  # 1 MB
+
+
 async def handle_mcp_post(request: Request):
     """Handles JSON-RPC 2.0 direct streamable HTTP requests."""
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_MCP_PAYLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Payload too large: Max MCP request size is 1 MB")
+        
     try:
         body = await request.json()
     except Exception:
@@ -511,7 +518,11 @@ async def handle_mcp_post(request: Request):
 
 
 async def handle_mcp_messages(request: Request, sessionId: Optional[str] = Query(None)):
-    """Handles POST messages for active SSE sessions."""
+    """Handles POST messages for active SSE sessions with backpressure management."""
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_MCP_PAYLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Payload too large: Max MCP request size is 1 MB")
+
     try:
         body = await request.json()
     except Exception:
@@ -521,8 +532,14 @@ async def handle_mcp_messages(request: Request, sessionId: Optional[str] = Query
     
     # Push to SSE stream if session exists
     if sessionId and sessionId in sse_sessions:
-        await sse_sessions[sessionId].put(res)
-        return Response(status_code=202)
+        q = sse_sessions[sessionId]
+        try:
+            q.put_nowait(res)
+            return Response(status_code=202)
+        except asyncio.QueueFull:
+            logger.warning(f"SSE session {sessionId} queue full (slow/stuck consumer); terminating session to prevent resource lock.")
+            sse_sessions.pop(sessionId, None)
+            raise HTTPException(status_code=429, detail="SSE consumer backpressure limit reached; session closed.")
     
     # Fallback to direct HTTP response
     return JSONResponse(content=res)

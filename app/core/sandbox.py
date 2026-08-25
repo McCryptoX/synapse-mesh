@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import signal
 import shutil
 import sys
 import tempfile
@@ -11,10 +12,48 @@ from app.models.recipe import EvidenceDefinition
 from datetime import datetime, timezone
 
 
+def kill_process_tree(pid: int):
+    """Kills entire process tree (process group) to prevent orphan child leaks."""
+    try:
+        pgid = os.getpgid(pid)
+        os.killpg(pgid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    except Exception:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except Exception:
+            pass
+
+
+async def read_stream_capped(stream: asyncio.StreamReader, max_bytes: int = 512 * 1024) -> str:
+    """Reads stream asynchronously with strict byte cap preventing memory bombs."""
+    buf = bytearray()
+    truncated = False
+    try:
+        while True:
+            chunk = await stream.read(8192)
+            if not chunk:
+                break
+            if len(buf) + len(chunk) <= max_bytes:
+                buf.extend(chunk)
+            else:
+                if not truncated:
+                    remaining = max_bytes - len(buf)
+                    if remaining > 0:
+                        buf.extend(chunk[:remaining])
+                    buf.extend(b"\n[OUTPUT TRUNCATED: Exceeded 512 KiB limit]\n")
+                    truncated = True
+    except (asyncio.CancelledError, Exception):
+        pass
+    return buf.decode(errors="replace")
+
+
 class SandboxRunner:
     """Executes multi-ecosystem reproduction and test suites in isolated temporary workspaces with strict limits."""
 
     TIMEOUT_SECONDS = 12.0
+    MAX_OUTPUT_BYTES = 512 * 1024  # 512 KiB per stream
 
     @classmethod
     async def run_workspace_test(
@@ -80,28 +119,32 @@ class SandboxRunner:
                 executable = sys.executable
                 args = [executable, entrypoint]
 
+            # Spawn process in new session / process group for clean tree kill
             process = await asyncio.create_subprocess_exec(
                 *args,
                 cwd=temp_dir,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env=env
+                env=env,
+                start_new_session=True
             )
 
+            stdout_task = asyncio.create_task(read_stream_capped(process.stdout, cls.MAX_OUTPUT_BYTES))
+            stderr_task = asyncio.create_task(read_stream_capped(process.stderr, cls.MAX_OUTPUT_BYTES))
+
             try:
-                stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=cls.TIMEOUT_SECONDS
-                )
+                await asyncio.wait_for(process.wait(), timeout=cls.TIMEOUT_SECONDS)
                 exit_code = process.returncode
-                stdout = stdout_bytes.decode(errors="replace")
-                stderr = stderr_bytes.decode(errors="replace")
+                stdout = await stdout_task
+                stderr = await stderr_task
             except asyncio.TimeoutError:
+                kill_process_tree(process.pid)
                 try:
-                    process.kill()
                     await process.wait()
                 except Exception:
                     pass
+                stdout_task.cancel()
+                stderr_task.cancel()
                 exit_code = -1
                 stdout = ""
                 stderr = f"Sandbox execution timed out after {cls.TIMEOUT_SECONDS}s"

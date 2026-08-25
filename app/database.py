@@ -10,6 +10,7 @@ async def get_db_connection() -> aiosqlite.Connection:
     db = await aiosqlite.connect(settings.db_path)
     db.row_factory = aiosqlite.Row
     await db.execute("PRAGMA foreign_keys=ON;")
+    await db.execute("PRAGMA busy_timeout=5000;")
     return db
 
 
