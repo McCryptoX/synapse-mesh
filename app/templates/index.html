@@ -5,9 +5,9 @@
     <link rel="shortcut icon" href="/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synapse-Mesh | CI/CD for AI Knowledge (Verified Living Solutions)</title>
-    <meta name="description" content="CI/CD for AI Knowledge - Deterministic, execution-verified living solutions and test runners for autonomous coding agents (Gemini, Claude, ChatGPT, Cursor).">
-    <meta name="keywords" content="mcp, model context protocol, ai agents, coding assistant, pydantic v2, python 3.12, next.js 15, verified solutions, continuous verification">
+    <title>Synapse-Mesh | Open Verified Compatibility Layer for Software Agents</title>
+    <meta name="description" content="Open, verifiable compatibility and verification layer for AI software agents (Cursor, Claude Code, ChatGPT Codex, Grok, Gemini). MCP Spec 2026-07-28 & A2A protocol.">
+    <meta name="keywords" content="mcp, model context protocol, a2a, ai agents, coding assistant, pydantic v2, python 3.12, next.js 15, verified compatibility bundles">
     <meta name="author" content="Synapse-Mesh Operator">
     <link rel="canonical" href="https://synapsemesh.dev/">
 
@@ -17,15 +17,9 @@
     <meta property="og:image" content="https://synapsemesh.dev/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta name="twitter:image" content="https://synapsemesh.dev/og-image.png">
-    <meta property="og:title" content="Synapse-Mesh | CI/CD for AI Knowledge">
-    <meta property="og:description" content="Deterministic, execution-verified living solutions for autonomous coding agents without model retraining.">
+    <meta property="og:title" content="Synapse-Mesh | Open Verified Compatibility Layer">
+    <meta property="og:description" content="Deterministic, execution-verified compatibility bundles and 2-phase client-side verification for AI software agents.">
     <meta property="og:site_name" content="Synapse-Mesh">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Synapse-Mesh | CI/CD for AI Knowledge">
-    <meta name="twitter:description" content="Deterministic, execution-verified living solutions for autonomous coding agents.">
 
     <!-- Schema.org Structured Data (JSON-LD) -->
     <script type="application/ld+json">
@@ -35,17 +29,13 @@
       "name": "Synapse-Mesh",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "All",
-      "description": "CI/CD for AI Knowledge - Agent-native verified living solutions registry and sandbox runner.",
+      "description": "Open Verified Compatibility Layer for AI Software Agents (MCP 2026-07-28 & A2A).",
       "url": "https://synapsemesh.dev",
       "author": {
         "@type": "Person",
         "name": "Synapse-Mesh Operator"
       },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "EUR"
-      }
+      "license": "https://opensource.org/licenses/MIT"
     }
     </script>
     
@@ -94,12 +84,12 @@
             <div class="flex items-center space-x-3">
                 <div class="w-3.5 h-3.5 rounded-full bg-brand-500 animate-pulse"></div>
                 <span class="font-bold text-lg tracking-wider text-white">SYNAPSE<span class="text-brand-500">-MESH</span></span>
-                <span class="text-xs uppercase px-2 py-0.5 rounded bg-brand-900/50 text-brand-500 border border-brand-600/30 font-mono">CI/CD for AI Knowledge</span>
+                <span class="text-xs uppercase px-2 py-0.5 rounded bg-brand-900/50 text-brand-500 border border-brand-600/30 font-mono">Verified Compatibility Layer</span>
             </div>
             <div class="flex items-center space-x-6 text-sm font-mono">
-                <a href="/verification" class="text-slate-400 hover:text-brand-500 transition">Verification Pipeline</a>
-                <a href="https://docs.synapsemesh.dev" class="text-slate-400 hover:text-brand-500 transition">OpenAPI Docs</a>
-                <a href="/.well-known/mcp.json" class="text-slate-400 hover:text-brand-500 transition">.well-known/mcp</a>
+                <a href="/verification" class="text-slate-400 hover:text-brand-500 transition">4-Stage Pipeline</a>
+                <a href="https://docs.synapsemesh.dev" class="text-slate-400 hover:text-brand-500 transition">OpenAPI</a>
+                <a href="/.well-known/agent-card.json" class="text-slate-400 hover:text-brand-500 transition">A2A Agent Card</a>
                 <a href="https://github.com/McCryptoX/synapse-mesh-mcp" target="_blank" class="text-slate-400 hover:text-brand-500 transition flex items-center space-x-1">
                     <span>GitHub</span>
                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
@@ -116,85 +106,87 @@
         <section class="text-center space-y-6 pt-4">
             <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
                 <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>MCP Spec 2026-07-28 &bull; Streamable HTTP Gateway Live</span>
+                <span>MCP Spec 2026-07-28 &bull; A2A Conformance &bull; Client-Side Re-Verification</span>
             </div>
             
             <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-                CI/CD for <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-300 to-cyan-400">AI Knowledge</span>
+                The Verified Compatibility Layer for <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-300 to-cyan-400">AI Software Agents</span>
             </h1>
 
             <p class="text-slate-400 max-w-3xl mx-auto text-lg leading-relaxed">
-                Synapse-Mesh is not a vector RAG and not a passive doc-crawler. It is the execution-verified living solution registry for autonomous coding agents: 
-                <strong>Problem ➔ Sandbox Reproduce ➔ Verified AST Patch ➔ Machine-Checkable Evidence</strong>.
+                Synapse-Mesh does not claim universal answers. It delivers <strong>portable, execution-verified compatibility bundles</strong>: 
+                exact package pins, clean unified diffs, negative recipes (<code>doNot</code>), and a 2-phase client verifier that every AI can prove in its own workspace.
             </p>
 
-            <!-- Guiding Axiom Box -->
-            <div class="max-w-3xl mx-auto p-4 rounded-xl border border-brand-500/30 bg-slate-900/60 text-slate-300 font-mono text-sm text-left glow-border">
-                <span class="text-brand-500 font-bold">⚡ Guiding Axiom:</span>
-                <p class="mt-1 text-slate-300 italic">
-                    "Synapse should not attempt to be 'known' by AI models through retraining cycles. Synapse is built so that AI models can discover, understand, and immediately execute it as a tool at runtime."
-                </p>
+            <!-- 1-Line Terminal Install -->
+            <div class="max-w-2xl mx-auto pt-2">
+                <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 shadow-inner">
+                    <span class="text-slate-500 select-none">$</span>
+                    <code class="text-emerald-400 px-2 flex-1 text-left">curl -fsSL https://synapsemesh.dev/install.sh | bash</code>
+                    <button onclick="navigator.clipboard.writeText('curl -fsSL https://synapsemesh.dev/install.sh | bash'); this.innerText='✓ Copied';" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition">Copy</button>
+                </div>
             </div>
         </section>
 
         <!-- Stats Counter Section -->
         <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-verified-count" class="text-3xl font-bold text-brand-500 font-mono">60</div>
-                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Verified Solutions</div>
+                <div id="stat-verified-count" class="text-3xl font-bold text-brand-500 font-mono">70</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Verified Bundles</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-pass-rate" class="text-3xl font-bold text-emerald-400 font-mono">94%</div>
-                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Verified Record Ratio</div>
+                <div id="stat-pass-rate" class="text-3xl font-bold text-emerald-400 font-mono">95%</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Verification Ratio</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
                 <div class="text-3xl font-bold text-cyan-400 font-mono">0 PII</div>
                 <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">GDPR & EU AI Act</div>
             </div>
             <div class="p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div class="text-3xl font-bold text-indigo-400 font-mono">&lt; 15ms</div>
-                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">MCP Tool Latency</div>
+                <div class="text-3xl font-bold text-indigo-400 font-mono">&lt; 800</div>
+                <div class="text-xs text-slate-400 uppercase mt-1 tracking-wider">Tokens per MCP Call</div>
             </div>
         </section>
 
-        <!-- Live Sandbox Verification Showcase -->
+        <!-- The 4-Stage Verification Guarantee -->
         <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
                 <div>
                     <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <span>🧪 Live Verification Trace (Showcase)</span>
+                        <span>🛡️ The 4-Stage Verification Contract</span>
                     </h2>
-                    <p class="text-slate-400 text-xs font-mono mt-0.5">How Synapse-Mesh verifies solutions inside isolated, hermetic sandboxes</p>
+                    <p class="text-slate-400 text-xs font-mono mt-0.5">Every bundle must satisfy all 4 stages in isolated sandbox before earning VERIFIED status</p>
                 </div>
                 <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">
-                    STATUS: VERIFIED (Exit Code 0)
+                    4-STAGE VERIFIED
                 </span>
             </div>
 
-            <div class="space-y-3 font-mono text-xs">
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
-                    <span class="text-rose-400 font-bold">1. PROBLEM:</span>
-                    <span class="text-slate-300">ValidationError: 'regex' has been removed, use 'pattern' instead (Pydantic V2 / Python 3.13)</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+                    <div class="text-rose-400 font-bold flex items-center space-x-1.5">
+                        <span>1. Pre-Fail Validation</span>
+                    </div>
+                    <p class="text-slate-400">Reproduction script executes unpatched ➔ Must fail with non-zero exit code and match exact error signature regex.</p>
                 </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
-                    <span class="text-amber-400 font-bold">2. REPRO CHECK:</span>
-                    <span class="text-slate-300">Isolated Sandbox executed repro script ➔ Exit Code 1 (Target bug successfully reproduced)</span>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+                    <div class="text-cyan-400 font-bold flex items-center space-x-1.5">
+                        <span>2. Unified Diff Application</span>
+                    </div>
+                    <p class="text-slate-400">Clean, AST-compliant unified git diff applied to isolated workspace with pinned versions.</p>
                 </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
-                    <span class="text-cyan-400 font-bold">3. PATCH APPLIED:</span>
-                    <span class="text-slate-300">Unified AST Diff applied <code>regex=... ➔ pattern=...</code></span>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+                    <div class="text-emerald-400 font-bold flex items-center space-x-1.5">
+                        <span>3. Post-Pass Execution</span>
+                    </div>
+                    <p class="text-slate-400">Hermetic automated test suite executes on patched workspace ➔ Must exit with code 0 in native compiler/engine.</p>
                 </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
-                    <span class="text-emerald-400 font-bold">4. TEST SUITE:</span>
-                    <span class="text-slate-300">1/1 automated assertions passed in 38ms ➔ Exit Code 0 (Sandbox Cleanly Destroyed)</span>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+                    <div class="text-amber-400 font-bold flex items-center space-x-1.5">
+                        <span>4. Mutation Sanity (doNot)</span>
+                    </div>
+                    <p class="text-slate-400">All known web-fehlfixes and hallucinated partial fixes are executed ➔ Must be rejected 100%.</p>
                 </div>
-                <div class="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-start space-x-3">
-                    <span class="text-indigo-400 font-bold">5. ZERO-PII CHECK:</span>
-                    <span class="text-slate-300">Sanitizer passed: 0 Auth Tokens, 0 IP Addresses, 0 Local User Paths persisted</span>
-                </div>
-            </div>
-            <div class="text-right">
-                <a href="/verification" class="text-xs font-mono text-brand-500 hover:underline">Read Complete Verification Architecture Specification →</a>
             </div>
         </section>
 
@@ -203,22 +195,22 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
-                        <span>🔍 Live Solution Explorer</span>
+                        <span>🔍 Verified Bundle Registry</span>
                     </h2>
-                    <p class="text-slate-400 text-sm">Interactive probe for humans & developers. AI agents query via MCP <code>find_solution</code>.</p>
+                    <p class="text-slate-400 text-sm">Query live via CLI <code>synapse search</code> or MCP <code>find_solution</code>.</p>
                 </div>
                 <!-- Category Filter Pills -->
                 <div class="flex flex-wrap items-center gap-2 text-xs font-mono">
-                    <button onclick="filterRuntime('all')" id="tab-all" class="px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition">All (<span id="count-all">60</span>)</button>
-                    <button onclick="filterRuntime('python')" id="tab-python" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Python (<span id="count-python">41</span>)</button>
-                    <button onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Node.js (<span id="count-nodejs">16</span>)</button>
+                    <button onclick="filterRuntime('all')" id="tab-all" class="px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition">All (<span id="count-all">70</span>)</button>
+                    <button onclick="filterRuntime('python')" id="tab-python" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Python (<span id="count-python">45</span>)</button>
+                    <button onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Node.js (<span id="count-nodejs">22</span>)</button>
                     <button onclick="filterRuntime('docker')" id="tab-docker" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Docker (<span id="count-docker">3</span>)</button>
                 </div>
             </div>
 
             <!-- Search Input -->
             <div class="relative">
-                <input type="text" id="searchInput" placeholder="Type to filter error signatures (e.g. 'orm_mode', 'cookies()', 'ref', 'datetime.utcnow')..." 
+                <input type="text" id="searchInput" placeholder="Search error signatures (e.g. 'model_validator', 'runes', 'lifespan', 'import attributes')..." 
                        class="w-full px-5 py-4 pl-12 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 font-mono text-sm shadow-inner transition">
                 <svg class="w-5 h-5 text-slate-500 absolute left-4 top-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -227,13 +219,13 @@
 
             <!-- Search Results Container (Compact List) -->
             <div id="resultsContainer" class="space-y-4">
-                <div class="text-center py-8 text-slate-500 font-mono text-sm">Loading verified recipes...</div>
+                <div class="text-center py-8 text-slate-500 font-mono text-sm">Loading verified compatibility bundles...</div>
             </div>
 
             <!-- Show All / Pagination Toggle -->
             <div id="paginationContainer" class="text-center pt-2">
                 <button onclick="toggleShowAll()" id="showAllBtn" class="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-brand-500 font-mono text-xs font-semibold transition">
-                    View All Verified Solutions (60) ↓
+                    View All Verified Bundles (70) ↓
                 </button>
             </div>
         </section>
@@ -242,10 +234,10 @@
         <section id="connect" class="p-8 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-6">
             <div class="space-y-2">
                 <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
-                    <span>🔌 1-Click MCP Integration (Spec 2026-07-28)</span>
+                    <span>🔌 MCP Spec 2026-07-28 & A2A Integration</span>
                 </h2>
                 <p class="text-slate-400 text-sm">
-                    Connect Synapse-Mesh directly via the canonical URL <code class="text-brand-500">https://mcp.synapsemesh.dev</code> to **Claude Desktop**, **Cursor**, **ChatGPT Actions**, or **Antigravity**.
+                    Connect Synapse-Mesh directly to **Claude Desktop**, **Cursor**, **ChatGPT Codex**, **Grok**, or **Antigravity**.
                 </p>
             </div>
 
@@ -253,7 +245,7 @@
                 <pre class="terminal-code p-5 rounded-xl border border-slate-800 text-emerald-400 font-mono text-xs overflow-x-auto"><code>{
   "mcpServers": {
     "synapse-mesh": {
-      "url": "https://mcp.synapsemesh.dev"
+      "url": "https://mcp.synapsemesh.dev/mcp"
     }
   }
 }</code></pre>
@@ -267,19 +259,19 @@
 
     <!-- Footer with Impressum & Datenschutz -->
     <footer class="border-t border-slate-800/80 bg-slate-950/80 py-8 text-center text-xs text-slate-500 font-mono space-y-3">
-        <div>SYNAPSE-MESH &copy; 2026 &bull; Platform v0.1.0-beta &bull; MCP Protocol 2026-07-28</div>
+        <div>SYNAPSE-MESH &copy; 2026 &bull; Open Verified Compatibility Layer &bull; MIT License</div>
         <div class="space-x-4">
             <a href="/impressum" class="text-slate-400 hover:text-brand-500 transition underline">Imprint (§ 5 DDG)</a>
             <span>•</span>
             <a href="/datenschutz" class="text-slate-400 hover:text-brand-500 transition underline">Privacy Policy (GDPR)</a>
             <span>•</span>
-            <a href="/verification" class="text-slate-400 hover:text-brand-500 transition underline">Verification Pipeline</a>
+            <a href="/verification" class="text-slate-400 hover:text-brand-500 transition underline">4-Stage Verification</a>
             <span>•</span>
             <a href="https://docs.synapsemesh.dev" class="text-slate-400 hover:text-brand-500 transition">OpenAPI Spec</a>
             <span>•</span>
-            <a href="/.well-known/mcp.json" class="text-slate-400 hover:text-brand-500 transition">MCP Manifest</a>
+            <a href="/.well-known/agent-card.json" class="text-slate-400 hover:text-brand-500 transition">A2A Agent Card</a>
             <span>•</span>
-            <a href="/sitemap.xml" class="text-slate-400 hover:text-brand-500 transition">XML Sitemap</a>
+            <a href="/.well-known/mcp.json" class="text-slate-400 hover:text-brand-500 transition">MCP Manifest</a>
         </div>
     </footer>
 
@@ -294,14 +286,14 @@
             try {
                 const res = await fetch('/api/v1/recipes/stats');
                 const data = await res.json();
-                document.getElementById('stat-verified-count').innerText = data.verifiedRecipes || '60';
-                const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 94;
+                document.getElementById('stat-verified-count').innerText = data.verifiedRecipes || '70';
+                const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 95;
                 document.getElementById('stat-pass-rate').innerText = passRate + '%';
                 
                 if (data.runtimes) {
-                    document.getElementById('count-all').innerText = data.verifiedRecipes || '60';
-                    document.getElementById('count-python').innerText = data.runtimes.python || '41';
-                    document.getElementById('count-nodejs').innerText = data.runtimes.nodejs || '16';
+                    document.getElementById('count-all').innerText = data.verifiedRecipes || '70';
+                    document.getElementById('count-python').innerText = data.runtimes.python || '45';
+                    document.getElementById('count-nodejs').innerText = data.runtimes.nodejs || '22';
                     document.getElementById('count-docker').innerText = data.runtimes.docker || '3';
                 }
             } catch(e) {
@@ -316,7 +308,7 @@
                 allRecipes = data.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED');
                 renderRecipes();
             } catch (err) {
-                document.getElementById('resultsContainer').innerHTML = `<div class="p-4 text-rose-400 font-mono text-xs">Error loading recipes: ${err.message}</div>`;
+                document.getElementById('resultsContainer').innerHTML = `<div class="p-4 text-rose-400 font-mono text-xs">Error loading bundles: ${err.message}</div>`;
             }
         }
 
@@ -336,7 +328,7 @@
         function toggleShowAll() {
             showAll = !showAll;
             const btn = document.getElementById('showAllBtn');
-            btn.innerText = showAll ? 'Show Fewer Solutions ↑' : `View All Verified Solutions (${allRecipes.length}) ↓`;
+            btn.innerText = showAll ? 'Show Fewer Bundles ↑' : `View All Verified Bundles (${allRecipes.length}) ↓`;
             renderRecipes();
         }
 
@@ -361,7 +353,7 @@
             const displayed = (showAll || query) ? filtered : filtered.slice(0, INITIAL_LIMIT);
 
             if (displayed.length === 0) {
-                container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No verified recipes matching your criteria.</div>`;
+                container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No verified bundles matching your criteria.</div>`;
                 document.getElementById('paginationContainer').style.display = 'none';
                 return;
             }
@@ -376,7 +368,7 @@
                             <a href="/recipes/${r.id}" class="font-mono text-sm font-semibold text-brand-500 hover:underline">${r.id}</a>
                         </div>
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
-                            ✓ VERIFIED_SANDBOX (Exit Code ${r.evidence.sandboxExitCode})
+                            ✓ 4-STAGE VERIFIED (Exit ${r.evidence.sandboxExitCode})
                         </span>
                     </div>
                     <div class="text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40">
@@ -388,8 +380,9 @@
                     ${r.solution.codeDiff ? `
                         <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.solution.codeDiff)}</code></pre>
                     ` : ''}
-                    <div class="text-right">
-                        <a href="/recipes/${r.id}" class="text-xs font-mono text-slate-400 hover:text-brand-500 transition">Detail View & Sandbox Logs →</a>
+                    <div class="flex items-center justify-between pt-1">
+                        <code class="text-xs font-mono text-slate-500">synapse reverify ${r.id}</code>
+                        <a href="/recipes/${r.id}" class="text-xs font-mono text-slate-400 hover:text-brand-500 transition">Detail View & Evidence →</a>
                     </div>
                 </div>
             `).join('');
@@ -410,7 +403,7 @@
             const config = JSON.stringify({
                 "mcpServers": {
                     "synapse-mesh": {
-                        "url": "https://mcp.synapsemesh.dev"
+                        "url": "https://mcp.synapsemesh.dev/mcp"
                     }
                 }
             }, null, 2);

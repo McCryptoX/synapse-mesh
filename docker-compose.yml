@@ -9,6 +9,7 @@ services:
       - ./data:/app/data
       - ./app:/app/app:ro
       - ./scripts:/app/scripts:ro
+      - ./synapse_cli:/app/synapse_cli:ro
       - ./benchmark:/app/benchmark:ro
       - ./tests:/app/tests:ro
     environment:
