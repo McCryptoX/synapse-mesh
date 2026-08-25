@@ -76,7 +76,7 @@ Implementiert in `benchmark/agent_orchestrator.py`:
 ## 4. Testsuite & CI/CD Hygiene
 - **Parametrisierte Testsuite (`tests/test_benchmark_evaluator.py`):** 30 eigenständige Test-Items via `@pytest.mark.parametrize`.
 - **Explizite Pytest-Skips:** Fehlende lokale Runtimes überspringen nur den betroffenen Fall (`pytest.skip(...)`) statt stiller Erfolgsmeldungen.
-- **VPS Container Ergebnis:** **36 passed in 12.05s (einschließlich echtem 4-Stufen-Workspace-Patching in synapse_reverify, Rejection-Tests und MCP server/discover) (einschließlich synapse CLI doctor test, MCP server/discover, A2A agent-card.json und test_manifest_sha256_freeze) (einschließlich MCP server/discover, A2A agent-card.json und test_manifest_sha256_freeze)** (100% grün).
+- **VPS Container Ergebnis:** **39 passed in 11.86s (einschließlich echtem 4-Stufen-Workspace-Patching, Mutant-Rejections, hard Signature-Gate und 3 Golden Bundles) (einschließlich echtem 4-Stufen-Workspace-Patching in synapse_reverify, Rejection-Tests und MCP server/discover) (einschließlich synapse CLI doctor test, MCP server/discover, A2A agent-card.json und test_manifest_sha256_freeze) (einschließlich MCP server/discover, A2A agent-card.json und test_manifest_sha256_freeze)** (100% grün).
 
 ---
 
