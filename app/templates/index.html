@@ -455,7 +455,11 @@ input:tool-submit-active, button:tool-submit-active {
         </div>
     </footer>
 
-            <!-- JavaScript for Live Search, Tabs & Stats -->
+    <script id="synapse-initial-data" type="application/json">
+{{ initial_data_json | default('[]') | safe }}
+    </script>
+
+    <!-- JavaScript for Live Search, Tabs & Stats -->
     <script>
         // Baseline Golden Compatibility Bundles embedded for 0-latency and zero initial network requests
         const EMBEDDED_GOLDEN_BUNDLES = [
@@ -509,10 +513,21 @@ input:tool-submit-active, button:tool-submit-active {
             }
         ];
 
-        let allItems = [...EMBEDDED_GOLDEN_BUNDLES];
+        let allItems = [];
+        try {
+            const rawInitial = document.getElementById('synapse-initial-data');
+            if (rawInitial && rawInitial.textContent.trim()) {
+                allItems = JSON.parse(rawInitial.textContent);
+            }
+        } catch(e) {}
+
+        if (!Array.isArray(allItems) || allItems.length === 0) {
+            allItems = [...EMBEDDED_GOLDEN_BUNDLES];
+        }
+
         let activeRuntime = 'all';
         let showAll = false;
-        let isDataFetched = false;
+        let isDataFetched = allItems.length > 14;
         let isFetching = false;
         const INITIAL_LIMIT = 6;
 
@@ -870,18 +885,7 @@ input:tool-submit-active, button:tool-submit-active {
             }
         ];
 
-        // Zero-Latency On-Demand Loading for 100/100 PageSpeed (No Critical Path Chaining)
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(() => ensureDataLoaded(), { timeout: 3500 });
-        } else {
-            setTimeout(() => ensureDataLoaded(), 2000);
-        }
-
-        ['pointerdown', 'keydown', 'touchstart', 'focusin'].forEach(evt => {
-            window.addEventListener(evt, () => {
-                ensureDataLoaded();
-            }, { once: true, passive: true });
-        });
+        // No network requests on pageload; data is pre-hydrated from SSR.
     </script>
 </body>
 </html>
