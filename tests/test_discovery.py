@@ -56,3 +56,16 @@ async def test_well_known_agent_card_standard():
         data = res.json()
         assert data["agentName"] == "Synapse-Mesh-Exocortex"
         assert data["evidenceFirst"] is True
+
+@pytest.mark.asyncio
+async def test_llms_txt_standard():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/llms.txt")
+        assert res.status_code == 200
+        assert res.headers["content-type"].startswith("text/markdown")
+        assert "# Synapse-Mesh" in res.text
+        assert "Golden Compatibility Bundles" in res.text
+
+        res_full = await ac.get("/llms-full.txt")
+        assert res_full.status_code == 200
+        assert "# Synapse-Mesh" in res_full.text
