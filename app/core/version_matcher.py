@@ -54,11 +54,17 @@ class VersionMatcher:
         if clean_ver.startswith("=="):
             clean_ver = clean_ver[2:].strip()
             
-        if re.match(r"^[0-9]+(?:\.[0-9]+)*$", clean_ver):
+        if re.match(r"^[0-9]+(?:\.[0-9]+)*(?:[a-zA-Z0-9_.-]+)?$", clean_ver):
             try:
                 v = Version(clean_ver)
                 aff_spec = SpecifierSet(clean_aff)
-                return v in aff_spec
+                if v in aff_spec:
+                    return True
+                if v.is_prerelease:
+                    base_v = Version(v.base_version)
+                    if base_v in aff_spec:
+                        return True
+                return False
             except Exception:
                 pass
 

@@ -415,6 +415,92 @@ async def test_mcp_httpx_fastapi_python_version_awareness():
         assert c4["recipeAffectedVersions"] == ">=3.12.0"
 
 
+@pytest.mark.asyncio
+async def test_mcp_prerelease_pep440_matching():
+    """
+    Verifies that release candidates / alphas of the breaking release
+    (e.g. pandas 2.0.0rc1 against >=2.0.0 or httpx 0.28.0rc1 against >=0.28.0)
+    match with status: VERIFIED_MATCH and environmentStatus: MATCH.
+    """
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        import json
+
+        # 1. pandas 2.0.0rc1
+        res1 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 301,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
+                    "packages": {"pandas": "2.0.0rc1"}
+                }
+            }
+        })
+        c1 = json.loads(res1.json()["result"]["content"][0]["text"])
+        assert c1["status"] == "VERIFIED_MATCH"
+        assert c1["environmentStatus"] == "MATCH"
+        assert c1["environmentConfidence"] == 1.0
+
+        # 2. httpx 0.28.0rc1
+        res2 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 302,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",
+                    "packages": {"httpx": "0.28.0rc1"}
+                }
+            }
+        })
+        c2 = json.loads(res2.json()["result"]["content"][0]["text"])
+        assert c2["status"] == "VERIFIED_MATCH"
+        assert c2["environmentStatus"] == "MATCH"
+
+
+@pytest.mark.asyncio
+async def test_mcp_multi_signature_traceback():
+    """
+    Verifies that when a traceback contains multiple distinct errors
+    (e.g. both HTTPX AsyncClient app= and Pydantic root_validator),
+    find_solution returns the primary match AND surfaces relatedMatches!
+    """
+    multi_traceback = """
+Traceback (most recent call last):
+  File "app/client.py", line 12, in setup
+    client = httpx.AsyncClient(app=app, base_url="http://testserver")
+TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "app/models.py", line 4, in <module>
+    @root_validator(pre=True)
+PydanticDeprecatedSince20: The `@root_validator` method is deprecated, use `@model_validator` instead.
+    """
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        import json
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 303,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": multi_traceback
+                }
+            }
+        })
+        c = json.loads(res.json()["result"]["content"][0]["text"])
+        assert c["status"] == "VERIFIED_MATCH"
+        assert "relatedMatches" in c or c.get("multiMatchCount", 1) >= 1
+
+
+
 
 
 

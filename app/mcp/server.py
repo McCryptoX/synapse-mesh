@@ -291,8 +291,22 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
 
             if scored_bundles:
                 scored_bundles.sort(key=lambda x: x[0], reverse=True)
-                # Return single canonical Top-1 Golden Standard
-                content_text = json.dumps(scored_bundles[0][1], indent=2)
+                top_match = scored_bundles[0][1]
+                
+                # Multi-Signature Traceback Detection: Surface distinct related matches if multiple errors matched
+                if len(scored_bundles) > 1:
+                    additional_matches = []
+                    seen_bundles = {top_match.get("recipeId")}
+                    for s_conf, b_payload in scored_bundles[1:]:
+                        bid = b_payload.get("recipeId")
+                        if bid not in seen_bundles and s_conf >= 0.70:
+                            seen_bundles.add(bid)
+                            additional_matches.append(b_payload)
+                    if additional_matches:
+                        top_match["relatedMatches"] = additional_matches
+                        top_match["multiMatchCount"] = len(additional_matches) + 1
+
+                content_text = json.dumps(top_match, indent=2)
             else:
                 # 2. High-Precision Search in Living Recipes Store
                 search_req = RecipeSearchRequest(
