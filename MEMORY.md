@@ -61,12 +61,12 @@ Implementiert in `benchmark/agent_orchestrator.py`:
 ## 4. Testsuite & CI/CD Hygiene
 - **Parametrisierte Testsuite (`tests/test_benchmark_evaluator.py`):** 30 eigenständige Test-Items via `@pytest.mark.parametrize`.
 - **Explizite Pytest-Skips:** Fehlende lokale Runtimes überspringen nur den betroffenen Fall (`pytest.skip(...)`) statt stiller Erfolgsmeldungen.
-- **VPS Container Ergebnis:** **30 passed in 11.55s** (100% grün).
+- **VPS Container Ergebnis:** **32 passed in 11.97s (einschließlich test_manifest_sha256_freeze und /install.sh)** (100% grün).
 
 ---
 
 ## 5. Live-Plattform & Infrastruktur (Stand: 25. August 2026)
-- **Live-Lösungen:** 64 Datensätze (60 `VERIFIED`, gerundete Pass-Ratio 93.75%) auf der SQLite WAL-Datenbank des VPS.
+- **Live-Lösungen:** 74 Datensätze (70 `VERIFIED`, 95% Verified-Ratio) auf der SQLite WAL-Datenbank des VPS.
 - **Frontend & UI:** Mission-Control Dashboard auf `https://synapsemesh.dev/` mit Top-5-Vorschau und Laufzeit-Filtern.
 - **Anti-Leakage (Go-Gate 10):** Rohtext-Suchabfragen wurden aus den öffentlichen Telemetrie-Endpunkten (`/api/v1/recipes/stats`) entfernt.
 - **Produktiv-Toolchain im Docker-Container:**
