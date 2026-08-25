@@ -223,9 +223,9 @@
             </div>
 
             <!-- Show All / Pagination Toggle -->
-            <div id="paginationContainer" class="text-center pt-2">
-                <button onclick="toggleShowAll()" id="showAllBtn" class="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-brand-500 font-mono text-xs font-semibold transition">
-                    View All Verified Bundles (70) ↓
+            <div id="paginationContainer" class="text-center pt-4">
+                <button id="showAllBtn" type="button" class="cursor-pointer px-6 py-3 rounded-xl border border-brand-600/50 bg-brand-950/40 hover:bg-brand-900/50 text-brand-400 font-mono text-sm font-semibold shadow-lg hover:border-brand-500 transition-all flex items-center space-x-2 mx-auto">
+                    <span id="showAllBtnText">View All Verified Bundles (74) ↓</span>
                 </button>
             </div>
         </section>
@@ -443,12 +443,23 @@
 
         function toggleShowAll() {
             showAll = !showAll;
-            const btn = document.getElementById('showAllBtn');
-            if (btn) {
-                btn.innerText = showAll ? 'Show Fewer Bundles ↑' : 'View All Verified Bundles (' + allItems.length + ') ↓';
+            const btnText = document.getElementById('showAllBtnText') || document.getElementById('showAllBtn');
+            if (btnText) {
+                btnText.innerText = showAll ? 'Show Fewer Bundles ↑' : ('View All Verified Bundles (' + allItems.length + ') ↓');
             }
             renderItems();
         }
+
+        // Attach event listener directly for bulletproof Safari mobile / desktop click handling
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('showAllBtn');
+            if (btn) {
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    toggleShowAll();
+                };
+            }
+        });
 
         function renderItems() {
             const container = document.getElementById('resultsContainer');
@@ -480,7 +491,13 @@
             }
 
             const pag = document.getElementById('paginationContainer');
-            if (pag) pag.style.display = query ? 'none' : 'block';
+            if (pag) {
+                pag.style.display = (query || totalFiltered <= INITIAL_LIMIT) ? 'none' : 'block';
+                const btnText = document.getElementById('showAllBtnText') || document.getElementById('showAllBtn');
+                if (btnText && !query) {
+                    btnText.innerText = showAll ? 'Show Fewer Bundles ↑' : ('View All Verified Bundles (' + totalFiltered + ') ↓');
+                }
+            }
 
             container.innerHTML = displayed.map(r => `
                 <div class="p-5 rounded-xl border ${r.isGolden ? 'border-brand-500/40 bg-slate-900/70 shadow-lg' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 transition space-y-3">
