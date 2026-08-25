@@ -46,7 +46,6 @@ synapsemesh.dev, www.synapsemesh.dev, api.synapsemesh.dev, status.synapsemesh.de
         header_up Host {host}
         header_up X-Real-IP "127.0.0.1"
         header_up X-Forwarded-For "127.0.0.1"
-        header_up X-Forwarded-Proto {scheme}
     }
 }
 
@@ -61,7 +60,6 @@ mcp.synapsemesh.dev {
         header_up Host {host}
         header_up X-Real-IP "127.0.0.1"
         header_up X-Forwarded-For "127.0.0.1"
-        header_up X-Forwarded-Proto {scheme}
     }
 }
 
@@ -76,6 +74,5 @@ docs.synapsemesh.dev {
         header_up Host {host}
         header_up X-Real-IP "127.0.0.1"
         header_up X-Forwarded-For "127.0.0.1"
-        header_up X-Forwarded-Proto {scheme}
     }
 }
