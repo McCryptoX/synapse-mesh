@@ -6,6 +6,7 @@ class BundleScope(BaseModel):
     package: str
     fromVersion: Optional[str] = None
     toVersion: Optional[str] = None
+    affectedVersionRange: Optional[str] = None
     runtime: str = "python"
     runtimeVersion: Optional[str] = None
     platform: str = "all"

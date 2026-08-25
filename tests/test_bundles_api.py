@@ -68,7 +68,7 @@ async def test_verify_endpoint_authenticated_flow(monkeypatch):
         "bundleId": "test_auth_bundle",
         "status": "VERIFIED",
         "description": "Test Auth Bundle",
-        "scope": {"package": "test", "runtime": "python"},
+        "scope": {"package": "test", "runtime": "python", "affectedVersionRange": ">=1.0.0"},
         "fingerprint": {"errorSignature": "ZeroDivisionError"},
         "patch": {
             "targetFile": "calc.py",

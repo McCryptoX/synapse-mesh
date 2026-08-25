@@ -281,7 +281,36 @@ def verify_golden_bundle(bundle: dict) -> bool:
                         return False
             print(f"[✓] Stage 5 (Variants): All {len(variants)} family claim variants independently proven on real runtime.")
 
-        print(f"\n[★] GOLDEN BUNDLE 100% PROVEN: Pre:{res_pre.returncode} -> Diff Applied -> Post:0 -> Mutants: {mutants_killed}/{len(mutations)} Killed -> Variants: {len(variants)} Verified.")
+        # -------------------------------------------------------------
+        # Stage 6: Evidence Metadata Integrity Compiler Pass
+        # -------------------------------------------------------------
+        from app.core.version_matcher import VersionMatcher
+        aff_range = scope.get("affectedVersionRange")
+        if not aff_range:
+            print(f"[✗] STAGE 6 METADATA INTEGRITY FAILED: 'scope.affectedVersionRange' must be explicitly declared for {bundle_id}.", file=sys.stderr)
+            return False
+            
+        pkg_name = scope.get("package", "").lower()
+        if pkg_name in pinned_deps:
+            pinned_ver_str = pinned_deps[pkg_name]
+            if not VersionMatcher.check_version_compatibility(pinned_ver_str, aff_range):
+                print(f"[✗] STAGE 6 METADATA INTEGRITY FAILED: Pinned dependency '{pkg_name}=={pinned_ver_str}' violates affectedVersionRange '{aff_range}'.", file=sys.stderr)
+                return False
+                
+        to_ver = scope.get("toVersion")
+        if to_ver and not VersionMatcher.check_version_compatibility(to_ver, aff_range):
+            print(f"[✗] STAGE 6 METADATA INTEGRITY FAILED: Scope toVersion '{to_ver}' violates affectedVersionRange '{aff_range}'.", file=sys.stderr)
+            return False
+
+        if pkg_name == "python" and scope.get("runtimeVersion"):
+            rt_ver = scope.get("runtimeVersion")
+            if not VersionMatcher.check_version_compatibility(rt_ver, aff_range):
+                print(f"[✗] STAGE 6 METADATA INTEGRITY FAILED: Scope runtimeVersion '{rt_ver}' violates affectedVersionRange '{aff_range}'.", file=sys.stderr)
+                return False
+
+        print(f"[✓] Stage 6 (Metadata Integrity): Pinned dependencies ({pinned_deps.get(pkg_name, 'N/A')}) & scope strictly satisfy affectedVersionRange ('{aff_range}').")
+
+        print(f"\n[★] GOLDEN BUNDLE 100% PROVEN: Pre:{res_pre.returncode} -> Diff Applied -> Post:0 -> Mutants: {mutants_killed}/{len(mutations)} Killed -> Variants: {len(variants)} Verified -> Metadata: 100% Consistent.")
         return True
 
 

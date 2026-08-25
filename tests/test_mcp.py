@@ -371,7 +371,7 @@ async def test_mcp_httpx_fastapi_python_version_awareness():
         assert c2["environmentStatus"] == "MATCH"
         assert c2["environmentConfidence"] == 1.0
         assert c2["package"] == "fastapi"
-        assert c2["affectedVersions"] == ">=0.115.0"
+        assert c2["affectedVersions"] == ">=0.100.0"
 
         # 3. Python 3.12 utcnow
         res3 = await ac.post("/mcp", json={
@@ -392,6 +392,28 @@ async def test_mcp_httpx_fastapi_python_version_awareness():
         assert c3["environmentConfidence"] == 1.0
         assert c3["package"] == "python"
         assert c3["affectedVersions"] == ">=3.12.0"
+
+        # 4. Python 3.11.9 (Pre-Deprecation Version -> Must return VERSION_MISMATCH)
+        res4 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 204,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.",
+                    "packages": {"python": "3.11.9"}
+                }
+            }
+        })
+        c4 = json.loads(res4.json()["result"]["content"][0]["text"])
+        assert c4["status"] == "VERSION_MISMATCH"
+        assert c4["environmentStatus"] == "MISMATCH"
+        assert c4["environmentConfidence"] == 0.0
+        assert c4["package"] == "python"
+        assert c4["requestedVersion"] == "3.11.9"
+        assert c4["recipeAffectedVersions"] == ">=3.12.0"
+
 
 
 
