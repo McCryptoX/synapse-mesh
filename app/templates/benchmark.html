@@ -16,7 +16,7 @@
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
     <!-- Header / Nav -->
     <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <a href="/" class="flex items-center space-x-2.5 group" aria-label="Synapse-Mesh Homepage">
                 <div class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></div>
                 <span class="font-bold text-base sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
@@ -37,25 +37,26 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-12">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 flex-1 w-full space-y-16">
+        
         <!-- Hero Header -->
-        <section class="text-center space-y-4 max-w-4xl mx-auto">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
+        <section class="text-center space-y-5 max-w-4xl mx-auto pt-2">
+            <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
                 <span class="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
                 <span>CONTROLLED METHODOLOGICAL EVALUATION</span>
             </div>
-            <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
                 Execution-Verified Contracts vs.<br>
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Ungrounded Code Generation</span>
             </h1>
-            <p class="text-slate-300 text-base max-w-3xl mx-auto leading-relaxed">
+            <p class="text-slate-300 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
                 Evaluating automated code repair strategies against strict, hermetic 4-stage verification contracts across 12 modern breaking changes in Python, Node.js, and SQL environments.
             </p>
         </section>
 
         <!-- Methodological Transparency Disclaimer -->
-        <section class="rounded-xl border border-slate-800 bg-slate-900/60 p-5 text-sm text-slate-300 space-y-2 max-w-4xl mx-auto">
-            <div class="flex items-center space-x-2 text-white font-semibold">
+        <section class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:p-7 text-sm text-slate-300 space-y-3 max-w-5xl mx-auto">
+            <div class="flex items-center space-x-2.5 text-white font-semibold text-base">
                 <svg class="w-4 h-4 text-brand-400 shrink-0" width="16" height="16" style="width: 16px; height: 16px; min-width: 16px; max-width: 16px; display: inline-block; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="9"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -63,90 +64,96 @@
                 </svg>
                 <span>Methodological Transparency & Evaluation Scope</span>
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
                 This evaluation tests automated repair success under deterministic 4-stage contract criteria (pre-failure reproduction, clean diff application, post-patch test suite pass with exit 0, and mutation rejection). The comparison illustrates the structural difference between unverified statistical generation and execution-tested, contract-bound recipes. Individual model capabilities may vary with different prompting techniques, toolsets, and model updates.
             </p>
         </section>
 
         <!-- Metrics Comparison Cards -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 max-w-7xl mx-auto">
             <!-- Treatment A -->
-            <div class="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 flex flex-col justify-between space-y-4">
-                <div>
+            <div class="rounded-2xl bg-slate-900/60 border border-slate-800 p-7 sm:p-8 flex flex-col justify-between space-y-6">
+                <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">TREATMENT A</span>
-                        <span class="text-xs font-bold text-slate-400">UNGROUNDED GENERATION</span>
+                        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-slate-800 text-slate-300">TREATMENT A</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ungrounded</span>
                     </div>
-                    <h2 class="text-xl font-bold text-white mt-3">Statistical Generation</h2>
-                    <p class="text-slate-300 text-sm mt-1">Code synthesis relying solely on internal model weights without execution feedback or verified external specifications.</p>
+                    <h2 class="text-2xl font-bold text-white">Statistical Generation</h2>
+                    <p class="text-slate-300 text-sm leading-relaxed">Code synthesis relying solely on internal model weights without execution feedback or verified external specifications.</p>
                 </div>
-                <div class="space-y-2 pt-4 border-t border-slate-800">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-400">4-Stage Contract Pass:</span>
-                        <span class="font-bold text-slate-200">16.7% (2 / 12 cases)</span>
+                <div class="space-y-3 pt-4 border-t border-slate-800">
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-xs font-mono text-slate-400 uppercase">4-Stage Contract Pass:</span>
+                        <span class="text-2xl font-extrabold font-mono text-slate-200">16.7% <span class="text-xs text-slate-400 font-normal">(2 / 12)</span></span>
                     </div>
-                    <div class="w-full bg-slate-800 rounded-full h-2">
-                        <div class="bg-slate-500 h-2 rounded-full" style="width: 16.7%"></div>
+                    <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                        <div class="bg-slate-500 h-2.5 rounded-full" style="width: 16.7%"></div>
                     </div>
-                    <span class="text-xs text-slate-400 block pt-1">Common failure mode: Outputting pre-deprecation APIs present in historical training corpora.</span>
+                    <p class="text-xs text-slate-400 leading-relaxed pt-1">
+                        <strong class="text-slate-300">Primary failure mode:</strong> Outputs pre-deprecation APIs prevalent in historical training corpora.
+                    </p>
                 </div>
             </div>
 
             <!-- Treatment B -->
-            <div class="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 flex flex-col justify-between space-y-4">
-                <div>
+            <div class="rounded-2xl bg-slate-900/60 border border-slate-800 p-7 sm:p-8 flex flex-col justify-between space-y-6">
+                <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">TREATMENT B</span>
-                        <span class="text-xs font-bold text-slate-400">DOCUMENTATION SEARCH</span>
+                        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-slate-800 text-slate-300">TREATMENT B</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Unverified RAG</span>
                     </div>
-                    <h2 class="text-xl font-bold text-white mt-3">Unverified RAG / Web Search</h2>
-                    <p class="text-slate-300 text-sm mt-1">Code synthesis augmented with search results from public documentation and forums, without runtime test execution.</p>
+                    <h2 class="text-2xl font-bold text-white">Documentation Search</h2>
+                    <p class="text-slate-300 text-sm leading-relaxed">Code synthesis augmented with search results from public documentation and forums, without runtime test execution.</p>
                 </div>
-                <div class="space-y-2 pt-4 border-t border-slate-800">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-400">4-Stage Contract Pass:</span>
-                        <span class="font-bold text-slate-200">25.0% (3 / 12 cases)</span>
+                <div class="space-y-3 pt-4 border-t border-slate-800">
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-xs font-mono text-slate-400 uppercase">4-Stage Contract Pass:</span>
+                        <span class="text-2xl font-extrabold font-mono text-slate-200">25.0% <span class="text-xs text-slate-400 font-normal">(3 / 12)</span></span>
                     </div>
-                    <div class="w-full bg-slate-800 rounded-full h-2">
-                        <div class="bg-slate-400 h-2 rounded-full" style="width: 25%"></div>
+                    <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                        <div class="bg-slate-400 h-2.5 rounded-full" style="width: 25%"></div>
                     </div>
-                    <span class="text-xs text-slate-400 block pt-1">Common failure mode: Version mismatch and non-failing mutation bypasses (e.g. uninspected try/except).</span>
+                    <p class="text-xs text-slate-400 leading-relaxed pt-1">
+                        <strong class="text-slate-300">Primary failure mode:</strong> Version mismatches and non-failing mutation bypasses (e.g. uninspected try/except).
+                    </p>
                 </div>
             </div>
 
             <!-- Treatment C (Synapse MCP) -->
-            <div class="rounded-2xl bg-slate-900/90 border-2 border-brand-500/60 p-6 flex flex-col justify-between space-y-4 shadow-xl shadow-brand-500/10 relative overflow-hidden">
-                <div class="absolute -right-12 -top-12 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                <div>
+            <div class="rounded-2xl bg-slate-900/90 border-2 border-brand-500/60 p-7 sm:p-8 flex flex-col justify-between space-y-6 shadow-xl shadow-brand-500/10 relative overflow-hidden">
+                <div class="absolute -right-12 -top-12 w-36 h-36 bg-brand-500/15 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-brand-950 border border-brand-500/40 text-brand-300">TREATMENT C</span>
-                        <span class="text-xs font-bold text-brand-300">VERIFIED CONTRACTS</span>
+                        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded bg-brand-950 border border-brand-500/40 text-brand-300">TREATMENT C</span>
+                        <span class="text-xs font-bold text-brand-300 uppercase tracking-wider">Verified Layer</span>
                     </div>
-                    <h2 class="text-xl font-bold text-white mt-3">Synapse-Mesh Bundles</h2>
-                    <p class="text-slate-200 text-sm mt-1">Retrieval of exact compatibility bundles verified via 4-stage hermetic sandbox execution before serving.</p>
+                    <h2 class="text-2xl font-bold text-white">Synapse-Mesh Bundles</h2>
+                    <p class="text-slate-200 text-sm leading-relaxed">Retrieval of exact compatibility bundles verified via 4-stage hermetic sandbox execution before serving.</p>
                 </div>
-                <div class="space-y-2 pt-4 border-t border-brand-500/30">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-300">4-Stage Contract Pass:</span>
-                        <span class="font-bold text-brand-300">100.0% (12 / 12 cases)</span>
+                <div class="space-y-3 pt-4 border-t border-brand-500/30">
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-xs font-mono text-slate-300 uppercase">4-Stage Contract Pass:</span>
+                        <span class="text-2xl font-extrabold font-mono text-brand-300">100.0% <span class="text-xs text-brand-400 font-normal">(12 / 12)</span></span>
                     </div>
-                    <div class="w-full bg-slate-800 rounded-full h-2">
-                        <div class="bg-gradient-to-r from-brand-500 to-cyan-400 h-2 rounded-full" style="width: 100%"></div>
+                    <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                        <div class="bg-gradient-to-r from-brand-500 to-cyan-400 h-2.5 rounded-full" style="width: 100%"></div>
                     </div>
-                    <span class="text-xs text-brand-300 font-medium block pt-1">Deterministically satisfies pre-fail, patch, post-pass, and multi-mutant gates.</span>
+                    <p class="text-xs text-brand-300 font-medium leading-relaxed pt-1">
+                        <strong>Deterministic guarantee:</strong> Satisfies pre-fail, AST patch, post-pass (exit 0), and multi-mutant rejection gates.
+                    </p>
                 </div>
             </div>
         </section>
 
         <!-- Benchmark Matrix Table -->
-        <section class="space-y-6">
+        <section class="space-y-6 max-w-7xl mx-auto">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-white">The 10 Curated Golden Standards</h2>
-                    <p class="text-slate-300 text-sm">Each golden bundle encapsulates an exact version scope, reproducible pre-fail script, minimal unified diff, and mutation test suite.</p>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white">The 10 Curated Golden Standards</h2>
+                    <p class="text-slate-300 text-sm sm:text-base mt-1">Each golden bundle encapsulates an exact version scope, reproducible pre-fail script, minimal unified diff, and mutation test suite.</p>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono text-xs border border-slate-700">Protocol Spec 2026-07-28</span>
+                <div class="flex items-center space-x-2 shrink-0">
+                    <span class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-300 font-mono text-xs border border-slate-700">Protocol Spec 2026-07-28</span>
                 </div>
             </div>
 
@@ -154,105 +161,106 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs font-mono">
                         <thead>
-                            <tr class="border-b border-slate-800 bg-slate-950/80 text-slate-300">
-                                <th class="p-4 font-semibold">STANDARD / PACKAGE</th>
-                                <th class="p-4 font-semibold">TARGET RUNTIME</th>
-                                <th class="p-4 font-semibold">BREAKING ERROR SIGNATURE</th>
-                                <th class="p-4 font-semibold text-center">PRE-FAIL (1)</th>
-                                <th class="p-4 font-semibold text-center">UNIFIED DIFF</th>
-                                <th class="p-4 font-semibold text-center">POST-PASS (0)</th>
-                                <th class="p-4 font-semibold text-center">MUTANTS REJECTED</th>
+                            <tr class="border-b border-slate-800 bg-slate-950/90 text-slate-300">
+                                <th class="px-6 py-4 font-semibold uppercase tracking-wider">Standard / Package</th>
+                                <th class="px-6 py-4 font-semibold uppercase tracking-wider">Target Runtime</th>
+                                <th class="px-6 py-4 font-semibold uppercase tracking-wider">Breaking Error Signature</th>
+                                <th class="px-6 py-4 font-semibold text-center uppercase tracking-wider">Pre-Fail (1)</th>
+                                <th class="px-6 py-4 font-semibold text-center uppercase tracking-wider">Unified Diff</th>
+                                <th class="px-6 py-4 font-semibold text-center uppercase tracking-wider">Post-Pass (0)</th>
+                                <th class="px-6 py-4 font-semibold text-center uppercase tracking-wider">Mutants</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/60 text-slate-300">
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">HTTPX 0.28.1</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">TypeError: ASGITransport.__init__() got keyword 'app'</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">HTTPX 0.28.1</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="px-6 py-4 text-rose-300">TypeError: ASGITransport.__init__() got keyword 'app'</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">Next.js 15.5</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
-                                <td class="p-4 text-rose-300">Error: Route "/blog/[slug]" params should be awaited</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">Next.js 15.5</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
+                                <td class="px-6 py-4 text-rose-300">Error: Route "/blog/[slug]" params should be awaited</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">Pydantic 2.10</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">PydanticUserError: root_validator is deprecated</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">Pydantic 2.10</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="px-6 py-4 text-rose-300">PydanticUserError: root_validator is deprecated</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">FastAPI 0.115</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">DeprecationWarning: on_event("startup") is deprecated</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">FastAPI 0.115</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="px-6 py-4 text-rose-300">DeprecationWarning: on_event("startup") is deprecated</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">SQLAlchemy 2.0</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">ArgumentError: Textual SQL expression must be declared text()</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">SQLAlchemy 2.0</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="px-6 py-4 text-rose-300">ArgumentError: Textual SQL expression must be declared text()</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">NumPy 2.0</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">AttributeError: `np.NAN` was removed in NumPy 2.0</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">NumPy 2.0</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="px-6 py-4 text-rose-300">AttributeError: `np.NAN` was removed in NumPy 2.0</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">Express 5.0</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
-                                <td class="p-4 text-rose-300">TypeError: Missing parameter name at 1: /*</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">Express 5.0</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
+                                <td class="px-6 py-4 text-rose-300">TypeError: Missing parameter name at 1: /*</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">TypeScript 5.6</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
-                                <td class="p-4 text-rose-300">TS2532: Object is possibly 'undefined' on Map.get()</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">TypeScript 5.6</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
+                                <td class="px-6 py-4 text-rose-300">TS2532: Object is possibly 'undefined' on Map.get()</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">DuckDB 0.10</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">duckdb.BinderException: No function matches SUBSTRING(...)</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">DuckDB 0.10</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="px-6 py-4 text-rose-300">duckdb.BinderException: No function matches SUBSTRING(...)</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                             <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white">Python 3.12 UTC</td>
-                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">DeprecationWarning: datetime.utcnow() is deprecated</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
-                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
-                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                                <td class="px-6 py-4 font-bold text-white whitespace-nowrap">Python 3.12 UTC</td>
+                                <td class="px-6 py-4 whitespace-nowrap"><span class="px-2.5 py-1 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="px-6 py-4 text-rose-300">DeprecationWarning: datetime.utcnow() is deprecated</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
+                                <td class="px-6 py-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
                             </tr>
                         </tbody>
                     </table>
@@ -261,20 +269,22 @@
         </section>
 
         <!-- Interactive CLI Verification Snippet -->
-        <section class="rounded-2xl bg-gradient-to-r from-brand-950/60 via-slate-900 to-slate-900 border border-brand-500/30 p-8 text-center space-y-6">
+        <section class="rounded-2xl bg-gradient-to-r from-brand-950/40 via-slate-900 to-slate-900 border border-brand-500/30 p-8 sm:p-10 text-center space-y-6 max-w-4xl mx-auto">
             <div class="max-w-2xl mx-auto space-y-3">
-                <h3 class="text-2xl font-bold text-white">Re-verify Locally with 0 External Trust</h3>
-                <p class="text-slate-300 text-sm">
+                <h3 class="text-2xl sm:text-3xl font-bold text-white">Re-verify Locally with 0 External Trust</h3>
+                <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
                     Execute the 4-stage verification engine directly in your own shell using either our Node.js or Python CLI tools:
                 </p>
             </div>
 
-            <div class="max-w-xl mx-auto space-y-3 font-mono text-xs text-left">
-                <div class="rounded-lg bg-slate-950 p-4 border border-slate-800 flex items-center justify-between">
-                    <span class="text-brand-300">npx @synapse-mesh/verify bundles/golden/bundle_nextjs_15_async_params.json</span>
+            <div class="max-w-2xl mx-auto space-y-3 font-mono text-xs text-left">
+                <div class="rounded-xl bg-slate-950 p-4 border border-slate-800 flex items-center justify-between shadow-inner">
+                    <code class="text-emerald-400 truncate mr-3">npx @synapse-mesh/verify bundles/golden/bundle_nextjs_15_async_params.json</code>
+                    <button type="button" aria-label="Copy npx verify command" onclick="navigator.clipboard.writeText('npx @synapse-mesh/verify bundles/golden/bundle_nextjs_15_async_params.json'); this.textContent='✓ Copied';" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono text-xs cursor-pointer shrink-0">Copy</button>
                 </div>
-                <div class="rounded-lg bg-slate-950 p-4 border border-slate-800 flex items-center justify-between">
-                    <span class="text-brand-300">synapse reverify bundle_httpx_028_asgi_transport</span>
+                <div class="rounded-xl bg-slate-950 p-4 border border-slate-800 flex items-center justify-between shadow-inner">
+                    <code class="text-emerald-400 truncate mr-3">synapse reverify bundle_httpx_028_asgi_transport</code>
+                    <button type="button" aria-label="Copy synapse reverify command" onclick="navigator.clipboard.writeText('synapse reverify bundle_httpx_028_asgi_transport'); this.textContent='✓ Copied';" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono text-xs cursor-pointer shrink-0">Copy</button>
                 </div>
             </div>
         </section>
@@ -282,7 +292,7 @@
 
     <!-- Footer -->
     <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-xs text-slate-400 font-mono">
-        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-slate-400">
                 <span class="text-white font-semibold">SYNAPSE-MESH &copy; 2026</span>
                 <span>&bull;</span>
