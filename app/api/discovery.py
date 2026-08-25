@@ -5,13 +5,16 @@ router = APIRouter()
 
 
 @router.get("/.well-known/mcp.json", tags=["Discovery"], response_model=McpManifest)
+@router.head("/.well-known/mcp.json", tags=["Discovery"], include_in_schema=False)
 async def get_mcp_manifest():
     """Agent discovery manifest for automatic MCP client integration."""
     return McpManifest()
 
 
 @router.get("/.well-known/agent-card.json", tags=["Discovery"], response_model=AgentManifest)
+@router.head("/.well-known/agent-card.json", tags=["Discovery"], include_in_schema=False)
 @router.get("/.well-known/agent.json", tags=["Discovery"], response_model=AgentManifest)
+@router.head("/.well-known/agent.json", tags=["Discovery"], include_in_schema=False)
 async def get_agent_manifest():
     """A2A (Agent-to-Agent) discovery descriptor conforming to A2A standard."""
     return AgentManifest()
@@ -23,6 +26,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent.parent / "scripts"
 
 
 @router.get("/install.sh", tags=["Agent Tooling"], response_class=PlainTextResponse)
+@router.head("/install.sh", tags=["Agent Tooling"], include_in_schema=False)
 async def get_install_script():
     """One-command bash installer for Cursor, Claude Desktop, and Antigravity."""
     install_file = SCRIPTS_DIR / "install.sh"
@@ -199,13 +203,16 @@ synapse reverify bundle_httpx_028_asgi_transport_001
 
 
 @router.get("/llms.txt", tags=["Discovery"], response_class=PlainTextResponse)
+@router.head("/llms.txt", tags=["Discovery"], include_in_schema=False)
 @router.get("/.well-known/llms.txt", tags=["Discovery"], response_class=PlainTextResponse)
+@router.head("/.well-known/llms.txt", tags=["Discovery"], include_in_schema=False)
 async def get_llms_txt():
     """Conforms to llmstxt.org specification for LLM crawler discovery."""
     return PlainTextResponse(LLMS_TXT_CONTENT, media_type="text/markdown; charset=utf-8")
 
 
 @router.get("/llms-full.txt", tags=["Discovery"], response_class=PlainTextResponse)
+@router.head("/llms-full.txt", tags=["Discovery"], include_in_schema=False)
 async def get_llms_full_txt():
     """Full context file for LLMs conforming to llmstxt.org."""
     return PlainTextResponse(LLMS_FULL_TXT_CONTENT, media_type="text/markdown; charset=utf-8")
