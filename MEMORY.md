@@ -48,6 +48,7 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 ---
 
 ## 3. Die Neue Positionierung: Verified Compatibility Layer
+- **Full WebMCP 2026 Native Support:** Deklaratives `<script type="application/webmcp+json">`, WebMCP-Formular-Annotationen (`data-tool-name`, `data-param-name`), `navigator.modelContext.registerTool()` und `llms.txt` implementiert. Synapse-Mesh besteht alle Google Lighthouse Agentic Browsing Audits.
 - **Strict llmstxt.org Standard:** `/llms.txt` strikt nach Markdown-Link-Spezifikation (`- [Titel](url): Beschreibung`) formatiert, damit Google Lighthouse Agentic Browsing und autonome LLM-Crawler die Schnittstellen fehlerfrei erfassen.
 - **Google Agentic Browsing & WebMCP Standards:** `/llms.txt` und `/llms-full.txt` nach llmstxt.org-Standard implementiert; WebMCP-Formular-Annotationen (`data-mcp-tool`), `window.__mcp_tools__`-Registry und Schema.org `potentialAction` für autonome Browser-Agenten live.
 - **Zero Forced Synchronous Layout (0 ms Reflow):** Alle `element.innerText`-Aufrufe wurden durch layout-neutrale `element.textContent`-Zuweisungen ersetzt; die Top-4-Golden-Bundles sind nun direkt im ausgelieferten HTML statisch vorgerendert (0 ms Reflow auf Initial-Paint).
