@@ -13,6 +13,7 @@
     "package": "sqlalchemy",
     "fromVersion": "1.4.0",
     "toVersion": "2.0.0",
+    "affectedVersionRange": ">=2.0.0",
     "runtime": "python",
     "runtimeVersion": "3.12.0",
     "platform": "all"
@@ -20,7 +21,13 @@
   "fingerprint": {
     "errorSignature": "LegacyAPIWarning: The Query.get() method is considered legacy in 2.0. Use Session.get() instead.",
     "regex": "(LegacyAPIWarning|RemovedIn20Warning|AttributeError).*Query\\.get",
-    "matchStream": "stderr"
+    "matchStream": "stderr",
+    "variants": [
+      {
+        "errorSignature": "LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get()",
+        "regex": "(LegacyAPIWarning|RemovedIn20Warning|AttributeError).*Query\\.get"
+      }
+    ]
   },
   "patch": {
     "targetFile": "dao.py",

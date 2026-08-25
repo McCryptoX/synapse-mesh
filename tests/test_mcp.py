@@ -168,4 +168,66 @@ async def test_mcp_structural_attribute_discriminator():
         assert c3["recipeId"] == "bundle_pandas_20_dataframe_append_001"
 
 
+@pytest.mark.asyncio
+async def test_mcp_variant_recall_and_version_mismatch():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        import json
+
+        # 1. Variant Recall: Series.append
+        res1 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 10,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "AttributeError: 'Series' object has no attribute 'append'",
+                    "packages": {"pandas": ">=2.0.0"}
+                }
+            }
+        })
+        c1 = json.loads(res1.json()["result"]["content"][0]["text"])
+        assert c1["status"] == "VERIFIED_MATCH"
+        assert c1["recipeId"] == "bundle_pandas_20_dataframe_append_001"
+        assert c1["signatureConfidence"] >= 0.98
+        assert c1["environmentConfidence"] == 1.0
+
+        # 2. Variant Recall: np.Inf
+        res2 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 11,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "AttributeError: `np.Inf` was removed in the NumPy 2.0 release. Use `np.inf` instead."
+                }
+            }
+        })
+        c2 = json.loads(res2.json()["result"]["content"][0]["text"])
+        assert c2["status"] == "VERIFIED_MATCH"
+        assert c2["recipeId"] == "bundle_numpy_20_nan_alias_removal_001"
+
+        # 3. Version Mismatch: pandas 1.5.3 on DataFrame.append removal
+        res3 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
+                    "packages": {"pandas": "1.5.3"}
+                }
+            }
+        })
+        c3 = json.loads(res3.json()["result"]["content"][0]["text"])
+        assert c3["status"] == "VERSION_MISMATCH"
+        assert c3["signatureConfidence"] >= 0.98
+        assert c3["environmentConfidence"] == 0.0
+        assert c3["requestedVersion"] == "1.5.3"
+        assert c3["recipeAffectedVersions"] == ">=2.0.0"
+
+
+
 

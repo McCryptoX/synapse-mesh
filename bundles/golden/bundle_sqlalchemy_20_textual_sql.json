@@ -13,6 +13,7 @@
     "package": "sqlalchemy",
     "fromVersion": "1.4.0",
     "toVersion": "2.0.0",
+    "affectedVersionRange": ">=2.0.0",
     "runtime": "python",
     "runtimeVersion": "3.12.0",
     "platform": "all"
@@ -20,7 +21,17 @@
   "fingerprint": {
     "errorSignature": "sqlalchemy.exc.ObjectNotExecutableError: Not an executable object: 'SELECT 1'. Use text('SELECT 1') instead.",
     "regex": "(ObjectNotExecutableError|ArgumentError).*Not an executable object|Textual SQL expression",
-    "matchStream": "stderr"
+    "matchStream": "stderr",
+    "variants": [
+      {
+        "errorSignature": "sqlalchemy.exc.ObjectNotExecutableError: Not an executable object: 'SELECT 1'. Use text('SELECT 1') instead.",
+        "regex": "(ObjectNotExecutableError|ArgumentError).*Not an executable object|Textual SQL expression"
+      },
+      {
+        "errorSignature": "sqlalchemy.exc.ArgumentError: Textual SQL expression should be explicitly declared as text()",
+        "regex": "Textual SQL expression.*should be explicitly declared as text\\("
+      }
+    ]
   },
   "patch": {
     "targetFile": "db.py",

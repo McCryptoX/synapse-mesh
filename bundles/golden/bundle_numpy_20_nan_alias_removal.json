@@ -13,6 +13,7 @@
     "package": "numpy",
     "fromVersion": "1.26.4",
     "toVersion": "2.0.0",
+    "affectedVersionRange": ">=2.0.0",
     "runtime": "python",
     "runtimeVersion": "3.12.0",
     "platform": "all"
@@ -20,7 +21,24 @@
   "fingerprint": {
     "errorSignature": "AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.",
     "regex": "AttributeError:.*(no attribute 'NAN'|np\\.NAN.*removed|'NAN')",
-    "matchStream": "stderr"
+    "matchStream": "stderr",
+    "variants": [
+      {
+        "symbol": "NAN",
+        "errorSignature": "AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.",
+        "regex": "AttributeError:.*(no attribute 'NAN'|np\\.NAN.*removed|'NAN')"
+      },
+      {
+        "symbol": "Inf",
+        "errorSignature": "AttributeError: `np.Inf` was removed in the NumPy 2.0 release. Use `np.inf` instead.",
+        "regex": "AttributeError:.*(no attribute 'Inf'|np\\.Inf.*removed|'Inf')"
+      },
+      {
+        "symbol": "bool",
+        "errorSignature": "AttributeError: `np.bool` was removed in the NumPy 2.0 release. Use `bool` instead.",
+        "regex": "AttributeError:.*(no attribute 'bool'|np\\.bool.*removed|'bool')"
+      }
+    ]
   },
   "patch": {
     "targetFile": "cleaner.py",

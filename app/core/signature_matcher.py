@@ -101,12 +101,37 @@ class SignatureMatcher:
         cls,
         query_text: str,
         target_text: str,
-        target_regex: Optional[str] = None
+        target_regex: Optional[str] = None,
+        variants: Optional[list] = None
     ) -> Tuple[bool, float]:
         """
         Computes structured match and matchConfidence between query error and candidate recipe error.
+        If variants are supplied, evaluates query against all declared variants.
         Returns (is_match, match_confidence).
         """
+        # 1. Evaluate primary signature
+        is_match, conf = cls._evaluate_single_match(query_text, target_text, target_regex)
+        if is_match:
+            return (True, conf)
+
+        # 2. Evaluate variants if present
+        if variants:
+            for v in variants:
+                v_sig = v.get("errorSignature", "")
+                v_regex = v.get("regex")
+                v_match, v_conf = cls._evaluate_single_match(query_text, v_sig, v_regex)
+                if v_match:
+                    return (True, v_conf)
+
+        return (False, 0.0)
+
+    @classmethod
+    def _evaluate_single_match(
+        cls,
+        query_text: str,
+        target_text: str,
+        target_regex: Optional[str] = None
+    ) -> Tuple[bool, float]:
         q = cls.extract_structure(query_text)
         t = cls.extract_structure(target_text)
 
@@ -152,7 +177,6 @@ class SignatureMatcher:
             return (False, 0.0)
 
         # F. Quoted Literal / Method Invocations Gate
-        # If query has quoted literals ('append', 'select 1', 'nan'), target MUST contain at least one!
         if q["quoted"]:
             if not any(ql in t["raw"] or ql in t["quoted"] for ql in q["quoted"]):
                 return (False, 0.0)
@@ -164,7 +188,6 @@ class SignatureMatcher:
         # G. High-Entropy Token Overlap (General Fallback)
         common_tokens = q["distinctive_tokens"].intersection(t["distinctive_tokens"])
         if len(common_tokens) >= 3:
-            # High overlap on 3+ distinctive terms
             ratio = len(common_tokens) / max(len(q["distinctive_tokens"]), 1)
             if ratio >= 0.6:
                 return (True, min(0.95, round(0.5 + ratio * 0.45, 2)))

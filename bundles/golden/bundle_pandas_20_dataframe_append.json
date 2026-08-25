@@ -13,6 +13,7 @@
     "package": "pandas",
     "fromVersion": "1.5.3",
     "toVersion": "2.0.0",
+    "affectedVersionRange": ">=2.0.0",
     "runtime": "python",
     "runtimeVersion": "3.12.0",
     "platform": "all"
@@ -20,7 +21,21 @@
   "fingerprint": {
     "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
     "regex": "AttributeError:.*'DataFrame' object has no attribute 'append'",
-    "matchStream": "stderr"
+    "matchStream": "stderr",
+    "variants": [
+      {
+        "target": "DataFrame",
+        "attribute": "append",
+        "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
+        "regex": "AttributeError:.*'DataFrame' object has no attribute 'append'"
+      },
+      {
+        "target": "Series",
+        "attribute": "append",
+        "errorSignature": "AttributeError: 'Series' object has no attribute 'append'",
+        "regex": "AttributeError:.*'Series' object has no attribute 'append'"
+      }
+    ]
   },
   "patch": {
     "targetFile": "merge_data.py",

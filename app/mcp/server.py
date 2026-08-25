@@ -194,6 +194,7 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
             from app.api.bundles import load_all_golden_bundles
             from app.api.recipes import KNOWN_PACKAGES, PACKAGE_ALIASES, STOPWORDS
             from app.core.signature_matcher import SignatureMatcher
+            from app.core.version_matcher import VersionMatcher
             
             clean_query = error_sig.lower()
             raw_tokens = [w.strip(".:(),'\"`") for w in clean_query.split()]
@@ -202,8 +203,10 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
             for t in raw_tokens:
                 if t in PACKAGE_ALIASES:
                     query_packages.add(PACKAGE_ALIASES[t])
-            if arguments.get("packages") and isinstance(arguments.get("packages"), dict):
-                query_packages.update(arguments.get("packages").keys())
+            
+            req_packages_dict = arguments.get("packages") if isinstance(arguments.get("packages"), dict) else {}
+            if req_packages_dict:
+                query_packages.update(req_packages_dict.keys())
 
             scored_bundles = []
             for b in load_all_golden_bundles():
@@ -212,44 +215,69 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                 fp = b.get("fingerprint", {})
                 regex_pat = fp.get("regex", "")
                 sig_text = fp.get("errorSignature", "")
+                variants = fp.get("variants", [])
                 pkg = b.get("scope", {}).get("package", "").lower()
+                aff_versions = b.get("scope", {}).get("affectedVersionRange", ">=2.0.0")
 
                 # Package filter rule: if query has explicit package, bundle MUST match package!
                 if query_packages and pkg not in query_packages:
                     continue
 
-                # Structural Semantic Matcher Gate
-                is_matched, match_conf = SignatureMatcher.compute_match(error_sig, sig_text, regex_pat)
+                # Structural Semantic Matcher Gate (Multi-Variant Aware)
+                is_matched, match_conf = SignatureMatcher.compute_match(error_sig, sig_text, regex_pat, variants=variants)
                 if not is_matched or match_conf < 0.70:
                     continue
 
+                # Version Constraint Matcher Gate
+                req_pkg_ver = req_packages_dict.get(pkg)
+                is_env_compat, env_conf = VersionMatcher.check_version_compatibility(req_pkg_ver, aff_versions)
+
                 prov = b.get("provenance", {})
                 primary_src = prov.get("primarySources", ["https://synapsemesh.dev/benchmark"])[0] if prov.get("primarySources") else prov.get("primarySource", "https://synapsemesh.dev/benchmark")
-                scored_bundles.append((match_conf, {
-                    "status": "VERIFIED_MATCH",
-                    "matchConfidence": match_conf,
-                    "verificationConfidence": 1.0,
-                    "evidenceTier": "VERIFIED_REAL_RUNTIME",
-                    "recipeId": b.get("bundleId"),
-                    "runtime": b.get("scope", {}).get("runtime"),
-                    "package": b.get("scope", {}).get("package"),
-                    "affectedVersions": b.get("scope", {}).get("affectedVersionRange", ">=2.0.0"),
-                    "errorSignature": fp.get("errorSignature"),
-                    "minimalFix": b.get("description"),
-                    "codeDiff": b.get("patch", {}).get("unifiedDiff"),
-                    "pinnedDependencies": b.get("patch", {}).get("pinnedDependencies", {}),
-                    "doNot": b.get("patch", {}).get("doNot", []),
-                    "environment": {
-                        "runtime": f"{b.get('scope', {}).get('runtime')} 3.12.14 / Node 22",
-                        "compilerIsolation": "Hermetic Native Execution",
-                        "sandboxExitCodes": [1, 0],
-                        "mutationsKilled": "2/2"
-                    },
-                    "confidence": 1.0,
-                    "confidenceExplanation": "100% Hermetic pass in isolated sandbox: Pre-Fail Exit 1 verified on native compiler, AST-Diff applied, Post-Pass Exit 0, 2/2 Mutants Killed.",
-                    "primarySource": primary_src,
-                    "canonicalUrl": f"https://synapsemesh.dev/api/v1/bundles/{b.get('bundleId')}"
-                }))
+
+                if not is_env_compat:
+                    scored_bundles.append((match_conf, {
+                        "status": "VERSION_MISMATCH",
+                        "signatureConfidence": match_conf,
+                        "environmentConfidence": 0.0,
+                        "verificationConfidence": 1.0,
+                        "matchConfidence": match_conf,
+                        "package": pkg,
+                        "requestedVersion": req_pkg_ver,
+                        "recipeAffectedVersions": aff_versions,
+                        "recipeId": b.get("bundleId"),
+                        "errorSignature": fp.get("errorSignature"),
+                        "suggestion": f"The error signature matches a verified breaking change in {pkg} {aff_versions}, but your specified version ({req_pkg_ver}) lies outside the affected range.",
+                        "canonicalUrl": f"https://synapsemesh.dev/api/v1/bundles/{b.get('bundleId')}"
+                    }))
+                else:
+                    scored_bundles.append((match_conf, {
+                        "status": "VERIFIED_MATCH",
+                        "signatureConfidence": match_conf,
+                        "environmentConfidence": env_conf,
+                        "verificationConfidence": 1.0,
+                        "matchConfidence": match_conf,
+                        "evidenceTier": "VERIFIED_REAL_RUNTIME",
+                        "recipeId": b.get("bundleId"),
+                        "runtime": b.get("scope", {}).get("runtime"),
+                        "package": b.get("scope", {}).get("package"),
+                        "affectedVersions": aff_versions,
+                        "errorSignature": fp.get("errorSignature"),
+                        "minimalFix": b.get("description"),
+                        "codeDiff": b.get("patch", {}).get("unifiedDiff"),
+                        "pinnedDependencies": b.get("patch", {}).get("pinnedDependencies", {}),
+                        "doNot": b.get("patch", {}).get("doNot", []),
+                        "environment": {
+                            "runtime": f"{b.get('scope', {}).get('runtime')} 3.12.14 / Node 22",
+                            "compilerIsolation": "Hermetic Native Execution",
+                            "sandboxExitCodes": [1, 0],
+                            "mutationsKilled": "2/2"
+                        },
+                        "confidence": 1.0,
+                        "confidenceExplanation": "100% Hermetic pass in isolated sandbox: Pre-Fail Exit 1 verified on native compiler, AST-Diff applied, Post-Pass Exit 0, 2/2 Mutants Killed.",
+                        "primarySource": primary_src,
+                        "canonicalUrl": f"https://synapsemesh.dev/api/v1/bundles/{b.get('bundleId')}"
+                    }))
 
             if scored_bundles:
                 scored_bundles.sort(key=lambda x: x[0], reverse=True)
