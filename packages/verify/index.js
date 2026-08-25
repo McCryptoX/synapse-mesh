@@ -756,6 +756,23 @@ function locateNodePackageVersion(packageName, dependencyRoot) {
   return null;
 }
 
+function readCargoLockVersions(workspaceRoot) {
+  const lockPath = path.join(workspaceRoot, 'Cargo.lock');
+  const versionsByName = new Map();
+  if (!fs.existsSync(lockPath)) return versionsByName;
+  const lockText = fs.readFileSync(lockPath, 'utf8');
+  for (const block of lockText.split(/(?=^\[\[package\]\]\s*$)/m)) {
+    if (!/^\[\[package\]\]\s*$/m.test(block)) continue;
+    const nameMatch = /^name\s*=\s*"([A-Za-z0-9_.-]+)"\s*$/m.exec(block);
+    const versionMatch = /^version\s*=\s*"([^"\r\n]+)"\s*$/m.exec(block);
+    if (!nameMatch || !versionMatch) continue;
+    const versions = versionsByName.get(nameMatch[1]) || [];
+    if (!versions.includes(versionMatch[1])) versions.push(versionMatch[1]);
+    versionsByName.set(nameMatch[1], versions);
+  }
+  return versionsByName;
+}
+
 async function probeExecutionEnvironment(bundle, workspaceRoot, options = {}) {
   const expectedRuntime = bundle.scope.runtimeVersion;
   const expectedPackages = bundle.patch.pinnedDependencies;
@@ -800,21 +817,46 @@ async function probeExecutionEnvironment(bundle, workspaceRoot, options = {}) {
   } else if (bundle.scope.runtime === 'rust') {
     const source = [
       "const { spawnSync } = require('node:child_process');",
-      "const result = spawnSync('rustc', ['--version'], { encoding: 'utf8', shell: false });",
-      "if (result.error) { console.error(result.error.message); process.exit(127); }",
-      "process.stdout.write(result.stdout || '');",
-      'process.exit(result.status === null ? 125 : result.status);'
+      "const rustc = spawnSync('rustc', ['--version'], { encoding: 'utf8', shell: false });",
+      "const cargo = spawnSync('cargo', ['--version'], { encoding: 'utf8', shell: false });",
+      "if (rustc.error) { console.error(rustc.error.message); process.exit(127); }",
+      "if (rustc.status !== 0) { process.stderr.write(rustc.stderr || ''); process.exit(rustc.status ?? 125); }",
+      "const rustcMatch = (rustc.stdout || '').match(/^rustc\\s+(\\d+\\.\\d+\\.\\d+)/);",
+      "const cargoMatch = !cargo.error && cargo.status === 0 ? (cargo.stdout || '').match(/^cargo\\s+(\\d+\\.\\d+\\.\\d+)/) : null;",
+      "process.stdout.write(JSON.stringify({ rustcVersion: rustcMatch ? rustcMatch[1] : null, cargoVersion: cargoMatch ? cargoMatch[1] : null }));"
     ].join('\n');
     probeResult = await runScript(workspaceRoot, 'javascript', source, 'environment-probe', {
       ...options,
       timeoutMs: Math.min(options.timeoutMs || DEFAULT_TIMEOUT_MS, 10_000)
     });
-    const match = probeResult.stdout.match(/^rustc\s+(\d+\.\d+\.\d+)/);
-    if (probeResult.exitCode === 0 && match) actualRuntime = match[1];
-    for (const packageName of Object.keys(expectedPackages)) actualPackages[packageName] = null;
+    let cargoVersion = null;
+    if (probeResult.exitCode === 0) {
+      try {
+        const parsed = JSON.parse(probeResult.stdout.trim());
+        actualRuntime = parsed.rustcVersion;
+        cargoVersion = parsed.cargoVersion;
+      } catch {
+        // Reported as a failed probe below.
+      }
+    }
+    const lockedVersions = readCargoLockVersions(workspaceRoot);
+    for (const [packageName, expectedVersion] of Object.entries(expectedPackages)) {
+      if (packageName === 'rustc') actualPackages[packageName] = actualRuntime;
+      else if (packageName === 'cargo') actualPackages[packageName] = cargoVersion;
+      else {
+        const candidates = lockedVersions.get(packageName) || [];
+        actualPackages[packageName] = candidates.includes(expectedVersion)
+          ? expectedVersion
+          : candidates.length === 1 ? candidates[0] : candidates.length > 1 ? candidates.join(',') : null;
+      }
+    }
   }
 
   const mismatches = [];
+  const hostPlatform = normalizedHostPlatform();
+  if (bundle.scope.platform !== 'all' && bundle.scope.platform !== hostPlatform) {
+    mismatches.push(`platform: expected ${bundle.scope.platform}, got ${hostPlatform}`);
+  }
   if (actualRuntime !== expectedRuntime) {
     mismatches.push(`runtime ${bundle.scope.runtime}: expected ${expectedRuntime}, got ${actualRuntime || 'unavailable'}`);
   }
@@ -826,6 +868,7 @@ async function probeExecutionEnvironment(bundle, workspaceRoot, options = {}) {
   }
   return {
     passed: mismatches.length === 0,
+    platform: { expected: bundle.scope.platform, actual: hostPlatform },
     runtime: { name: bundle.scope.runtime, expected: expectedRuntime, actual: actualRuntime },
     packages: Object.fromEntries(Object.entries(expectedPackages).map(([name, expected]) => [
       name,
@@ -892,6 +935,7 @@ async function verifyBundle(bundle, options = {}) {
   const mutationResults = [];
   let failureReason = null;
   let signatureMatched = false;
+  let fingerprintMatchResult = null;
 
   try {
     const environmentWorkspace = createFreshWorkspace('environment');
@@ -915,13 +959,18 @@ async function verifyBundle(bundle, options = {}) {
       : bundle.fingerprint.matchStream === 'stderr'
         ? preResult.stderr
         : `${preResult.stderr}\n${preResult.stdout}`;
-    const expression = new RegExp(bundle.fingerprint.regex, bundle.fingerprint.regexFlags || '');
     const preExitMatches = preResult ? preResult.exitCode === bundle.verification.expectedPreExit : false;
-    signatureMatched = preResult ? expression.test(preOutput) : false;
+    fingerprintMatchResult = preResult
+      ? await testRegexSafely(bundle.fingerprint.regex, bundle.fingerprint.regexFlags || '', preOutput)
+      : null;
+    signatureMatched = fingerprintMatchResult ? fingerprintMatchResult.matched : false;
     const prePassed = preResult ? phasePassedWithoutHarnessFailure(preResult) && preExitMatches && signatureMatched : false;
 
     if (!failureReason && !prePassed) {
-      failureReason = `Pre-fail gate failed (exit=${preResult.exitCode}, expected=${bundle.verification.expectedPreExit}, signatureMatched=${signatureMatched})`;
+      const fingerprintFailure = fingerprintMatchResult && (fingerprintMatchResult.timedOut || fingerprintMatchResult.error)
+        ? `, fingerprintError=${fingerprintMatchResult.error}`
+        : '';
+      failureReason = `Pre-fail gate failed (exit=${preResult.exitCode}, expected=${bundle.verification.expectedPreExit}, signatureMatched=${signatureMatched}${fingerprintFailure})`;
     } else if (!failureReason) {
       const postWorkspace = createFreshWorkspace('post-pass');
       applyPatchInWorkspace(postWorkspace, bundle.patch.targetFile, bundle.patch.unifiedDiff);
@@ -947,17 +996,22 @@ async function verifyBundle(bundle, options = {}) {
             scriptOptions
           );
           const mutationOutput = `${mutationResult.stderr}\n${mutationResult.stdout}`;
-          const expectedErrorMatched = mutation.expectedErrorRegex
-            ? new RegExp(mutation.expectedErrorRegex).test(mutationOutput)
+          const expectedErrorResult = mutation.expectedErrorRegex
+            ? await testRegexSafely(mutation.expectedErrorRegex, '', mutationOutput)
             : null;
+          const expectedErrorMatched = expectedErrorResult ? expectedErrorResult.matched : null;
           const killed = phasePassedWithoutHarnessFailure(mutationResult) &&
             mutationResult.exitCode !== 0 &&
-            (expectedErrorMatched === null || expectedErrorMatched);
+            (expectedErrorMatched === null || (
+              expectedErrorMatched && !expectedErrorResult.timedOut && expectedErrorResult.error === null
+            ));
           mutationResults.push({
             id: mutation.id,
             description: mutation.description,
             killed,
             expectedErrorMatched,
+            expectedErrorMatchTimedOut: expectedErrorResult ? expectedErrorResult.timedOut : null,
+            expectedErrorMatchError: expectedErrorResult ? expectedErrorResult.error : null,
             ...summarizePhase(mutationResult)
           });
         }
@@ -980,7 +1034,7 @@ async function verifyBundle(bundle, options = {}) {
       failureReason,
       phases: {
         environment: environmentResult,
-        preFail: preResult ? summarizePhase(preResult) : null,
+        preFail: preResult ? { ...summarizePhase(preResult), fingerprint: fingerprintMatchResult } : null,
         postPass: postResult ? summarizePhase(postResult) : null,
         mutations: mutationResults
       },

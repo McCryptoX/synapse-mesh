@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import init_db
-from app.api import health_router, discovery_router, recipes_router
+from app.api import health_router, discovery_router, recipes_router, bundles_router
 from app.mcp import mcp_router
 
 logging.basicConfig(
@@ -48,6 +48,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(discovery_router)
 app.include_router(recipes_router)
+app.include_router(bundles_router)
 app.include_router(mcp_router)
 
 

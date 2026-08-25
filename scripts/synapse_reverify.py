@@ -252,7 +252,7 @@ def verify_golden_bundle(bundle: dict) -> bool:
                 return False
 
             # Run test_runner on mutant workspace
-            res_mut = subprocess.run(runner_cmd + [str(test_runner)], cwd=workspace, capture_output=True, text=True, timeout=timeout_sec)
+            res_mut = subprocess.run(runner_cmd + [str(test_runner)], cwd=workspace, capture_output=True, text=True, timeout=timeout_sec, env=env)
             if res_mut.returncode == 0:
                 print(f"[✗] STAGE 4 MUTATION FAILED: Web-Fehlfix mutant '{mut_id}' unexpectedly PASSED (escaped kill).", file=sys.stderr)
                 return False
