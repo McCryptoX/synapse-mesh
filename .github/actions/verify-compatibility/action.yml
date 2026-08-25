@@ -1,0 +1,162 @@
+name: Verify Synapse Compatibility Bundle
+description: Validate and execute a Verified Compatibility Bundle and emit a machine-readable evidence statement.
+
+inputs:
+  bundle:
+    description: Local bundle path (relative to GITHUB_WORKSPACE) or an HTTPS URL.
+    required: true
+  schema:
+    description: Optional schema path. Defaults to the schema shipped with this action.
+    required: false
+    default: ''
+  python:
+    description: Python interpreter used by bundles whose scriptLanguage is python.
+    required: false
+    default: python3
+  dependency-root:
+    description: Directory containing preinstalled Node dependencies for Node.js bundles.
+    required: false
+    default: '.'
+  attestation-path:
+    description: Output path for the unsigned in-toto Statement-shaped verification evidence.
+    required: false
+    default: compatibility-attestation.json
+  artifact-name:
+    description: Name used when uploading the evidence artifact.
+    required: false
+    default: compatibility-verification-evidence
+  upload-artifact:
+    description: Upload the evidence JSON using actions/upload-artifact.
+    required: false
+    default: 'true'
+
+outputs:
+  verified:
+    description: Whether all verification gates passed.
+    value: ${{ steps.inspect.outputs.verified }}
+  bundle-sha256:
+    description: SHA-256 of the exact input bundle bytes.
+    value: ${{ steps.inspect.outputs.bundle-sha256 }}
+  attestation-path:
+    description: Absolute path to the emitted evidence statement.
+    value: ${{ steps.paths.outputs.attestation }}
+
+runs:
+  using: composite
+  steps:
+    - id: paths
+      name: Resolve verifier and output paths
+      shell: bash
+      env:
+        INPUT_SCHEMA: ${{ inputs.schema }}
+        INPUT_ATTESTATION: ${{ inputs.attestation-path }}
+        INPUT_DEPENDENCY_ROOT: ${{ inputs.dependency-root }}
+      run: |
+        set -euo pipefail
+        action_root="$(cd "$GITHUB_ACTION_PATH/../../.." && pwd)"
+        schema_path="$INPUT_SCHEMA"
+        if [[ -z "$schema_path" ]]; then
+          schema_path="$action_root/schemas/compatibility_bundle_v1.json"
+        elif [[ "$schema_path" != /* ]]; then
+          schema_path="$GITHUB_WORKSPACE/$schema_path"
+        fi
+        attestation_path="$INPUT_ATTESTATION"
+        if [[ "$attestation_path" != /* ]]; then
+          attestation_path="$GITHUB_WORKSPACE/$attestation_path"
+        fi
+        dependency_root="$INPUT_DEPENDENCY_ROOT"
+        if [[ "$dependency_root" != /* ]]; then
+          dependency_root="$GITHUB_WORKSPACE/$dependency_root"
+        fi
+        {
+          echo "verifier=$action_root/packages/verify/bin.js"
+          echo "schema=$schema_path"
+          echo "attestation=$attestation_path"
+          echo "dependency-root=$dependency_root"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Validate bundle against Compatibility Bundle v1 schema
+      shell: bash
+      env:
+        INPUT_BUNDLE: ${{ inputs.bundle }}
+        VERIFIER: ${{ steps.paths.outputs.verifier }}
+        SCHEMA: ${{ steps.paths.outputs.schema }}
+      run: |
+        set -euo pipefail
+        bundle_source="$INPUT_BUNDLE"
+        if [[ "$bundle_source" != https://* && "$bundle_source" != /* ]]; then
+          bundle_source="$GITHUB_WORKSPACE/$bundle_source"
+        fi
+        node "$VERIFIER" "$bundle_source" --schema "$SCHEMA" --validate-only
+
+    - id: verify
+      name: Execute pre-fail, patch, post-pass, and mutation gates
+      shell: bash
+      env:
+        INPUT_BUNDLE: ${{ inputs.bundle }}
+        INPUT_PYTHON: ${{ inputs.python }}
+        VERIFIER: ${{ steps.paths.outputs.verifier }}
+        SCHEMA: ${{ steps.paths.outputs.schema }}
+        ATTESTATION: ${{ steps.paths.outputs.attestation }}
+        DEPENDENCY_ROOT: ${{ steps.paths.outputs.dependency-root }}
+      run: |
+        set -uo pipefail
+        bundle_source="$INPUT_BUNDLE"
+        if [[ "$bundle_source" != https://* && "$bundle_source" != /* ]]; then
+          bundle_source="$GITHUB_WORKSPACE/$bundle_source"
+        fi
+        node "$VERIFIER" "$bundle_source" \
+          --schema "$SCHEMA" \
+          --python "$INPUT_PYTHON" \
+          --dependency-root "$DEPENDENCY_ROOT" \
+          --allow-code-execution \
+          --attestation "$ATTESTATION"
+        verifier_exit=$?
+        echo "exit-code=$verifier_exit" >> "$GITHUB_OUTPUT"
+        exit 0
+
+    - id: inspect
+      name: Inspect verification evidence
+      if: always()
+      shell: bash
+      env:
+        ATTESTATION: ${{ steps.paths.outputs.attestation }}
+      run: |
+        set -euo pipefail
+        node - "$ATTESTATION" "$GITHUB_OUTPUT" <<'NODE'
+        const fs = require('node:fs');
+        const [attestationPath, outputPath] = process.argv.slice(2);
+        if (!fs.existsSync(attestationPath)) {
+          fs.appendFileSync(outputPath, 'verified=false\nbundle-sha256=\n');
+          process.exit(0);
+        }
+        const statement = JSON.parse(fs.readFileSync(attestationPath, 'utf8'));
+        const subject = Array.isArray(statement.subject) ? statement.subject[0] : null;
+        fs.appendFileSync(
+          outputPath,
+          `verified=${statement.predicate?.verified === true}\n` +
+          `bundle-sha256=${subject?.digest?.sha256 || ''}\n`
+        );
+        NODE
+
+    - name: Upload verification evidence
+      if: always() && inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.paths.outputs.attestation }}
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Enforce verification result
+      if: always()
+      shell: bash
+      env:
+        VERIFIED: ${{ steps.inspect.outputs.verified }}
+        VERIFIER_EXIT: ${{ steps.verify.outputs.exit-code }}
+      run: |
+        set -euo pipefail
+        if [[ "$VERIFIED" != "true" || "$VERIFIER_EXIT" != "0" ]]; then
+          echo "Compatibility verification failed (verified=$VERIFIED, exit=$VERIFIER_EXIT)." >&2
+          exit 1
+        fi

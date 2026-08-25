@@ -1,0 +1,47 @@
+name: Compatibility verifier Node matrix
+
+on:
+  pull_request:
+    paths:
+      - 'packages/verify/**'
+      - 'schemas/compatibility_bundle_v1.json'
+      - 'bundles/golden/**'
+      - '.github/actions/verify-compatibility/**'
+      - '.github/workflows/compatibility-verifier-node-matrix.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/verify/**'
+      - 'schemas/compatibility_bundle_v1.json'
+      - 'bundles/golden/**'
+      - '.github/actions/verify-compatibility/**'
+      - '.github/workflows/compatibility-verifier-node-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verifier-unit-tests:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Validate Golden Bundles without executing third-party code
+        shell: bash
+        run: |
+          set -euo pipefail
+          for bundle in bundles/golden/*.json; do
+            node packages/verify/bin.js "$bundle" \
+              --schema schemas/compatibility_bundle_v1.json \
+              --validate-only
+          done
+      - name: Run verifier unit tests
+        run: node --test packages/verify/test/*.test.js

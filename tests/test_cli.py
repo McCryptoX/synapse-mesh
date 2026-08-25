@@ -84,3 +84,22 @@ def test_reverify_rejects_escaping_mutant():
         }
     }
     assert verify_bundle_data(bundle) is False
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+def test_golden_httpx_bundle_full_4stage_pass():
+    """Tests the real Golden Bundle for HTTPX 0.28 ASGITransport."""
+    p = BASE_DIR / "bundles/golden/bundle_httpx_028_asgi_transport.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert verify_bundle_data(data) is True
+
+
+def test_golden_pydantic_bundle_full_4stage_pass():
+    """Tests the real Golden Bundle for Pydantic v2 model_validator."""
+    p = BASE_DIR / "bundles/golden/bundle_pydantic_v2_model_validator.json"
+    assert p.exists()
+    import json
+    data = json.loads(p.read_text(encoding="utf-8"))
+    assert verify_bundle_data(data) is True

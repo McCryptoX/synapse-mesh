@@ -1,0 +1,22 @@
+{
+  "name": "@synapse-mesh/verify",
+  "version": "0.1.0",
+  "description": "Zero-dependency verifier for Synapse Verified Compatibility Bundles",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "index.js",
+  "bin": {
+    "synapse-verify": "bin.js"
+  },
+  "engines": {
+    "node": ">=18 <=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "files": [
+    "bin.js",
+    "index.js",
+    "README.md"
+  ]
+}

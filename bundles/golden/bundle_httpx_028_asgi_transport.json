@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_httpx_028_asgi_transport_001",
-  "status": "CANDIDATE",
+  "status": "VERIFIED",
   "description": "HTTPX 0.28 removes the Client and AsyncClient app shortcut; explicit ASGITransport is required for in-process ASGI requests.",
   "tags": [
     "python",
@@ -65,6 +65,6 @@
       "https://github.com/encode/httpx/releases/tag/0.28.0",
       "https://www.python-httpx.org/advanced/transports/#asgi-transport"
     ],
-    "verifiedAt": "2026-08-25T05:27:23Z"
+    "verifiedAt": "2026-08-25T05:37:11Z"
   }
 }

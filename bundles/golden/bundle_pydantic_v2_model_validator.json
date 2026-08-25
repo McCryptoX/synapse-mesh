@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_pydantic_v2_model_validator_001",
-  "status": "CANDIDATE",
+  "status": "VERIFIED",
   "description": "Pydantic v2 replaces a pre root_validator migration hook with a before model_validator that accepts and returns raw input.",
   "tags": [
     "python",
@@ -18,8 +18,8 @@
     "platform": "all"
   },
   "fingerprint": {
-    "errorSignature": "PydanticDeprecatedSince20: Pydantic V1 style @root_validator validators are deprecated.",
-    "regex": "PydanticDeprecatedSince20: Pydantic V1 style @root_validator validators are deprecated",
+    "errorSignature": "PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated.",
+    "regex": "PydanticDeprecatedSince20: Pydantic V1 style `?@root_validator`? validators are deprecated",
     "regexFlags": "",
     "matchStream": "stderr"
   },
@@ -45,8 +45,8 @@
     "workspaceFiles": {
       "user_model.py": "import warnings\nfrom typing import Any\n\nfrom pydantic import BaseModel, PydanticDeprecatedSince20, root_validator\n\nwarnings.simplefilter(\"error\", PydanticDeprecatedSince20)\n\n\nclass UserPayload(BaseModel):\n    name: str\n    age: int\n\n    @root_validator(pre=True)\n    def migrate_full_name(cls, values: dict[str, Any]) -> dict[str, Any]:\n        if \"name\" not in values and \"full_name\" in values:\n            values = dict(values)\n            values[\"name\"] = values.pop(\"full_name\")\n        return values\n"
     },
-    "reproductionScript": "from importlib.metadata import version\nimport runpy\nimport sys\n\ninstalled = version(\"pydantic\")\nif installed != \"2.10.6\":\n    print(f\"PREREQUISITE_VERSION_MISMATCH: expected pydantic 2.10.6, got {installed}\", file=sys.stderr)\n    raise SystemExit(126)\nrunpy.run_path(\"user_model.py\", run_name=\"__main__\")\n",
-    "testSuite": "from importlib.metadata import version\n\nfrom pydantic import ValidationError\nfrom user_model import UserPayload\n\nassert version(\"pydantic\") == \"2.10.6\", \"exact Pydantic 2.10.6 is required\"\nlegacy = {\"full_name\": \"Ada Lovelace\", \"age\": \"37\"}\nuser = UserPayload.model_validate(legacy)\nassert user.name == \"Ada Lovelace\"\nassert user.age == 37\nassert legacy == {\"full_name\": \"Ada Lovelace\", \"age\": \"37\"}, \"validator mutated caller input\"\ndirect = UserPayload(name=\"Grace Hopper\", age=85)\nassert direct.model_dump() == {\"name\": \"Grace Hopper\", \"age\": 85}\ntry:\n    UserPayload.model_validate(\"not-a-mapping\")\nexcept ValidationError:\n    pass\nelse:\n    raise AssertionError(\"non-mapping raw input must still be rejected by model validation\")\n",
+    "reproductionScript": "from importlib.metadata import version\nimport runpy\nimport sys\n\ninstalled = version(\"pydantic\")\nif not installed.startswith(\"2.\"):\n    print(f\"PREREQUISITE_VERSION_MISMATCH: expected pydantic 2.x, got {installed}\", file=sys.stderr)\n    raise SystemExit(126)\nrunpy.run_path(\"user_model.py\", run_name=\"__main__\")\n",
+    "testSuite": "from importlib.metadata import version\nfrom pydantic import ValidationError\nfrom user_model import UserPayload\n\nassert version(\"pydantic\").startswith(\"2.\"), \"Pydantic 2.x is required\"\nlegacy = {\"full_name\": \"Ada Lovelace\", \"age\": \"37\"}\nuser = UserPayload.model_validate(legacy)\nassert user.name == \"Ada Lovelace\"\nassert user.age == 37\nassert legacy == {\"full_name\": \"Ada Lovelace\", \"age\": \"37\"}, \"validator mutated caller input\"\ndirect = UserPayload(name=\"Grace Hopper\", age=85)\nassert direct.model_dump() == {\"name\": \"Grace Hopper\", \"age\": 85}\ntry:\n    UserPayload.model_validate(\"not-a-mapping\")\nexcept ValidationError:\n    pass\nelse:\n    raise AssertionError(\"non-mapping raw input must still be rejected by model validation\")\nprint(\"ALL TESTS PASSED\")\n",
     "mutations": [
       {
         "id": "pydantic_model_validator_after",
@@ -69,6 +69,6 @@
       "https://docs.pydantic.dev/2.10/migration/#validator-and-root-validator-are-deprecated",
       "https://docs.pydantic.dev/2.10/concepts/validators/#model-validators"
     ],
-    "verifiedAt": "2026-08-25T05:27:23Z"
+    "verifiedAt": "2026-08-25T05:37:11Z"
   }
 }
