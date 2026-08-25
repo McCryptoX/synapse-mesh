@@ -67,4 +67,6 @@ async def test_mcp_server_discover():
         })
     assert res.status_code == 200
     data = res.json()
+    assert "supportedVersions" in data["result"]
+    assert "2024-11-05" in data["result"]["supportedVersions"]
     assert data["result"]["serverInfo"]["name"] == "synapse-mesh"

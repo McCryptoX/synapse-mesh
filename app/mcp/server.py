@@ -110,9 +110,37 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
     if not method:
         return {"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32600, "message": "Missing method"}}
 
-    # 1. Initialize
-    if method in ("initialize", "server/discover"):
-        await log_agent_access("mcp_call", method.replace("/", "_"), "", request)
+    # 1. Server Discovery (MCP Modern Stateless Probe - Spec 2026-07-28 / OpenAI Agents SDK)
+    if method == "server/discover":
+        await log_agent_access("mcp_call", "server_discover", "", request)
+        return {
+            "jsonrpc": "2.0",
+            "id": msg_id,
+            "result": {
+                "supportedVersions": ["2024-11-05", "2024-10-07", "2026-07-28"],
+                "capabilities": {
+                    "tools": {"listChanged": False},
+                    "resources": {"subscribe": False, "listChanged": False},
+                    "prompts": {"listChanged": False},
+                    "logging": {}
+                },
+                "serverInfo": {
+                    "name": "synapse-mesh",
+                    "version": settings.app_version
+                },
+                "instructions": "Synapse-Mesh deterministic living solutions and compatibility verification engine."
+            },
+            "_meta": {
+                "io.modelcontextprotocol/serverInfo": {
+                    "name": "synapse-mesh",
+                    "version": settings.app_version
+                }
+            }
+        }
+
+    # 2. Initialize (Legacy/Stateful MCP Handshake)
+    elif method == "initialize":
+        await log_agent_access("mcp_call", "initialize", "", request)
         client_proto = params.get("protocolVersion") or "2024-11-05"
         return {
             "jsonrpc": "2.0",
