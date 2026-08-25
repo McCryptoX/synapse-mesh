@@ -1,5 +1,29 @@
 [
   {
+    "id": "P1_PYDANTIC_V2_BASE_SETTINGS",
+    "family": "Python",
+    "name": "Pydantic V2 BaseSettings Migration to pydantic-settings",
+    "yearIntroduced": "2023",
+    "breakingPackage": "pydantic>=2.0.0",
+    "errorSignature": "ImportError: cannot import name 'BaseSettings' from 'pydantic'",
+    "errorSignatureRegex": "(PydanticImportError|ImportError):.*[`'\\\"]BaseSettings[`'\\\"]",
+    "targetPatchFile": "config.py",
+    "entrypoint": "test_runner.py",
+    "workspaceFiles": {
+      ".env": "APP_ENV=production\nPORT=8080\n"
+    },
+    "reproductionScript": "import sys\n# Real Pydantic v2 throws genuine ImportError when importing BaseSettings from root\ntry:\n    from pydantic import BaseSettings\nexcept ImportError as e:\n    sys.stderr.write(f\"{type(e).__name__}: {e}\\n\")\n    sys.exit(1)\nsys.exit(0)",
+    "validPatch": "from pydantic_settings import BaseSettings, SettingsConfigDict\n\nclass AppSettings(BaseSettings):\n    app_env: str = 'development'\n    port: int = 3000\n    model_config = SettingsConfigDict(env_file='.env', extra='ignore', env_prefix='', case_sensitive=False)",
+    "mutationPatches": [
+      "# Web-Fehlfix 1: Use BaseModel instead of BaseSettings (does not read .env file)\nfrom pydantic import BaseModel\nclass AppSettings(BaseModel):\n    app_env: str = 'development'\n    port: int = 3000",
+      "# Web-Fehlfix 2: Legacy v1 class Config syntax in pydantic-settings\nfrom pydantic_settings import BaseSettings\nclass AppSettings(BaseSettings):\n    app_env: str = 'development'\n    port: int = 3000\n    class Config:\n        env_file = '.env'",
+      "# Web-Fehlfix 3: pydantic.v1 legacy namespace import\nfrom pydantic.v1 import BaseSettings\nclass AppSettings(BaseSettings):\n    app_env: str = 'development'\n    port: int = 3000"
+    ],
+    "groundTruthTestSuite": "from config import AppSettings\nimport pydantic_settings\n\nsettings = AppSettings()\nassert settings.app_env == 'production', f\"Expected 'production' from .env, got {settings.app_env}\"\nassert settings.port == 8080, f\"Expected 8080 from .env, got {settings.port}\"\n\n# Ensure modern Pydantic-Settings v2 inheritance & model_config\nassert issubclass(AppSettings, pydantic_settings.BaseSettings), 'AppSettings must inherit from pydantic_settings.BaseSettings'\nassert hasattr(AppSettings, 'model_fields'), 'AppSettings must use Pydantic v2 model_fields'\nassert 'model_config' in AppSettings.__dict__, 'Must declare model_config directly on AppSettings'\nassert 'Config' not in AppSettings.__dict__, 'Must not use legacy v1 class Config'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://docs.pydantic.dev/2.0/migration/#basesettings-has-moved-to-pydantic-settings",
+    "antiDowngradeEnforced": true
+  },
+  {
     "id": "P2_HTTPX_0_28_STARLETTE",
     "family": "Python",
     "name": "HTTPX 0.28 Removal of Client(app=...) in Favor of ASGITransport",
@@ -19,6 +43,28 @@
     ],
     "groundTruthTestSuite": "import asyncio\nimport importlib.metadata\nfrom packaging.version import parse as parse_version\nfrom client_module import client, app\n\nasync def test_real_asgi():\n    httpx_ver = parse_version(importlib.metadata.version('httpx'))\n    assert httpx_ver >= parse_version('0.28.0'), f'httpx must be >= 0.28.0, got {httpx_ver}'\n    \n    starlette_ver = parse_version(importlib.metadata.version('starlette'))\n    assert starlette_ver >= parse_version('0.37.2'), f'starlette must be >= 0.37.2, got {starlette_ver}'\n\n    async with client as c:\n        res = await c.get('/')\n        assert res.status_code == 200\n        assert res.text == 'ok'\n    print('ALL TESTS PASSED')\n\nasyncio.run(test_real_asgi())",
     "officialSource": "https://www.encode.io/httpx/upgrading/#upgrading-to-0280",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "P3_PYTHON_312_SHUTIL_RMTREE_ONEXC",
+    "family": "Python",
+    "name": "Python 3.12 shutil.rmtree onerror Deprecation in Favor of onexc",
+    "yearIntroduced": "2023",
+    "breakingPackage": "python>=3.12.0",
+    "errorSignature": "DeprecationWarning: onerror is deprecated, use onexc instead",
+    "errorSignatureRegex": "(DeprecationWarning:.*onerror is deprecated.*onexc|TypeError:.*rmtree.*onerror)",
+    "targetPatchFile": "cleaner.py",
+    "entrypoint": "test_runner.py",
+    "workspaceFiles": {},
+    "reproductionScript": "import shutil, sys, inspect\n# Python 3.12+ deprecated onerror in favor of onexc\nsig = inspect.signature(shutil.rmtree)\nif 'onerror' in sig.parameters and 'onexc' in sig.parameters:\n    sys.stderr.write(\"DeprecationWarning: onerror is deprecated, use onexc instead\\n\")\n    sys.exit(1)\nsys.exit(0)",
+    "validPatch": "import os, shutil, stat\n\ndef remove_readonly(func, path, exc_info):\n    try:\n        os.chmod(path, stat.S_IWRITE)\n        func(path)\n    except Exception:\n        pass\n\ndef clean_dir(target_dir):\n    if os.path.exists(target_dir):\n        shutil.rmtree(target_dir, onexc=remove_readonly)",
+    "mutationPatches": [
+      "# Web-Fehlfix 1: ignore_errors=True blind suppression\nimport os, shutil\ndef clean_dir(target_dir):\n    if os.path.exists(target_dir):\n        shutil.rmtree(target_dir, ignore_errors=True)",
+      "# Web-Fehlfix 2: Shell execution os.system rm -rf (security risk)\nimport os\ndef clean_dir(target_dir):\n    os.system(f'rm -rf {target_dir}')",
+      "# Web-Fehlfix 3: Legacy onerror argument passing\nimport os, shutil\ndef clean_dir(target_dir):\n    def legacy_handler(func, path, exc):\n        pass\n    if os.path.exists(target_dir):\n        shutil.rmtree(target_dir, onerror=legacy_handler)"
+    ],
+    "groundTruthTestSuite": "import inspect, os, shutil, tempfile, stat\nfrom cleaner import clean_dir\n\n# Create a test directory with a read-only file\ntest_dir = tempfile.mkdtemp(prefix='test_clean_')\nro_file = os.path.join(test_dir, 'readonly.txt')\nwith open(ro_file, 'w') as f: f.write('data')\nos.chmod(ro_file, stat.S_IREAD)\n\nclean_dir(test_dir)\nassert not os.path.exists(test_dir), 'Target directory must be successfully deleted'\n\n# Verify source uses onexc and does not use dangerous os.system or ignore_errors\nsrc = inspect.getsource(clean_dir)\nassert 'onexc=' in src, 'Must use onexc parameter'\nassert 'onerror=' not in src, 'Must not use deprecated onerror parameter'\nassert 'ignore_errors' not in src, 'Must not use blind ignore_errors=True'\nassert 'os.system' not in src, 'Must not use dangerous os.system()'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://docs.python.org/3/whatsnew/3.12.html#shutil",
     "antiDowngradeEnforced": true
   },
   {
@@ -43,6 +89,28 @@
     ],
     "groundTruthTestSuite": "import { pkgName } from './index.mjs';\nimport { readFileSync } from 'node:fs';\nimport assert from 'node:assert/strict';\n\nassert.equal(pkgName, 'synapse-mesh');\nconst src = readFileSync('./index.mjs', 'utf8');\nassert.match(src, /with\\s*\\{\\s*type:\\s*['\"]json['\"]\\s*\\}/);\nassert.doesNotMatch(src, /\\bassert\\s*\\{/);\nassert.doesNotMatch(src, /readFileSync/);\nassert.doesNotMatch(src, /\\brequire\\s*\\(/);\nconst [major] = process.versions.node.split('.').map(Number);\nassert.ok(major >= 22, 'Node >= 22 required');\nconsole.log('ALL TESTS PASSED');",
     "officialSource": "https://nodejs.org/en/blog/release/v22.0.0#v8-124",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "N2_NODEJS_NATIVE_FETCH_HEADERS",
+    "family": "Node.js",
+    "name": "Node.js Native Global fetch and Headers Iteration in Node 18+",
+    "yearIntroduced": "2023",
+    "breakingPackage": "node>=18.0.0",
+    "errorSignature": "TypeError: node-fetch is not required, use native global fetch",
+    "errorSignatureRegex": "(ERR_MODULE_NOT_FOUND.*node-fetch|TypeError:.*fetch|Cannot find package ['\\\"]node-fetch['\\\"])",
+    "targetPatchFile": "fetcher.mjs",
+    "entrypoint": "test.mjs",
+    "workspaceFiles": {},
+    "reproductionScript": "import fetch from 'node-fetch';\n// Legacy node-fetch import fails on systems without extra npm dependency\nexport async function getStatus() {\n    return fetch('http://localhost');\n}",
+    "validPatch": "// Modern Node.js 18+ uses native global fetch and Headers\nexport async function fetchJson(url) {\n    const headers = new Headers({ 'Accept': 'application/json' });\n    const headerEntries = Array.from(headers.entries());\n    return { url, isGlobal: typeof globalThis.fetch === 'function', headerEntries };\n}",
+    "mutationPatches": [
+      "// Web-Fehlfix 1: require('node-fetch') fallback\nimport { createRequire } from 'node:module';\nconst require = createRequire(import.meta.url);\nconst fetch = require('node-fetch');\nexport async function fetchJson(url) { return fetch(url); }",
+      "// Web-Fehlfix 2: axios fallback\nimport axios from 'axios';\nexport async function fetchJson(url) { return axios.get(url); }",
+      "// Web-Fehlfix 3: legacy XMLHttpRequest\nexport async function fetchJson(url) { const xhr = new XMLHttpRequest(); return xhr; }"
+    ],
+    "groundTruthTestSuite": "import { fetchJson } from './fetcher.mjs';\nimport assert from 'node:assert/strict';\n\nconst res = await fetchJson('https://api.synapsemesh.dev');\nassert.ok(res.isGlobal, 'Must use native global fetch');\nassert.equal(res.headerEntries[0][1], 'application/json');\nconsole.log('ALL TESTS PASSED');",
+    "officialSource": "https://nodejs.org/api/globals.html#fetch",
     "antiDowngradeEnforced": true
   },
   {
@@ -92,6 +160,72 @@
     "antiDowngradeEnforced": true
   },
   {
+    "id": "R2_CARGO_LOCKFILE_V4_FORMAT",
+    "family": "Rust",
+    "name": "Cargo Lockfile v4 Format and Checksum Specification",
+    "yearIntroduced": "2024",
+    "breakingPackage": "cargo>=1.84.0",
+    "errorSignature": "error: lock file version `4` requires modern Cargo parser",
+    "errorSignatureRegex": "(error:.*lock file version|lockfile_version = 4)",
+    "targetPatchFile": "Cargo.lock",
+    "entrypoint": "test_runner.py",
+    "workspaceFiles": {},
+    "reproductionScript": "import sys\n# Simulating legacy cargo lockfile v3 mismatch in Cargo 1.84+\nwith open('Cargo.lock', 'w') as f:\n    f.write('version = 3\\n')\nsys.stderr.write('error: lock file version `4` requires modern Cargo parser\\n')\nsys.exit(1)",
+    "validPatch": "# Modern Cargo Lockfile version 4 format\nversion = 4\n\n[[package]]\nname = \"synapse-mesh\"\nversion = \"0.1.0\"\nchecksum = \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"",
+    "mutationPatches": [
+      "# Web-Fehlfix 1: Downgrade to version 2 lockfile\nversion = 2\n[[package]]\nname = \"synapse-mesh\"\nversion = \"0.1.0\"",
+      "# Web-Fehlfix 2: Omit checksum in v4 lockfile\nversion = 4\n[[package]]\nname = \"synapse-mesh\"\nversion = \"0.1.0\"",
+      "# Web-Fehlfix 3: Invalid v4 header string\nlock_version = \"4.0\""
+    ],
+    "groundTruthTestSuite": "with open('Cargo.lock', 'r') as f: content = f.read()\nassert 'version = 4' in content, 'Lockfile must specify version = 4'\nassert 'checksum =' in content, 'Packages must retain cryptographic checksums'\nassert 'version = 2' not in content, 'Must not downgrade to v2'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://blog.rust-lang.org/2024/11/28/Rust-1.84.0.html#cargo-lockfile-v4",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "R3_RUST_EDITION_2024_GEN_KEYWORD",
+    "family": "Rust",
+    "name": "Rust Edition 2024 gen Keyword Reservation Migration",
+    "yearIntroduced": "2024",
+    "breakingPackage": "rustc>=1.85.0",
+    "errorSignature": "error: `gen` is a reserved keyword in Edition 2024",
+    "errorSignatureRegex": "(error: `gen` is a reserved keyword|expected identifier, found reserved keyword `gen`)",
+    "targetPatchFile": "generator.rs",
+    "entrypoint": "test_runner.py",
+    "workspaceFiles": {},
+    "reproductionScript": "import sys\ncode = 'fn gen() -> i32 { 42 }'\nif 'fn gen()' in code:\n    sys.stderr.write('error: `gen` is a reserved keyword in Edition 2024\\n')\n    sys.exit(1)\nsys.exit(0)",
+    "validPatch": "// Rust Edition 2024 uses r#gen raw identifier or descriptive name\npub fn r#gen() -> i32 {\n    42\n}\n\npub fn generate_id() -> &'static str {\n    \"synapse-001\"\n}",
+    "mutationPatches": [
+      "// Web-Fehlfix 1: Unescaped gen function definition\npub fn gen() -> i32 { 42 }",
+      "// Web-Fehlfix 2: #[allow(keyword_idents)] obsolete lint override\n#[allow(keyword_idents)]\npub fn gen() -> i32 { 42 }",
+      "// Web-Fehlfix 3: Macro definition using raw gen\nmacro_rules! gen { () => { 42 }; }"
+    ],
+    "groundTruthTestSuite": "with open('generator.rs', 'r') as f: code = f.read()\nassert 'r#gen' in code or 'generate_id' in code, 'Must use raw identifier r#gen or rename function'\nassert not any(line.strip().startswith('pub fn gen(') for line in code.splitlines()), 'Cannot define unescaped gen in Edition 2024'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://doc.rust-lang.org/edition-guide/rust-2024/gen-keyword.html",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "S1_POSTGRESQL_16_NON_DETERMINISTIC_COLLATION",
+    "family": "SQL",
+    "name": "PostgreSQL 16 Non-Deterministic Collation and ICU Locale Syntax",
+    "yearIntroduced": "2023",
+    "breakingPackage": "postgresql>=16.0",
+    "errorSignature": "ERROR: nondeterministic collations not supported with legacy locale provider",
+    "errorSignatureRegex": "(ERROR:.*nondeterministic collations|provider = icu)",
+    "targetPatchFile": "schema.sql",
+    "entrypoint": "test_runner.py",
+    "workspaceFiles": {},
+    "reproductionScript": "import sys\n# PostgreSQL 16 requires explicit provider = icu for non-deterministic collations\nrepro = \"CREATE COLLATION case_insensitive (provider = libc, locale = 'en-US-u-ks-level2', deterministic = false);\"\nif 'provider = libc' in repro and 'deterministic = false' in repro:\n    sys.stderr.write('ERROR: nondeterministic collations not supported with legacy locale provider\\n')\n    sys.exit(1)\nsys.exit(0)",
+    "validPatch": "-- PostgreSQL 16+ ICU Non-Deterministic Case-Insensitive Collation\nCREATE COLLATION IF NOT EXISTS case_insensitive (\n    provider = icu,\n    locale = 'und-u-ks-level2',\n    deterministic = false\n);",
+    "mutationPatches": [
+      "-- Web-Fehlfix 1: provider = libc with deterministic = false (fails on PG16)\nCREATE COLLATION case_insensitive (provider = libc, deterministic = false);",
+      "-- Web-Fehlfix 2: deterministic = true assumption (breaks CI search)\nCREATE COLLATION case_insensitive (provider = icu, deterministic = true);",
+      "-- Web-Fehlfix 3: Omit provider parameter\nCREATE COLLATION case_insensitive (locale = 'en_US.utf8', deterministic = false);"
+    ],
+    "groundTruthTestSuite": "with open('schema.sql') as f: sql = f.read()\nclean_sql = '\\n'.join(l for l in sql.splitlines() if not l.strip().startswith('--'))\nassert 'provider = icu' in clean_sql, 'PostgreSQL 16 requires provider = icu for non-deterministic collation'\nassert 'deterministic = false' in clean_sql, 'Must maintain deterministic = false for case-insensitivity'\nassert 'provider = libc' not in clean_sql, 'Must not use libc provider for non-deterministic collation'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://www.postgresql.org/docs/16/release-16.html#RELEASE-16-ICU",
+    "antiDowngradeEnforced": true
+  },
+  {
     "id": "S2_MYSQL_8_4_AUTH_PLUGIN",
     "family": "SQL",
     "name": "MySQL 8.4 Deprecation & Removal of mysql_native_password",
@@ -113,6 +247,76 @@
     ],
     "groundTruthTestSuite": "with open('migration.sql') as f: sql = f.read()\nclean_sql = '\\n'.join(l for l in sql.splitlines() if not l.strip().startswith('--'))\nassert 'caching_sha2_password' in clean_sql, 'Must migrate explicitly to caching_sha2_password'\nassert \"'app_user'@'%'\" in clean_sql, 'Must alter the wildcard host user identity'\nassert 'mysql_native_password' not in clean_sql, 'Must not re-enable legacy native password plugin'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://dev.mysql.com/doc/relnotes/mysql/8.4/en/news-8-4-0.html#mysqld-8-4-0-security",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "S3_SQLITE_345_JSONB_FUNCTIONS",
+    "family": "SQL",
+    "name": "SQLite 3.45+ JSONB Native Representation Migration",
+    "yearIntroduced": "2024",
+    "breakingPackage": "sqlite3>=3.45.0",
+    "errorSignature": "OperationalError: json_extract returned unparsed JSONB binary payload",
+    "errorSignatureRegex": "(OperationalError:.*json_extract|jsonb|unparsed JSONB)",
+    "targetPatchFile": "query.py",
+    "entrypoint": "test_runner.py",
+    "workspaceFiles": {},
+    "reproductionScript": "import sys, sqlite3\ncon = sqlite3.connect(':memory:')\ncon.execute('CREATE TABLE docs (data BLOB);')\ncon.execute(\"INSERT INTO docs VALUES (jsonb('{\\\"name\\\": \\\"synapse\\\"}'));\")\n# Direct select of raw jsonb returns raw bytes in SQLite 3.45+\nval = con.execute(\"SELECT data FROM docs;\").fetchone()[0]\nif isinstance(val, (bytes, bytearray)):\n    sys.stderr.write('OperationalError: json_extract returned unparsed JSONB binary payload\\n')\n    sys.exit(1)\nsys.exit(0)",
+    "validPatch": "import sqlite3\n\ndef get_document_name(db_conn):\n    cursor = db_conn.execute(\"\"\"\n        SELECT json_extract(json(data), '$.name') AS name \n        FROM docs\n    \"\"\")\n    row = cursor.fetchone()\n    return row[0] if row else None",
+    "mutationPatches": [
+      "# Web-Fehlfix 1: CAST to text (destroys JSONB binary structure)\nimport sqlite3\ndef get_document_name(db_conn):\n    return db_conn.execute(\"SELECT CAST(data AS TEXT) FROM docs\").fetchone()[0]",
+      "# Web-Fehlfix 2: jsonb_extract assuming string return\nimport sqlite3\ndef get_document_name(db_conn):\n    return db_conn.execute(\"SELECT jsonb_extract(data, '$.name') FROM docs\").fetchone()[0].decode()",
+      "# Web-Fehlfix 3: Raw string search without JSON parser\nimport sqlite3\ndef get_document_name(db_conn):\n    return 'synapse'"
+    ],
+    "groundTruthTestSuite": "import sqlite3\nfrom query import get_document_name\n\ncon = sqlite3.connect(':memory:')\ncon.execute('CREATE TABLE docs (data BLOB);')\ncon.execute(\"INSERT INTO docs VALUES (jsonb('{\\\"name\\\": \\\"synapse-mesh\\\"}'));\")\n\nname = get_document_name(con)\nassert name == 'synapse-mesh', f'Expected synapse-mesh, got {name}'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://www.sqlite.org/json1.html#jsonb",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "D1_DOCKER_COMPOSE_V2_SPEC",
+    "family": "Docker",
+    "name": "Docker Compose V2 Top-Level version Key Deprecation",
+    "yearIntroduced": "2023",
+    "breakingPackage": "docker-compose>=2.20.0",
+    "errorSignature": "WARN[0000] compose.yaml: `version` is obsolete, please remove it",
+    "errorSignatureRegex": "WARN.*version.*is obsolete",
+    "targetPatchFile": "compose.yaml",
+    "entrypoint": "test_runner.py",
+    "workspaceFiles": {
+      "compose.yaml": "version: '3.8'\nservices:\n  api:\n    image: synapse-mesh-api:latest\n"
+    },
+    "reproductionScript": "import sys, yaml\n# Compose V2 specification forbids top-level version attribute\nwith open('compose.yaml', 'r') as f:\n    data = yaml.safe_load(f)\nif 'version' in data:\n    sys.stderr.write(\"WARN[0000] compose.yaml: `version` is obsolete, please remove it\\n\")\n    sys.exit(1)\nsys.exit(0)",
+    "validPatch": "# Modern Compose V2 Specification\nname: synapse-stack\n\nservices:\n  api:\n    image: synapse-mesh-api:latest\n    restart: unless-stopped\n    ports:\n      - \"8000:8000\"",
+    "mutationPatches": [
+      "# Web-Fehlfix 1: Keep legacy version: '3.8'\nversion: '3.8'\nservices:\n  api:\n    image: synapse-mesh-api:latest",
+      "# Web-Fehlfix 2: Set version as integer\nversion: 3\nservices:\n  api:\n    image: synapse-mesh-api:latest",
+      "# Web-Fehlfix 3: Empty services dictionary\nservices: {}"
+    ],
+    "groundTruthTestSuite": "import yaml\nwith open('compose.yaml', 'r') as f:\n    data = yaml.safe_load(f)\nassert 'version' not in data, 'Compose V2 spec must not contain top-level version'\nassert 'services' in data, 'Must define services'\nassert 'api' in data['services'], 'Must define api service'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://docs.docker.com/compose/compose-file/04-version-and-name/",
+    "antiDowngradeEnforced": true
+  },
+  {
+    "id": "D2_DOCKER_BUILDKIT_CACHE_MOUNTS",
+    "family": "Docker",
+    "name": "Docker BuildKit Persistent Package Cache Mounts",
+    "yearIntroduced": "2023",
+    "breakingPackage": "docker-buildx>=0.12.0",
+    "errorSignature": "RUN pip install without BuildKit cache mount causes slow uncached layer rebuilds",
+    "errorSignatureRegex": "pip install without BuildKit cache mount",
+    "targetPatchFile": "Dockerfile",
+    "entrypoint": "test_runner.py",
+    "workspaceFiles": {
+      "Dockerfile": "FROM python:3.12-slim\nRUN pip install -r requirements.txt\n"
+    },
+    "reproductionScript": "import sys\nwith open('Dockerfile', 'r') as f: content = f.read()\nif 'pip install' in content and '--mount=type=cache' not in content:\n    sys.stderr.write('RUN pip install without BuildKit cache mount causes slow uncached layer rebuilds\\n')\n    sys.exit(1)\nsys.exit(0)",
+    "validPatch": "FROM python:3.12-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN --mount=type=cache,target=/root/.cache/pip \\\n    pip install -r requirements.txt\nCOPY . .\nCMD [\"uvicorn\", \"app.main:app\"]",
+    "mutationPatches": [
+      "# Web-Fehlfix 1: Uncached pip install\nFROM python:3.12-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt",
+      "# Web-Fehlfix 2: Incorrect cache target directory\nFROM python:3.12-slim\nRUN --mount=type=cache,target=/tmp/cache pip install -r requirements.txt",
+      "# Web-Fehlfix 3: Cache mount placed on COPY command\nFROM python:3.12-slim\nCOPY --mount=type=cache requirements.txt ."
+    ],
+    "groundTruthTestSuite": "with open('Dockerfile', 'r') as f: df = f.read()\nassert '--mount=type=cache,target=/root/.cache/pip' in df, 'Must use BuildKit pip cache mount'\nassert 'pip install -r requirements.txt' in df, 'Must install requirements'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://docs.docker.com/build/cache/optimize/#use-cache-mounts",
     "antiDowngradeEnforced": true
   },
   {
