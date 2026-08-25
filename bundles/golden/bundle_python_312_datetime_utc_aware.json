@@ -63,7 +63,7 @@
     "spdxLicense": "MIT",
     "primarySources": [
       "https://docs.python.org/3/whatsnew/3.12.html#deprecated",
-      "https://peps.python.org/pep-0615/"
+      "https://docs.python.org/3/library/datetime.html#datetime.datetime.utcnow"
     ],
     "verifiedAt": "2026-08-25T06:35:00Z"
   }
