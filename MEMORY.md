@@ -48,6 +48,8 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 ---
 
 ## 3. Die Neue Positionierung: Verified Compatibility Layer
+## 3. Die Neue Positionierung: Verified Compatibility Layer
+- **UI-Fix:** `index.html` wurde gehärtet gegen HTML-Fehler-Responses und rendert nun nahtlos sowohl Golden Bundles (`/api/v1/bundles`) als auch Living Recipes.
 Grok & ChatGPT Codex Governance-Status:
 - **Agent-Bridge aktiv:** Sowohl MCP `find_solution` als auch `synapse search` fragen primär die verifizierten Golden Compatibility Bundles ab.
 - **Python-Goldens (HTTPX 0.28, Pydantic v2, FastAPI 0.115 Lifespan, Python 3.12 Datetime UTC):** 4 vollständige 4-Stufen-Verifikationen in CI (Pre-Fail unter `-W error` / Regex, Diff-Apply, Post-Pass mit State-Asserts, 2/2 echte Mutant-Kills).
