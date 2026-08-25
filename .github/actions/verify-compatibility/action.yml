@@ -17,6 +17,14 @@ inputs:
     description: Directory containing preinstalled Node dependencies for Node.js bundles.
     required: false
     default: '.'
+  expected-bundle-sha256:
+    description: Expected lowercase SHA-256 of the exact bundle bytes. Required when bundle is an HTTPS URL.
+    required: false
+    default: ''
+  total-timeout-ms:
+    description: Fail-closed wall-clock budget for the complete verification run.
+    required: false
+    default: '300000'
   attestation-path:
     description: Output path for the unsigned in-toto Statement-shaped verification evidence.
     required: false
@@ -51,8 +59,15 @@ runs:
         INPUT_SCHEMA: ${{ inputs.schema }}
         INPUT_ATTESTATION: ${{ inputs.attestation-path }}
         INPUT_DEPENDENCY_ROOT: ${{ inputs.dependency-root }}
+        INPUT_BUNDLE: ${{ inputs.bundle }}
       run: |
         set -euo pipefail
+        for input_value in "$INPUT_SCHEMA" "$INPUT_ATTESTATION" "$INPUT_DEPENDENCY_ROOT" "$INPUT_BUNDLE"; do
+          if [[ "$input_value" == *$'\n'* || "$input_value" == *$'\r'* ]]; then
+            echo "Path inputs must not contain line breaks." >&2
+            exit 2
+          fi
+        done
         action_root="$(cd "$GITHUB_ACTION_PATH/../../.." && pwd)"
         schema_path="$INPUT_SCHEMA"
         if [[ -z "$schema_path" ]]; then
@@ -75,30 +90,14 @@ runs:
           echo "dependency-root=$dependency_root"
         } >> "$GITHUB_OUTPUT"
 
-    - name: Validate bundle against Compatibility Bundle v1 schema
-      shell: bash
-      env:
-        INPUT_BUNDLE: ${{ inputs.bundle }}
-        VERIFIER: ${{ steps.paths.outputs.verifier }}
-        SCHEMA: ${{ steps.paths.outputs.schema }}
-        ATTESTATION: ${{ steps.paths.outputs.attestation }}
-      run: |
-        set -euo pipefail
-        bundle_source="$INPUT_BUNDLE"
-        if [[ "$bundle_source" != https://* && "$bundle_source" != /* ]]; then
-          bundle_source="$GITHUB_WORKSPACE/$bundle_source"
-        fi
-        node "$VERIFIER" "$bundle_source" \
-          --schema "$SCHEMA" \
-          --validate-only \
-          --attestation "$ATTESTATION"
-
     - id: verify
-      name: Execute pre-fail, patch, post-pass, and mutation gates
+      name: Validate bundle and execute all four verification gates
       shell: bash
       env:
         INPUT_BUNDLE: ${{ inputs.bundle }}
         INPUT_PYTHON: ${{ inputs.python }}
+        EXPECTED_BUNDLE_SHA256: ${{ inputs.expected-bundle-sha256 }}
+        TOTAL_TIMEOUT_MS: ${{ inputs.total-timeout-ms }}
         VERIFIER: ${{ steps.paths.outputs.verifier }}
         SCHEMA: ${{ steps.paths.outputs.schema }}
         ATTESTATION: ${{ steps.paths.outputs.attestation }}
@@ -109,10 +108,24 @@ runs:
         if [[ "$bundle_source" != https://* && "$bundle_source" != /* ]]; then
           bundle_source="$GITHUB_WORKSPACE/$bundle_source"
         fi
+        digest_args=()
+        if [[ "$bundle_source" == https://* && -z "$EXPECTED_BUNDLE_SHA256" ]]; then
+          echo "expected-bundle-sha256 is required for HTTPS bundles." >&2
+          EXPECTED_BUNDLE_SHA256="$(printf '0%.0s' {1..64})"
+        fi
+        if [[ -n "$EXPECTED_BUNDLE_SHA256" ]]; then
+          if [[ ! "$EXPECTED_BUNDLE_SHA256" =~ ^[a-f0-9]{64}$ ]]; then
+            echo "expected-bundle-sha256 must be a lowercase SHA-256 digest." >&2
+            EXPECTED_BUNDLE_SHA256="$(printf '0%.0s' {1..64})"
+          fi
+          digest_args=(--expected-sha256 "$EXPECTED_BUNDLE_SHA256")
+        fi
         node "$VERIFIER" "$bundle_source" \
           --schema "$SCHEMA" \
           --python "$INPUT_PYTHON" \
           --dependency-root "$DEPENDENCY_ROOT" \
+          --total-timeout-ms "$TOTAL_TIMEOUT_MS" \
+          "${digest_args[@]}" \
           --allow-code-execution \
           --attestation "$ATTESTATION"
         verifier_exit=$?

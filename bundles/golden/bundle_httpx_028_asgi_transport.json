@@ -32,14 +32,16 @@
       "anyio": "4.14.2",
       "certifi": "2026.7.22",
       "h11": "0.16.0",
-      "idna": "3.19"
+      "idna": "3.19",
+      "typing-extensions": "4.12.2"
     },
     "doNot": [
       "Do not downgrade HTTPX to restore the removed app shortcut.",
       "Do not pass the ASGI application itself as the transport object.",
       "Do not use synchronous Client with ASGITransport.",
       "Do not omit base_url when the test sends a relative request URL."
-    ]
+    ],
+    "sha256": "2c89515c229bee56e086fa6492d5bbd28d7bb028c1d2bd0701d026ff4377c563"
   },
   "verification": {
     "scriptLanguage": "python",
@@ -64,12 +66,17 @@
     "expectedPostExit": 0,
     "timeoutMs": 30000
   },
+  "integrity": {
+    "algorithm": "sha256",
+    "patchSha256": "2c89515c229bee56e086fa6492d5bbd28d7bb028c1d2bd0701d026ff4377c563",
+    "workspaceSha256": "a4cb816524b5ed5b244d5dea6135b8db64f87f95a5137790a86fb704bf93b0a0"
+  },
   "provenance": {
     "spdxLicense": "MIT",
     "primarySources": [
       "https://github.com/encode/httpx/releases/tag/0.28.0",
       "https://www.python-httpx.org/advanced/transports/#asgi-transport"
     ],
-    "verifiedAt": "2026-08-25T06:05:10Z"
+    "verifiedAt": "2026-08-25T08:01:12Z"
   }
 }

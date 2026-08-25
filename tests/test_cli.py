@@ -1,4 +1,6 @@
 import sys
+import platform
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 import pytest
 
@@ -87,12 +89,31 @@ def test_reverify_rejects_escaping_mutant():
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def _skip_without_exact_python_bundle_environment(data: dict) -> None:
+    """A host-env smoke test is valid only when every declared pin is exact."""
+    mismatches = []
+    expected_runtime = data["scope"]["runtimeVersion"]
+    actual_runtime = platform.python_version()
+    if actual_runtime != expected_runtime:
+        mismatches.append(f"python expected {expected_runtime}, got {actual_runtime}")
+    for package, expected in data["patch"]["pinnedDependencies"].items():
+        try:
+            actual = version(package)
+        except PackageNotFoundError:
+            actual = "unavailable"
+        if actual != expected:
+            mismatches.append(f"{package} expected {expected}, got {actual}")
+    if mismatches:
+        pytest.skip("exact Golden Bundle environment unavailable: " + "; ".join(mismatches))
+
 def test_golden_httpx_bundle_full_4stage_pass():
     """Tests the real Golden Bundle for HTTPX 0.28 ASGITransport."""
     p = BASE_DIR / "bundles/golden/bundle_httpx_028_asgi_transport.json"
     assert p.exists()
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
+    _skip_without_exact_python_bundle_environment(data)
     assert verify_bundle_data(data) is True
 
 
@@ -102,12 +123,13 @@ def test_golden_pydantic_bundle_full_4stage_pass():
     assert p.exists()
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
+    _skip_without_exact_python_bundle_environment(data)
     assert verify_bundle_data(data) is True
 import shutil
 
 def test_golden_nextjs_bundle_schema_and_fixture_structure():
     """Validates the Next.js 15 Golden Bundle structure, workspace files, and multi-mutation declarations.
-    Note: Python-Goldens (HTTPX, Pydantic) execute full 4-stage runtime; Next.js is currently verified at the schema & structure level."""
+    Note: Python Goldens execute here only when the host exactly matches every declared pin; Next.js is checked structurally in this legacy test."""
     p = BASE_DIR / "bundles/golden/bundle_nextjs_15_async_params.json"
     assert p.exists()
     import json

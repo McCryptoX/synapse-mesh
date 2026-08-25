@@ -6,11 +6,14 @@ const path = require('node:path');
 const {
   BundleValidationError,
   VerificationError,
+  assertSupportedNodeRuntime,
   createAttestation,
   loadJsonSource,
   validateBundle,
-  verifySource
+  verifyBundle
 } = require('./index.js');
+
+const DEFAULT_CLI_TOTAL_TIMEOUT_MS = 300_000;
 
 function usage() {
   return [
@@ -24,7 +27,10 @@ function usage() {
     '  --python <executable>    Python interpreter for Python verification scripts.',
     '  --dependency-root <path> Root containing preinstalled Node node_modules.',
     '  --timeout-ms <number>    Cap each phase timeout.',
+    '  --total-timeout-ms <n>   Cap the complete verification run (default: 300000).',
+    '  --expected-sha256 <hex>  Require the exact bundle byte digest (mandatory for HTTPS in the action).',
     '  --keep-workspaces        Preserve temporary workspaces for debugging.',
+    '  --include-output         Include raw phase output in the CLI result (never in attestations).',
     '  --allow-code-execution   Required acknowledgement for executing bundle code.',
     '  --validate-only          Validate JSON and semantics without executing code.',
     '  --help                   Show this help.',
@@ -42,7 +48,10 @@ function parseArguments(argv) {
     pythonBinary: null,
     dependencyRoot: null,
     timeoutMs: null,
+    maxTotalDurationMs: null,
+    expectedBundleSha256: null,
     keepWorkspaces: false,
+    includeOutput: false,
     allowCodeExecution: false,
     validateOnly: false,
     help: false
@@ -52,9 +61,10 @@ function parseArguments(argv) {
     const argument = argv[index];
     if (argument === '--help' || argument === '-h') parsed.help = true;
     else if (argument === '--keep-workspaces') parsed.keepWorkspaces = true;
+    else if (argument === '--include-output') parsed.includeOutput = true;
     else if (argument === '--allow-code-execution') parsed.allowCodeExecution = true;
     else if (argument === '--validate-only') parsed.validateOnly = true;
-    else if (['--schema', '--attestation', '--python', '--dependency-root', '--timeout-ms'].includes(argument)) {
+    else if (['--schema', '--attestation', '--python', '--dependency-root', '--timeout-ms', '--total-timeout-ms', '--expected-sha256'].includes(argument)) {
       const value = argv[index + 1];
       if (!value || value.startsWith('--')) throw new BundleValidationError(`Missing value for ${argument}`);
       index += 1;
@@ -67,6 +77,18 @@ function parseArguments(argv) {
         if (!Number.isInteger(parsed.timeoutMs) || parsed.timeoutMs < 100 || parsed.timeoutMs > 300_000) {
           throw new BundleValidationError('--timeout-ms must be an integer between 100 and 300000');
         }
+      }
+      if (argument === '--total-timeout-ms') {
+        parsed.maxTotalDurationMs = Number(value);
+        if (!Number.isInteger(parsed.maxTotalDurationMs) || parsed.maxTotalDurationMs < 1000 || parsed.maxTotalDurationMs > 900_000) {
+          throw new BundleValidationError('--total-timeout-ms must be an integer between 1000 and 900000');
+        }
+      }
+      if (argument === '--expected-sha256') {
+        if (!/^[a-f0-9]{64}$/.test(value)) {
+          throw new BundleValidationError('--expected-sha256 must be a lowercase SHA-256 digest');
+        }
+        parsed.expectedBundleSha256 = value;
       }
     } else if (argument.startsWith('-')) {
       throw new BundleValidationError(`Unknown option: ${argument}`);
@@ -81,8 +103,9 @@ function parseArguments(argv) {
 
 function writeJson(destination, value) {
   const absolute = path.resolve(destination);
-  fs.mkdirSync(path.dirname(absolute), { recursive: true });
+  fs.mkdirSync(path.dirname(absolute), { recursive: true, mode: 0o700 });
   fs.writeFileSync(absolute, `${JSON.stringify(value, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+  try { fs.chmodSync(absolute, 0o600); } catch { /* POSIX mode hardening is not available on every platform */ }
 }
 
 async function main() {
@@ -108,38 +131,56 @@ async function main() {
   }
 
   let result;
+  let loadedSource = null;
+  const commandDeadlineMs = Date.now() + (args.maxTotalDurationMs || DEFAULT_CLI_TOTAL_TIMEOUT_MS);
   try {
+    assertSupportedNodeRuntime();
+    loadedSource = await loadJsonSource(args.source, { deadlineMs: commandDeadlineMs });
+    if (args.expectedBundleSha256 && loadedSource.sha256 !== args.expectedBundleSha256) {
+      throw new BundleValidationError('Bundle SHA-256 does not match the expected digest');
+    }
+    const schema = args.schemaPath
+      ? (await loadJsonSource(args.schemaPath, { deadlineMs: commandDeadlineMs })).value
+      : null;
+    validateBundle(loadedSource.value, schema);
+    const remainingMs = Math.floor(commandDeadlineMs - Date.now());
+    if (remainingMs <= 0) throw new VerificationError('Total verification time budget exceeded before completion');
     if (args.validateOnly) {
-      const source = await loadJsonSource(args.source);
-      const schema = args.schemaPath ? (await loadJsonSource(args.schemaPath)).value : null;
-      validateBundle(source.value, schema);
       result = {
         verified: false,
         validationOnly: true,
         validationPassed: true,
-        bundleId: source.value.bundleId,
-        bundleVersion: source.value.schemaVersion,
-        bundleSha256: source.sha256,
+        bundleId: loadedSource.value.bundleId,
+        bundleStatus: loadedSource.value.status,
+        bundleVersion: loadedSource.value.schemaVersion,
+        bundleSha256: loadedSource.sha256,
         failureReason: null,
         verifier: { name: '@synapse-mesh/verify', version: '0.1.0' }
       };
     } else {
-      result = await verifySource(args.source, {
-        schemaPath: args.schemaPath,
+      result = await verifyBundle(loadedSource.value, {
+        schema,
+        bundleSha256: loadedSource.sha256,
         allowCodeExecution: true,
         keepWorkspaces: args.keepWorkspaces,
+        includeOutput: args.includeOutput,
         pythonBinary: args.pythonBinary,
         dependencyRoot: args.dependencyRoot,
-        timeoutMs: args.timeoutMs || undefined
+        timeoutMs: args.timeoutMs || undefined,
+        maxTotalDurationMs: remainingMs
       });
     }
   } catch (error) {
+    const candidateBundleId = loadedSource && loadedSource.value && typeof loadedSource.value.bundleId === 'string' &&
+      /^[a-z0-9](?:[a-z0-9._-]{1,126}[a-z0-9])?$/.test(loadedSource.value.bundleId)
+      ? loadedSource.value.bundleId
+      : null;
     result = {
       verified: false,
       validationOnly: Boolean(args.validateOnly),
       validationPassed: false,
-      bundleId: null,
-      bundleSha256: null,
+      bundleId: candidateBundleId,
+      bundleSha256: loadedSource ? loadedSource.sha256 : null,
       failureReason: error.message,
       validationErrors: error instanceof BundleValidationError ? error.errors : [],
       errorType: error instanceof VerificationError || error instanceof BundleValidationError ? error.name : 'UnexpectedError',

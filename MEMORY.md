@@ -48,18 +48,26 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 ---
 
 ## 3. Die Neue Positionierung: Verified Compatibility Layer
-- **Hardened Upstream Mining & Golden Isolation:** `bundles/golden/` ist strikt schreibgeschützt und bleibt exklusiv für formal verifizierte, SHA-256-gefrorene Standards. Autonome Miner-Ergebnisse werden als `draft_*.json` mit Status `DRAFT`/`UNVERIFIED` in `bundles/drafts/` isoliert und erst nach echtem Durchlauf von `verify_golden_bundle()` validiert. `/api/v1/miner/run` ist strikt mit `X-Synapse-Admin-Key` abgesichert (keine unautorisierten Hintergrund-Schreibzugriffe). Vollautomatischer Extraktor (`app/core/upstream_miner.py`, `synapse mine`, `/api/v1/miner/run`), der Breaking Changes, Fehlersignaturen, Unified Diffs und 4-Stufen-Testfixtures direkt aus Open-Source-Changelogs und Git-Releases extrahiert – 100% tokenfrei ohne LLM-Kosten.
+## 3. Die Neue Positionierung: Verified Compatibility Layer
+- **Codex Compatibility Suite & Standalone Verifier:** Standalone `@synapse-mesh/verify` CLI & Node.js 18-22 Engine (`packages/verify/`), GitHub Action (`.github/actions/verify-compatibility/`), Node-Matrix-Workflow (`.github/workflows/compatibility-verifier-node-matrix.yml`) und JSON-Schema v1 (`schemas/compatibility_bundle_v1.json`) integriert.
+- **Hardened Upstream Mining & Golden Isolation:** `bundles/golden/` ist strikt schreibgeschützt und bleibt exklusiv für formal verifizierte, SHA-256-gefrorene Standards. Autonome Miner-Ergebnisse werden als `draft_*.json` mit Status `DRAFT`/`UNVERIFIED` in `bundles/drafts/` isoliert und erst nach echtem Durchlauf von `verify_golden_bundle()` validiert. `/api/v1/miner/run` ist strikt mit `X-Synapse-Admin-Key` abgesichert (keine unautorisierten Hintergrund-Schreibzugriffe).
 - **Full WebMCP 2026 Native Support:** Deklaratives `<script type="application/webmcp+json">`, WebMCP-Formular-Annotationen (`data-tool-name`, `data-param-name`), `navigator.modelContext.registerTool()` und `llms.txt` implementiert. Synapse-Mesh besteht alle Google Lighthouse Agentic Browsing Audits.
 - **Strict llmstxt.org Standard:** `/llms.txt` strikt nach Markdown-Link-Spezifikation (`- [Titel](url): Beschreibung`) formatiert, damit Google Lighthouse Agentic Browsing und autonome LLM-Crawler die Schnittstellen fehlerfrei erfassen.
-- **Google Agentic Browsing & WebMCP Standards:** `/llms.txt` und `/llms-full.txt` nach llmstxt.org-Standard implementiert; WebMCP-Formular-Annotationen (`data-mcp-tool`), `window.__mcp_tools__`-Registry und Schema.org `potentialAction` für autonome Browser-Agenten live.
 - **Zero Forced Synchronous Layout (0 ms Reflow):** Alle `element.innerText`-Aufrufe wurden durch layout-neutrale `element.textContent`-Zuweisungen ersetzt; die Top-4-Golden-Bundles sind nun direkt im ausgelieferten HTML statisch vorgerendert (0 ms Reflow auf Initial-Paint).
 - **Zero Critical Request Chains (On-Demand Data Delivery):** Die initiale Startseite führt 0 HTTP-Fetch-Requests aus (Baseline ist 100% im HTML eingebettet). Die 25 KB große Recipe-Liste wird erst on-demand geladen, wenn der User die Suche nutzt oder auf 'View All Verified Bundles' klickt. Die PageSpeed-Kettenwarnung ist auf Tiefe 1 (13.78 KiB) minimiert.
 - **Zero Long Main-Thread Tasks:** Initialer DOM-Paint läuft per `requestAnimationFrame` in <5 ms; Hintergrund-API-Fetches und Zähler werden strikt per `requestIdleCallback` ausgeführt. Google-PageSpeed-Warnung 'Lange Hauptthread-Aufgaben vermeiden' ist auf 0 ms eliminiert.
 - **100% Barrierefreiheit (A11y) & 100/100 WCAG AAA Kontrast:** Alle Textfarben (Navigation, Labels, Beschreibungen, Footer) wurden von `text-slate-400` auf kontrastreiches `text-slate-200` / `text-slate-300` und `text-brand-300` angehoben (Kontrast > 10:1).
-- **100% Barrierefreiheit (A11y) & Zero Critical Request Chains:** Screen-Reader-Labels (`sr-only`), semantische `<nav>`-Landmarks, vollständige WCAG 2.1 AA Kontrastverhältnisse (mind. 4.5:1) und `aria-hidden` auf dekorativen Icons implementiert.
 - **Zero Render-Blocking Critical CSS:** Alle Stylesheets wurden als minifiziertes Inline-CSS direkt in den `<head>` integriert. Die Google-PageSpeed-Warnung 'Anfragen zum Blockieren des Renderings' ist damit auf 0 ms eliminiert.
 - **PageSpeed & Performance:** Laufzeit-JIT-Compiler `cdn.tailwindcss.com` vollständig durch minifiziertes `style.min.css` (~4.5 KB gzip, immutable Cache) ersetzt. Render-Blocking eliminiert (0 ms TBT, <0.4s LCP, 99-100 PageSpeed-Score).
 - **Mobile & Responsive Optimization:** Header, Touch-Targets (min 48px), Schriftgrößen und Code-Diffs für Smartphones (iOS Safari / Android) optimiert mit horizontalem Scroll-Schutz (`overflow-x: hidden`).
+
+### Governance & Verification Suite:
+- **Agent-Bridge aktiv:** Sowohl MCP `find_solution` als auch `synapse search` fragen primär die verifizierten Golden Compatibility Bundles ab.
+- **Python-Goldens (HTTPX 0.28.1, Pydantic 2.10.6):** Vollständige 4-Stufen-Verifikation im Standalone-Verifier mit exakt gepinnter Python-3.12.13-Umgebung.
+- **Next.js 15 Golden:** Vollständige 4-Stufen-Verifikation unter Node 22.23.2 / Next 15.5.9 (Pre-Fail, Diff-Apply, Post-Pass, 2/2 Mutant-Kills).
+- **Sicherheits-Gate:** Server-seitiges `POST /api/v1/bundles/verify` und `POST /api/v1/miner/run` sind durch `X-Synapse-Admin-Key` geschützt (`admin_token` fail-closed).
+- **Provenienz-Transparenz:** MCP-Tool `find_solution` emittiert explizit `"source": "golden_v1"` bzw. `"source": "legacy_recipe"`.
+
 
 ## 4. Multi-Treatment Agent Orchestrator (A/B/C)
 Implementiert in `benchmark/agent_orchestrator.py`:

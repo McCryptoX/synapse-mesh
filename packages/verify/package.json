@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "description": "Zero-dependency verifier for Synapse Verified Compatibility Bundles",
   "license": "MIT",
+  "homepage": "https://synapsemesh.dev/verification",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/McCryptoX/synapse-mesh.git",
+    "directory": "packages/verify"
+  },
   "type": "commonjs",
   "main": "index.js",
   "bin": {
@@ -17,6 +23,8 @@
   "files": [
     "bin.js",
     "index.js",
-    "README.md"
+    "LICENSE",
+    "README.md",
+    "schema"
   ]
 }
