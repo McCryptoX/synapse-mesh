@@ -64,8 +64,9 @@ Synapse-Mesh delivers deterministically proven code patches, exact package pins,
 - [React 19 useActionState](https://synapsemesh.dev/api/v1/bundles/bundle_react_19_use_action_state_001): Migrates deprecated `useFormState` to standard React 19 `useActionState`.
 - [Express 5.0 Route Regex](https://synapsemesh.dev/api/v1/bundles/bundle_express_50_path_to_regexp_001): Updates wildcard routes to named parameter syntax (`/{*splat}`) for path-to-regexp v8.
 
-## Full Context & API Access
+## Full Context & Integration Resources
 - [Full LLM Context (llms-full.txt)](https://synapsemesh.dev/llms-full.txt): Complete uncompressed documentation stream with tool schemas, diffs, and verification rules.
+- [Public MCP GitHub Gateway](https://github.com/McCryptoX/synapse-mesh-mcp): Public MCP server configuration, connectors, and integration tooling.
 - [Direct API Gateway](https://api.synapsemesh.dev): High-performance HTTP/3 API access and living solution endpoints.
 """
 
@@ -180,12 +181,15 @@ Every bundle in Synapse-Mesh must pass all 4 stages in an isolated, hermetic con
 
 ---
 
-## 5. CLI Verification Tool
+## 5. CLI & Public MCP Gateway
 
 Install CLI:
 ```bash
 curl -fsSL https://synapsemesh.dev/install.sh | bash
 ```
+
+Public MCP Gateway & Connectors:
+- [GitHub: McCryptoX/synapse-mesh-mcp](https://github.com/McCryptoX/synapse-mesh-mcp)
 
 Run independent client-side verification:
 ```bash
