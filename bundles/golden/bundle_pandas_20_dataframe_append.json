@@ -20,21 +20,21 @@
   },
   "fingerprint": {
     "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
-    "regex": "AttributeError:.*'DataFrame' object has no attribute 'append'",
+    "regex": "AttributeError:.*'DataFrame' object has no attribute 'append'\\b",
     "matchStream": "stderr",
     "variants": [
       {
         "target": "DataFrame",
         "attribute": "append",
         "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
-        "regex": "AttributeError:.*'DataFrame' object has no attribute 'append'",
+        "regex": "AttributeError:.*'DataFrame' object has no attribute 'append'\\b",
         "preFailAssertion": "import pandas as pd\ndf = pd.DataFrame({'A': [1]})\nassert not hasattr(df, 'append')\n"
       },
       {
         "target": "Series",
         "attribute": "append",
         "errorSignature": "AttributeError: 'Series' object has no attribute 'append'",
-        "regex": "AttributeError:.*'Series' object has no attribute 'append'",
+        "regex": "AttributeError:.*'Series' object has no attribute 'append'\\b",
         "preFailAssertion": "import pandas as pd\ns = pd.Series([1])\nassert not hasattr(s, 'append')\n"
       }
     ]

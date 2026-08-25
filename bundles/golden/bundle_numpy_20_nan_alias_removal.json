@@ -20,37 +20,37 @@
   },
   "fingerprint": {
     "errorSignature": "AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.",
-    "regex": "AttributeError:.*(no attribute 'NAN'|np\\.NAN.*removed|'NAN')",
+    "regex": "AttributeError:.*(has no attribute 'NAN'|np\\.NAN\\b.*removed|'NAN'\\b)",
     "matchStream": "stderr",
     "variants": [
       {
         "symbol": "NAN",
         "errorSignature": "AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.",
-        "regex": "AttributeError:.*(no attribute 'NAN'|np\\.NAN.*removed|'NAN')",
+        "regex": "AttributeError:.*(has no attribute 'NAN'|np\\.NAN\\b.*removed|'NAN'\\b)",
         "preFailAssertion": "import numpy as np\nassert not hasattr(np, 'NAN')\n"
       },
       {
         "symbol": "NaN",
         "errorSignature": "AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan` instead.",
-        "regex": "AttributeError:.*(no attribute 'NaN'|np\\.NaN.*removed|'NaN')",
+        "regex": "AttributeError:.*(has no attribute 'NaN'|np\\.NaN\\b.*removed|'NaN'\\b)",
         "preFailAssertion": "import numpy as np\nassert not hasattr(np, 'NaN')\n"
       },
       {
         "symbol": "Inf",
         "errorSignature": "AttributeError: `np.Inf` was removed in the NumPy 2.0 release. Use `np.inf` instead.",
-        "regex": "AttributeError:.*(no attribute 'Inf'|np\\.Inf.*removed|'Inf')",
+        "regex": "AttributeError:.*(has no attribute 'Inf'|np\\.Inf\\b.*removed|'Inf'\\b)",
         "preFailAssertion": "import numpy as np\nassert not hasattr(np, 'Inf')\n"
       },
       {
         "symbol": "Infinity",
         "errorSignature": "AttributeError: `np.Infinity` was removed in the NumPy 2.0 release. Use `np.inf` instead.",
-        "regex": "AttributeError:.*(no attribute 'Infinity'|np\\.Infinity.*removed|'Infinity')",
+        "regex": "AttributeError:.*(has no attribute 'Infinity'|np\\.Infinity\\b.*removed|'Infinity'\\b)",
         "preFailAssertion": "import numpy as np\nassert not hasattr(np, 'Infinity')\n"
       },
       {
         "symbol": "infty",
         "errorSignature": "AttributeError: `np.infty` was removed in the NumPy 2.0 release. Use `np.inf` instead.",
-        "regex": "AttributeError:.*(no attribute 'infty'|np\\.infty.*removed|'infty')",
+        "regex": "AttributeError:.*(has no attribute 'infty'|np\\.infty\\b.*removed|'infty'\\b)",
         "preFailAssertion": "import numpy as np\nassert not hasattr(np, 'infty')\n"
       }
     ]

@@ -20,12 +20,12 @@
   },
   "fingerprint": {
     "errorSignature": "LegacyAPIWarning: The Query.get() method is considered legacy in 2.0. Use Session.get() instead.",
-    "regex": "(LegacyAPIWarning|RemovedIn20Warning|AttributeError).*Query\\.get",
+    "regex": "(LegacyAPIWarning|RemovedIn20Warning|AttributeError).*Query\\.get\\b",
     "matchStream": "stderr",
     "variants": [
       {
         "errorSignature": "LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get()",
-        "regex": "(LegacyAPIWarning|RemovedIn20Warning|AttributeError).*Query\\.get",
+        "regex": "(LegacyAPIWarning|RemovedIn20Warning|AttributeError).*Query\\.get\\b",
         "preFailAssertion": "import warnings, sys, sqlalchemy as sa\nwarnings.simplefilter('error', sa.exc.LegacyAPIWarning)\nfrom sqlalchemy.orm import declarative_base, sessionmaker\nBase = declarative_base()\nclass U(Base):\n    __tablename__ = 'u'\n    id = sa.Column(sa.Integer, primary_key=True)\ne = sa.create_engine('sqlite:///:memory:')\nBase.metadata.create_all(e)\nS = sessionmaker(bind=e)()\ntry:\n    S.query(U).get(1)\n    sys.exit(1)\nexcept sa.exc.LegacyAPIWarning:\n    sys.exit(0)\n"
       }
     ]
