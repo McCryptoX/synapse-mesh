@@ -204,6 +204,221 @@ Pin: duckdb>=0.10.0
 Do Not: Do not pass string literals for integer offset arguments in SQL dialect.
 """,
                 "url": "https://github.com/duckdb/duckdb/releases/tag/v0.10.0"
+            },
+            {
+                "package": "openai",
+                "version": "1.0.0",
+                "ecosystem": "pypi",
+                "runtime": "python",
+                "release_notes": """
+# OpenAI Python SDK 1.0.0 Migration
+### Breaking Changes
+- Top-level `openai.ChatCompletion.create()` has been completely removed in 1.0.0.
+- Accessing `openai.ChatCompletion` raises `APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0. Use client.chat.completions.create() instead.`.
+### Migration
+Before:
+```python
+import sys
+class MockOpenAI:
+    class ChatCompletion:
+        @classmethod
+        def create(cls, *args, **kwargs):
+            raise Exception("APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0. Use client.chat.completions.create() instead.")
+openai = MockOpenAI()
+try:
+    openai.ChatCompletion.create(model="gpt-4", messages=[{"role": "user", "content": "hello"}])
+except Exception as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockCompletions:
+    def create(self, *args, **kwargs):
+        return {"choices": [{"message": {"content": "Hello from Synapse Mesh"}}]}
+class MockChat:
+    completions = MockCompletions()
+class MockOpenAIClient:
+    chat = MockChat()
+client = MockOpenAIClient()
+result = client.chat.completions.create(model="gpt-4", messages=[{"role": "user", "content": "hello"}])
+assert "choices" in result
+```
+Pin: openai>=1.0.0,<2.0.0
+Do Not: Do not access legacy openai.ChatCompletion class directly.
+""",
+                "url": "https://github.com/openai/openai-python/discussions/742"
+            },
+            {
+                "package": "langchain",
+                "version": "0.2.0",
+                "ecosystem": "pypi",
+                "runtime": "python",
+                "release_notes": """
+# LangChain 0.2.0 Ecosystem Migration
+### Breaking Changes
+- Chat models are no longer exported from root `langchain.chat_models`.
+- Importing from `langchain.chat_models` raises `LangChainDeprecationWarning: Importing chat models from langchain is deprecated. Please use langchain_openai or langchain_community instead.`.
+### Migration
+Before:
+```python
+import sys
+class MockLangChain:
+    def __getattr__(self, name):
+        if name == "chat_models":
+            raise ImportError("LangChainDeprecationWarning: Importing chat models from langchain is deprecated. Please use langchain_openai or langchain_community instead.")
+        raise AttributeError(name)
+langchain = MockLangChain()
+try:
+    models = langchain.chat_models
+except ImportError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockChatOpenAI:
+    def invoke(self, prompt):
+        return "Model response: OK"
+ChatOpenAI = MockChatOpenAI
+chat = ChatOpenAI()
+result = chat.invoke("hello")
+assert result == "Model response: OK"
+```
+Pin: langchain>=0.2.0, langchain-openai>=0.1.0
+Do Not: Do not import ChatOpenAI or other LLMs from root langchain.chat_models namespace.
+""",
+                "url": "https://python.langchain.com/v0.2/docs/versions/v0_2/"
+            },
+            {
+                "package": "pydantic",
+                "version": "2.0.0",
+                "ecosystem": "pypi",
+                "runtime": "python",
+                "release_notes": """
+# Pydantic V2 Migration Guide
+### Breaking Changes
+- Method `BaseModel.parse_obj()` has been removed in Pydantic V2 in favor of `BaseModel.model_validate()`.
+- Calling `parse_obj` raises `PydanticUserError: The 'parse_obj' method has been removed in Pydantic V2. Use 'model_validate' instead.`.
+### Migration
+Before:
+```python
+import sys
+class MockBaseModel:
+    @classmethod
+    def parse_obj(cls, obj):
+        raise TypeError("PydanticUserError: The 'parse_obj' method has been removed in Pydantic V2. Use 'model_validate' instead.")
+class User(MockBaseModel):
+    pass
+try:
+    User.parse_obj({"id": 1, "name": "Alice"})
+except TypeError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockBaseModel:
+    @classmethod
+    def model_validate(cls, obj):
+        return {"id": obj.get("id"), "name": obj.get("name"), "validated": True}
+class User(MockBaseModel):
+    pass
+result = User.model_validate({"id": 1, "name": "Alice"})
+assert result.get("validated") is True
+```
+Pin: pydantic>=2.0.0,<3.0.0
+Do Not: Do not invoke legacy parse_obj() method on Pydantic v2 data models.
+""",
+                "url": "https://docs.pydantic.dev/latest/migration/"
+            },
+            {
+                "package": "httpx",
+                "version": "0.28.0",
+                "ecosystem": "pypi",
+                "runtime": "python",
+                "release_notes": """
+# HTTPX 0.28.0 Release
+### Breaking Changes
+- The `app=` keyword argument was deprecated and removed from `httpx.AsyncClient`.
+- Passing `app=` directly raises `TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'. Pass transport=ASGITransport(app=app) instead.`.
+### Migration
+Before:
+```python
+import sys
+class MockAsyncClient:
+    def __init__(self, **kwargs):
+        if "app" in kwargs:
+            raise TypeError("TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'. Pass transport=ASGITransport(app=app) instead.")
+try:
+    client = MockAsyncClient(app=object(), base_url="http://test")
+except TypeError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockASGITransport:
+    def __init__(self, app=None):
+        self.app = app
+class MockAsyncClient:
+    def __init__(self, transport=None, base_url=""):
+        self.transport = transport
+        self.base_url = base_url
+transport = MockASGITransport(app=object())
+client = MockAsyncClient(transport=transport, base_url="http://test")
+result = client.base_url
+assert result == "http://test"
+```
+Pin: httpx>=0.28.0,<1.0.0
+Do Not: Do not pass app argument directly into httpx.AsyncClient.
+""",
+                "url": "https://www.python-httpx.org/compatibility/"
+            },
+            {
+                "package": "fastapi",
+                "version": "0.100.0",
+                "ecosystem": "pypi",
+                "runtime": "python",
+                "release_notes": """
+# FastAPI 0.100.0 / Pydantic Settings Migration
+### Breaking Changes
+- `BaseSettings` is no longer re-exported from `pydantic`.
+- Importing `from pydantic import BaseSettings` raises `ImportError: cannot import name 'BaseSettings' from 'pydantic'. In Pydantic V2, BaseSettings is in pydantic_settings package.`.
+### Migration
+Before:
+```python
+import sys
+class MockPydantic:
+    def __getattr__(self, name):
+        if name == "BaseSettings":
+            raise ImportError("ImportError: cannot import name 'BaseSettings' from 'pydantic'. In Pydantic V2, BaseSettings is in pydantic_settings package.")
+        raise AttributeError(name)
+pydantic = MockPydantic()
+try:
+    Settings = pydantic.BaseSettings
+except ImportError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
+```
+After:
+```python
+import sys
+class MockBaseSettings:
+    def __init__(self, app_name="Synapse"):
+        self.app_name = app_name
+BaseSettings = MockBaseSettings
+con = BaseSettings(app_name="Synapse")
+assert con.app_name == "Synapse"
+```
+Pin: fastapi>=0.100.0, pydantic-settings>=2.0.0
+Do Not: Do not import BaseSettings from root pydantic module.
+""",
+                "url": "https://fastapi.tiangolo.com/advanced/settings/"
             }
         ]
 
@@ -214,7 +429,7 @@ class BreakingChangeExtractor:
     @classmethod
     def extract_error_signature(cls, text: str) -> Optional[str]:
         """Extracts exact error signature pattern from changelog text."""
-        match = re.search(r'(?:raise|raises|raising|throw|throws|threw|causes)?\s*`?([A-Za-z0-9_.]*(?:Exception|Error|Warning)[\w\s:()\'".,`\-]+)`?', text, re.IGNORECASE)
+        match = re.search(r'(?:raise|raises|raising|throw|throws|threw|causes)?\s*`?([A-Za-z0-9_.]*(?:Exception|Error|Warning|APIRemoved\w*)[\w\s:()\'".,`\-]+)`?', text, re.IGNORECASE)
         if match:
             sig = match.group(1).strip("`\"' .")
             if len(sig) > 8:
