@@ -174,21 +174,36 @@ async def mcp_json_rpc(request: Request):
             recipes = await search_recipes(search_req)
             
             if not recipes:
-                content_text = f"No verified recipes found in Synapse-Mesh matching query '{search_req.errorSignature}'."
+                content_text = json.dumps({
+                    "status": "NO_RECIPE_FOUND",
+                    "errorSignature": search_req.errorSignature,
+                    "suggestion": "Submit a minimal reproduction to Synapse-Mesh for sandbox verification."
+                }, indent=2)
             else:
-                formatted = []
+                # Ultra-token-dense machine payload (< 800 tokens)
+                payloads = []
                 for r in recipes:
-                    formatted.append(
-                        f"### Verified Recipe: {r.id} (Confidence: {r.evidence.confidenceScore*100:.0f}%)\n"
-                        f"- **Runtime:** {r.problem.runtime}\n"
-                        f"- **Error:** {r.problem.errorSignature}\n"
-                        f"- **Summary:** {r.solution.summary}\n"
-                        f"- **Verification Status:** {r.evidence.verificationStatus} (Sandbox Exit Code {r.evidence.sandboxExitCode})\n"
-                        f"```diff\n{r.solution.codeDiff or 'N/A'}\n```\n"
-                        f"- **Direct Link:** https://synapsemesh.dev/recipes/{r.id}\n"
-                        f"- **Source:** {r.evidence.primarySource or 'Synapse Sandbox'}\n"
-                    )
-                content_text = "\n\n".join(formatted)
+                    payloads.append({
+                        "recipeId": r.id,
+                        "runtime": r.problem.runtime,
+                        "errorSignature": r.problem.errorSignature,
+                        "pinnedDependencies": r.solution.pinnedDependencies or r.problem.packages,
+                        "summary": r.solution.summary,
+                        "diff": r.solution.codeDiff or r.solution.patchDiff,
+                        "doNot": r.solution.doNot,
+                        "reverify": {
+                            "testSuite": r.reproduction.testSuite
+                        },
+                        "evidence": {
+                            "status": r.evidence.verificationStatus,
+                            "preExit": r.evidence.preExit,
+                            "postExit": r.evidence.postExit,
+                            "mutationsKilled": r.evidence.mutationsKilled,
+                            "confidence": r.evidence.confidenceScore
+                        },
+                        "canonicalUrl": f"https://synapsemesh.dev/recipes/{r.id}"
+                    })
+                content_text = json.dumps(payloads if len(payloads) > 1 else payloads[0], indent=2)
 
             return {
                 "jsonrpc": "2.0",
