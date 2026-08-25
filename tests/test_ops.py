@@ -13,7 +13,7 @@ async def test_ops_unauthenticated_login_page():
         response = await client.get("/ops")
         assert response.status_code == 200
         assert "Ops Observatory Access" in response.text
-        assert "Passwort oder Access Key" in response.text
+        assert "Password or Access Key" in response.text
 
 
 @pytest.mark.asyncio
@@ -40,7 +40,7 @@ async def test_ops_login_invalid_password():
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.post("/ops/login", data={"password": "wrong_password"})
         assert response.status_code == 401
-        assert "Ungültiges Passwort" in response.text
+        assert "Invalid password" in response.text
 
 
 @pytest.mark.asyncio

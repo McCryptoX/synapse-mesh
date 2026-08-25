@@ -81,18 +81,18 @@
     <div class="login-card">
         <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔒</div>
         <h1 style="font-size: 1.25rem; font-weight: 800; color: #fff; letter-spacing: -0.02em;">Ops Observatory Access</h1>
-        <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">Authentifiziere dich für Zugriff auf Pipeline-Telemetrie und Sandbox-Steuerung.</p>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">Authenticate to access pipeline telemetry and sandbox verification controls.</p>
 
         <form action="/ops/login" method="POST" style="margin-top: 1.5rem;">
             {% if error %}
             <div class="error-msg">{{ error }}</div>
             {% endif %}
-            <input type="password" name="password" placeholder="Passwort oder Access Key..." required autofocus class="input-field">
-            <button type="submit" class="btn-submit">Entsperren &rarr;</button>
+            <input type="password" name="password" placeholder="Password or Access Key..." required autofocus class="input-field">
+            <button type="submit" class="btn-submit">Unlock Dashboard &rarr;</button>
         </form>
         
         <div style="margin-top: 1.5rem;">
-            <a href="/" style="font-size: 0.75rem; color: #64748b; font-family: ui-monospace, monospace; text-decoration: underline;">&larr; Zur&uuml;ck zur Startseite</a>
+            <a href="/" style="font-size: 0.75rem; color: #64748b; font-family: ui-monospace, monospace; text-decoration: underline;">&larr; Back to Public Registry</a>
         </div>
     </div>
 </body>

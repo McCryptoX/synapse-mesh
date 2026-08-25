@@ -174,7 +174,7 @@ async def ops_login(request: Request, password: str = Form(...)):
             resp.set_cookie(COOKIE_NAME, password.strip(), max_age=86400 * 30, httponly=True, samesite="lax")
             return resp
         template = jinja_env.get_template("ops_login.html")
-        return HTMLResponse(template.render(error="Ungültiges Passwort. Bitte erneut versuchen."), status_code=401)
+        return HTMLResponse(template.render(error="Invalid password. Please try again."), status_code=401)
     finally:
         await db.close()
 
@@ -190,13 +190,13 @@ async def ops_change_password(
     db = await get_db_connection()
     try:
         if not await is_authenticated(request, db) or not await verify_ops_password(db, current_password):
-            return RedirectResponse(url="/ops?err=Aktuelles+Passwort+ist+ungueltig", status_code=303)
+            return RedirectResponse(url="/ops?err=Current+password+is+invalid", status_code=303)
 
         if new_password != confirm_password:
-            return RedirectResponse(url="/ops?err=Die+neuen+Passwoerter+stimmen+nicht+ueberein", status_code=303)
+            return RedirectResponse(url="/ops?err=New+passwords+do+not+match", status_code=303)
 
         if len(new_password.strip()) < 6:
-            return RedirectResponse(url="/ops?err=Das+neue+Passwort+muss+mindestens+6+Zeichen+lang+sein", status_code=303)
+            return RedirectResponse(url="/ops?err=New+password+must+be+at+least+6+characters+long", status_code=303)
 
         # Store hashed new password in database
         new_hash = hash_ops_password(new_password)
@@ -208,7 +208,7 @@ async def ops_change_password(
         await db.commit()
 
         # Update session cookie to new password
-        resp = RedirectResponse(url="/ops?msg=Passwort+erfolgreich+gekuerzt+und+gespeichert", status_code=303)
+        resp = RedirectResponse(url="/ops?msg=Password+successfully+updated", status_code=303)
         resp.set_cookie(COOKIE_NAME, new_password.strip(), max_age=86400 * 30, httponly=True, samesite="lax")
         return resp
     finally:
