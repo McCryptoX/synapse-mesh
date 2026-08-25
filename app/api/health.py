@@ -139,6 +139,7 @@ async def health_check():
 
 
 @router.get("/benchmark", tags=["Architecture"], response_class=HTMLResponse)
+@router.head("/benchmark", tags=["Architecture"])
 async def benchmark_page():
     if BENCHMARK_HTML_PATH.exists():
         with open(BENCHMARK_HTML_PATH, "r", encoding="utf-8") as f:
@@ -146,7 +147,9 @@ async def benchmark_page():
     return HTMLResponse("<h1>Benchmark Dashboard</h1>")
 
 @router.get("/verification", tags=["Architecture"], response_class=HTMLResponse)
+@router.head("/verification", tags=["Architecture"])
 @router.get("/architecture", tags=["Architecture"], response_class=HTMLResponse)
+@router.head("/architecture", tags=["Architecture"])
 async def verification_page():
     if VERIFICATION_HTML_PATH.exists():
         with open(VERIFICATION_HTML_PATH, "r", encoding="utf-8") as f:
@@ -155,6 +158,7 @@ async def verification_page():
 
 
 @router.get("/legal", tags=["Legal"], response_class=HTMLResponse)
+@router.head("/legal", tags=["Legal"])
 async def legal_page():
     if LEGAL_HTML_PATH.exists():
         with open(LEGAL_HTML_PATH, "r", encoding="utf-8") as f:
@@ -163,6 +167,7 @@ async def legal_page():
 
 
 @router.get("/privacy", tags=["Legal"], response_class=HTMLResponse)
+@router.head("/privacy", tags=["Legal"])
 async def privacy_page():
     if PRIVACY_HTML_PATH.exists():
         with open(PRIVACY_HTML_PATH, "r", encoding="utf-8") as f:
