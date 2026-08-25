@@ -69,5 +69,37 @@
       "https://www.starlette.io/lifespan/"
     ],
     "verifiedAt": "2026-08-25T06:30:00Z"
+  },
+  "isolationProfile": {
+    "verificationProfile": "synapse-kernel-v1",
+    "isolationStatus": "ATTESTED",
+    "attestedAt": "2026-08-25T21:50:00Z",
+    "observedMetrics": {
+      "pidNamespace": true,
+      "ipcNamespace": true,
+      "network": "none",
+      "rootFs": "read-only",
+      "backendMountsVisible": false,
+      "dockerSocketPresent": false,
+      "noNewPrivs": true,
+      "seccompMode": 2,
+      "effectiveCapabilities": "0x0000000000000000",
+      "privateTmpfs": true,
+      "blockedSyscalls": ["mount", "ptrace", "bpf", "setns", "unshare", "raw_socket"]
+    },
+    "observedCgroup": {
+      "memoryMaxBytes": 536870912,
+      "memorySwapMaxBytes": 0,
+      "pidsMax": 64,
+      "cpuMax": "100000 100000"
+    },
+    "configuredPolicy": {
+      "seccompProfile": "synapse-v1",
+      "seccompProfileDigest": "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
+      "memoryLimitBytes": 536870912,
+      "tmpfsLimitBytes": 33554432,
+      "pidsLimit": 64,
+      "cpuLimitSeconds": 10
+    }
   }
 }

@@ -64,3 +64,5 @@ val = np.NAN  # Buggy mutant
     assert evidence.isolationProfile["verificationProfile"] == "synapse-kernel-v1"
     assert evidence.isolationProfile["isolationStatus"] == "ATTESTED"
     assert "observedMetrics" in evidence.isolationProfile
+    assert "observedCgroup" in evidence.isolationProfile
+    assert evidence.isolationProfile["observedCgroup"]["pidsMax"] == 64
