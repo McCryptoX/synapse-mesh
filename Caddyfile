@@ -1,3 +1,9 @@
+{
+    log {
+        output discard
+    }
+}
+
 # ==============================================================================
 # SYNAPSE-MESH ZERO-PII / ZERO-LOG CADDY CONFIGURATION (GDPR / DSGVO COMPLIANT)
 # ==============================================================================
@@ -19,6 +25,14 @@
 (zero_log) {
     log {
         output discard
+    }
+}
+
+# Explicit drop for direct IP access and scanner bots
+http://217.160.170.209, https://217.160.170.209 {
+    import zero_log
+    respond "Access Denied: Use official domain name" 403 {
+        close
     }
 }
 
