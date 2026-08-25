@@ -275,86 +275,151 @@
         </div>
     </footer>
 
-    <!-- JavaScript for Live Search, Tabs & Stats -->
+        <!-- JavaScript for Live Search, Tabs & Stats -->
     <script>
-        let allItems = [];
+        // Pre-bundled baseline for instant zero-latency render (works behind corporate firewalls / offline)
+        const EMBEDDED_GOLDEN_BUNDLES = [
+            {
+                id: "bundle_httpx_028_asgi_transport_001",
+                isGolden: true,
+                runtime: "python",
+                errorSignature: "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",
+                summary: "HTTPX 0.28 removes the AsyncClient app shortcut; explicit ASGITransport is required for in-process ASGI testing.",
+                diff: "--- a/client.py\n+++ b/client.py\n@@ -16,7 +16,8 @@\n-    async with httpx.AsyncClient(app=app, base_url=\"http://testserver\") as client:\n+    transport = httpx.ASGITransport(app=app)\n+    async with httpx.AsyncClient(transport=transport, base_url=\"http://testserver\") as client:\n         return await client.get(\"/health\")",
+                pins: {"httpx": "0.28.1"},
+                doNot: ["Do not pin httpx<0.28 indefinitely", "Do not instantiate ASGITransport without app kwarg"],
+                status: "VERIFIED",
+                reverify: "synapse reverify bundle_httpx_028_asgi_transport_001"
+            },
+            {
+                id: "bundle_pydantic_v2_model_validator_001",
+                isGolden: true,
+                runtime: "python",
+                errorSignature: "PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated.",
+                summary: "Pydantic v2 replaces root_validator with @model_validator(mode='before') that preserves and returns raw input.",
+                diff: "--- a/user_model.py\n+++ b/user_model.py\n@@ -4,4 +4,4 @@\n-    @root_validator(pre=True)\n+    @model_validator(mode=\"before\")\n+    @classmethod",
+                pins: {"pydantic": ">=2.0.0, <3.0.0"},
+                doNot: ["Do not silence warning with root_validator", "Do not drop transformed input"],
+                status: "VERIFIED",
+                reverify: "synapse reverify bundle_pydantic_v2_model_validator_001"
+            },
+            {
+                id: "bundle_fastapi_0115_lifespan_context_001",
+                isGolden: true,
+                runtime: "python",
+                errorSignature: "DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.",
+                summary: "FastAPI 0.100+ deprecates @app.on_event in favor of async context manager lifespan handlers.",
+                diff: "--- a/server.py\n+++ b/server.py\n@@ -5,6 +5,6 @@\n-@app.on_event(\"startup\")\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):",
+                pins: {"fastapi": ">=0.100.0", "starlette": ">=0.27.0"},
+                doNot: ["Do not retain @app.on_event alongside lifespan", "Do not omit yield in lifespan"],
+                status: "VERIFIED",
+                reverify: "synapse reverify bundle_fastapi_0115_lifespan_context_001"
+            },
+            {
+                id: "bundle_python_312_datetime_utc_aware_001",
+                isGolden: true,
+                runtime: "python",
+                errorSignature: "DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.",
+                summary: "Python 3.12+ deprecates naive datetime.utcnow() in favor of timezone-aware datetime.now(timezone.utc).",
+                diff: "--- a/timestamps.py\n+++ b/timestamps.py\n@@ -4,2 +4,2 @@\n-    return datetime.utcnow()\n+    return datetime.now(timezone.utc)",
+                pins: {"python": ">=3.12.0"},
+                doNot: ["Do not return naive datetime.now()", "Do not silence warning without timezone.utc"],
+                status: "VERIFIED",
+                reverify: "synapse reverify bundle_python_312_datetime_utc_aware_001"
+            }
+        ];
+
+        let allItems = [...EMBEDDED_GOLDEN_BUNDLES];
         let activeRuntime = 'all';
         let showAll = false;
         const INITIAL_LIMIT = 6;
 
         async function loadStats() {
             try {
-                const res = await fetch('/api/v1/recipes/stats');
+                const res = await fetch('/api/v1/recipes/stats?_t=' + Date.now(), {
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
                 if (!res.ok) return;
                 const contentType = res.headers.get("content-type") || "";
                 if (!contentType.includes("json")) return;
                 const data = await res.json();
-                document.getElementById('stat-verified-count').innerText = data.verifiedRecipes || '70';
+                document.getElementById('stat-verified-count').innerText = data.verifiedRecipes || '74';
                 const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 95;
                 document.getElementById('stat-pass-rate').innerText = passRate + '%';
                 
                 if (data.runtimes) {
-                    document.getElementById('count-all').innerText = data.verifiedRecipes || '70';
+                    document.getElementById('count-all').innerText = data.verifiedRecipes || '74';
                     document.getElementById('count-python').innerText = data.runtimes.python || '45';
-                    document.getElementById('count-nodejs').innerText = data.runtimes.nodejs || '22';
+                    document.getElementById('count-nodejs').innerText = data.runtimes.nodejs || '26';
                     document.getElementById('count-docker').innerText = data.runtimes.docker || '3';
                 }
             } catch(e) {
-                console.warn("Could not load real-time stats:", e);
+                console.warn("Real-time stats notice:", e);
             }
         }
 
         async function fetchAllData() {
-            allItems = [];
-            const results = [];
+            const results = [...EMBEDDED_GOLDEN_BUNDLES];
 
-            // 1. Fetch Golden Compatibility Bundles
+            // 1. Fetch Golden Compatibility Bundles with cache-busting
             try {
-                const resBundles = await fetch('/api/v1/bundles');
+                const resBundles = await fetch('/api/v1/bundles?_t=' + Date.now(), {
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
                 if (resBundles.ok && (resBundles.headers.get("content-type") || "").includes("json")) {
                     const bundles = await resBundles.json();
-                    bundles.forEach(b => {
-                        results.push({
-                            id: b.bundleId,
-                            isGolden: true,
-                            runtime: (b.scope && b.scope.runtime) || 'python',
-                            errorSignature: (b.fingerprint && b.fingerprint.errorSignature) || b.bundleId,
-                            summary: b.description || '',
-                            diff: (b.patch && b.patch.unifiedDiff) || '',
-                            pins: (b.patch && b.patch.pinnedDependencies) || {},
-                            doNot: (b.patch && b.patch.doNot) || [],
-                            status: b.status || 'VERIFIED',
-                            reverify: `synapse reverify ${b.bundleId}`
+                    if (Array.isArray(bundles) && bundles.length > 0) {
+                        results.length = 0; // Clear fallback to use live server bundles
+                        bundles.forEach(b => {
+                            results.push({
+                                id: b.bundleId,
+                                isGolden: true,
+                                runtime: (b.scope && b.scope.runtime) || 'python',
+                                errorSignature: (b.fingerprint && b.fingerprint.errorSignature) || b.bundleId,
+                                summary: b.description || '',
+                                diff: (b.patch && b.patch.unifiedDiff) || '',
+                                pins: (b.patch && b.patch.pinnedDependencies) || {},
+                                doNot: (b.patch && b.patch.doNot) || [],
+                                status: b.status || 'VERIFIED',
+                                reverify: `synapse reverify ${b.bundleId}`
+                            });
                         });
-                    });
+                    }
                 }
             } catch (e) {
-                console.warn("Golden bundles fetch note:", e);
+                console.warn("Live bundles fetch notice:", e);
             }
 
-            // 2. Fetch Living Recipes Store
+            // 2. Fetch Living Recipes Store with cache-busting
             try {
-                const resRecipes = await fetch('/api/v1/recipes?limit=100');
+                const resRecipes = await fetch('/api/v1/recipes?limit=100&_t=' + Date.now(), {
+                    cache: 'no-store',
+                    headers: { 'Accept': 'application/json' }
+                });
                 if (resRecipes.ok && (resRecipes.headers.get("content-type") || "").includes("json")) {
                     const recipes = await resRecipes.json();
-                    recipes.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED').forEach(r => {
-                        results.push({
-                            id: r.id,
-                            isGolden: false,
-                            runtime: (r.problem && r.problem.runtime) || 'python',
-                            errorSignature: (r.problem && r.problem.errorSignature) || r.id,
-                            summary: (r.solution && r.solution.summary) || '',
-                            diff: (r.solution && (r.solution.codeDiff || r.solution.patchDiff)) || '',
-                            pins: (r.solution && r.solution.pinnedDependencies) || (r.problem && r.problem.packages) || {},
-                            doNot: (r.solution && r.solution.doNot) || [],
-                            status: r.evidence ? r.evidence.verificationStatus : 'VERIFIED',
-                            reverify: `synapse reverify ${r.id}`,
-                            detailUrl: `/recipes/${r.id}`
+                    if (Array.isArray(recipes)) {
+                        recipes.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED').forEach(r => {
+                            results.push({
+                                id: r.id,
+                                isGolden: false,
+                                runtime: (r.problem && r.problem.runtime) || 'python',
+                                errorSignature: (r.problem && r.problem.errorSignature) || r.id,
+                                summary: (r.solution && r.solution.summary) || '',
+                                diff: (r.solution && (r.solution.codeDiff || r.solution.patchDiff)) || '',
+                                pins: (r.solution && r.solution.pinnedDependencies) || (r.problem && r.problem.packages) || {},
+                                doNot: (r.solution && r.solution.doNot) || [],
+                                status: r.evidence ? r.evidence.verificationStatus : 'VERIFIED',
+                                reverify: `synapse reverify ${r.id}`,
+                                detailUrl: `/recipes/${r.id}`
+                            });
                         });
-                    });
+                    }
                 }
             } catch (e) {
-                console.warn("Recipes fetch note:", e);
+                console.warn("Live recipes fetch notice:", e);
             }
 
             allItems = results;
@@ -364,11 +429,13 @@
         function filterRuntime(rt) {
             activeRuntime = rt;
             ['all', 'python', 'nodejs', 'docker'].forEach(k => {
-                const btn = document.getElementById(`tab-${k}`);
-                if (k === rt) {
-                    btn.className = "px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition";
-                } else {
-                    btn.className = "px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+                const btn = document.getElementById('tab-' + k);
+                if (btn) {
+                    if (k === rt) {
+                        btn.className = "px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition";
+                    } else {
+                        btn.className = "px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+                    }
                 }
             });
             renderItems();
@@ -377,13 +444,17 @@
         function toggleShowAll() {
             showAll = !showAll;
             const btn = document.getElementById('showAllBtn');
-            btn.innerText = showAll ? 'Show Fewer Bundles ↑' : `View All Verified Bundles (${allItems.length}) ↓`;
+            if (btn) {
+                btn.innerText = showAll ? 'Show Fewer Bundles ↑' : 'View All Verified Bundles (' + allItems.length + ') ↓';
+            }
             renderItems();
         }
 
         function renderItems() {
             const container = document.getElementById('resultsContainer');
-            const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+            if (!container) return;
+            const inputEl = document.getElementById('searchInput');
+            const query = (inputEl && inputEl.value ? inputEl.value : '').toLowerCase().trim();
 
             let filtered = allItems;
             if (activeRuntime !== 'all') {
@@ -402,12 +473,14 @@
             const displayed = (showAll || query) ? filtered : filtered.slice(0, INITIAL_LIMIT);
 
             if (displayed.length === 0) {
-                container.innerHTML = `<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No verified bundles matching your criteria.</div>`;
-                document.getElementById('paginationContainer').style.display = 'none';
+                container.innerHTML = '<div class="p-6 text-center text-slate-500 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No verified compatibility bundles matching your criteria.</div>';
+                const pag = document.getElementById('paginationContainer');
+                if (pag) pag.style.display = 'none';
                 return;
             }
 
-            document.getElementById('paginationContainer').style.display = query ? 'none' : 'block';
+            const pag = document.getElementById('paginationContainer');
+            if (pag) pag.style.display = query ? 'none' : 'block';
 
             container.innerHTML = displayed.map(r => `
                 <div class="p-5 rounded-xl border ${r.isGolden ? 'border-brand-500/40 bg-slate-900/70 shadow-lg' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 transition space-y-3">
@@ -446,14 +519,17 @@
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         let debounceTimer;
-        document.getElementById('searchInput').addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(renderItems, 150);
-        });
+        const searchInputEl = document.getElementById('searchInput');
+        if (searchInputEl) {
+            searchInputEl.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(renderItems, 150);
+            });
+        }
 
         function copyMcpConfig() {
             const config = JSON.stringify({
@@ -465,10 +541,14 @@
             }, null, 2);
             navigator.clipboard.writeText(config);
             const text = document.getElementById('copyText');
-            text.innerText = '✓ Copied!';
-            setTimeout(() => { text.innerText = '📋 Copy'; }, 2000);
+            if (text) {
+                text.innerText = '✓ Copied!';
+                setTimeout(() => { text.innerText = '📋 Copy'; }, 2000);
+            }
         }
 
+        // Instant render from embedded data, then asynchronously enhance with live API data
+        renderItems();
         loadStats();
         fetchAllData();
     </script>
