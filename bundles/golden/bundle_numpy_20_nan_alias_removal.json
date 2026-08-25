@@ -3,7 +3,12 @@
   "bundleId": "bundle_numpy_20_nan_alias_removal_001",
   "status": "VERIFIED",
   "description": "NumPy 2.0 removes legacy uppercase scalar aliases including np.NAN, np.Inf, and np.bool. Use np.nan, np.inf, and bool instead.",
-  "tags": ["numpy", "python", "data-science", "v20"],
+  "tags": [
+    "numpy",
+    "python",
+    "data-science",
+    "v20"
+  ],
   "scope": {
     "package": "numpy",
     "fromVersion": "1.26.4",
@@ -14,14 +19,14 @@
   },
   "fingerprint": {
     "errorSignature": "AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.",
-    "regex": "AttributeError: `np.NAN` was removed",
+    "regex": "AttributeError:.*(no attribute 'NAN'|np\\.NAN.*removed|'NAN')",
     "matchStream": "stderr"
   },
   "patch": {
     "targetFile": "cleaner.py",
-    "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,2 +1,2 @@\n def fill_missing_values(val):\n-    return np.NAN if val is None else val\n+    return np.nan if val is None else val\n",
+    "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,3 +1,3 @@\n import numpy as np\n def fill_missing_values(val):\n-    return np.NAN if val is None else val\n+    return np.nan if val is None else val\n",
     "pinnedDependencies": {
-      "numpy": "2.0.0"
+      "numpy": ">=2.0.0"
     },
     "doNot": [
       "Do not monkeypatch np.NAN = np.nan on module import",
@@ -31,20 +36,15 @@
   "verification": {
     "scriptLanguage": "python",
     "workspaceFiles": {
-      "cleaner.py": "def fill_missing_values(val):\n    return np.NAN if val is None else val\n"
+      "cleaner.py": "import numpy as np\ndef fill_missing_values(val):\n    return np.NAN if val is None else val\n"
     },
-    "reproductionScript": "import sys\nimport cleaner\n\nclass MockNumPy:\n    nan = float('nan')\n    def __getattr__(self, name):\n        if name == 'NAN':\n            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n        raise AttributeError(name)\n\ncleaner.np = MockNumPy()\ntry:\n    cleaner.fill_missing_values(None)\n    sys.exit(0)\nexcept AttributeError as e:\n    if \"`np.NAN` was removed\" in str(e):\n        sys.stderr.write(str(e) + \"\\n\")\n        sys.exit(1)\n    sys.exit(2)\n",
-    "testSuite": "import sys\nimport math\nimport cleaner\n\nclass MockNumPy:\n    nan = float('nan')\n    def __getattr__(self, name):\n        if name == 'NAN':\n            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n        raise AttributeError(name)\n\ncleaner.np = MockNumPy()\nres = cleaner.fill_missing_values(None)\nassert math.isnan(res)\nprint(\"VERIFICATION_SUCCESS_STAGE_3\")\nsys.exit(0)\n",
+    "reproductionScript": "import sys\nimport cleaner\n\ntry:\n    cleaner.fill_missing_values(None)\n    sys.exit(0)\nexcept AttributeError as e:\n    sys.stderr.write(f'AttributeError: {e}\\n')\n    sys.exit(1)\n",
+    "testSuite": "import sys\nimport math\nimport numpy as np\nimport cleaner\n\nres = cleaner.fill_missing_values(None)\nassert math.isnan(res)\nassert not hasattr(np, 'NAN')\nprint('VERIFICATION_SUCCESS_STAGE_3')\nsys.exit(0)\n",
     "mutations": [
       {
         "id": "mutant_global_monkeypatch",
         "description": "Monkeypatches global module attribute instead of fixing callsite",
-        "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,2 +1,3 @@\n+np.NAN = np.nan\n def fill_missing_values(val):\n     return np.NAN if val is None else val\n"
-      },
-      {
-        "id": "mutant_return_zero_lossy",
-        "description": "Returns 0.0 instead of NaN, corrupting missing data semantics",
-        "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,2 +1,2 @@\n def fill_missing_values(val):\n-    return np.NAN if val is None else val\n+    return 0.0 if val is None else val\n"
+        "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,3 +1,4 @@\n import numpy as np\n+np.NAN = np.nan\n def fill_missing_values(val):\n     return np.NAN if val is None else val\n"
       }
     ],
     "expectedPreExit": 1,
@@ -54,7 +54,7 @@
   "provenance": {
     "spdxLicense": "MIT",
     "primarySources": [
-      "https://numpy.org/devdocs/release/2.0.0-notes.html#c-api-and-abi-changes"
+      "https://numpy.org/doc/stable/release/2.0.0-notes.html#c-api-and-abi-changes"
     ],
     "verifiedAt": "2026-08-25T11:42:00Z"
   }

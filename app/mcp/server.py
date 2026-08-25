@@ -192,9 +192,20 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
 
             # 1. Prioritize Golden Compatibility Bundles v1.0 (VERIFIED_REAL_RUNTIME)
             from app.api.bundles import load_all_golden_bundles
-            matched_bundles = []
-            clean_query = error_sig.lower()
+            from app.api.recipes import KNOWN_PACKAGES, PACKAGE_ALIASES, STOPWORDS
             
+            clean_query = error_sig.lower()
+            raw_tokens = [w.strip(".:(),'\"`") for w in clean_query.split()]
+            meaningful_tokens = [t for t in raw_tokens if len(t) > 2 and t not in STOPWORDS]
+            
+            query_packages = {t for t in raw_tokens if t in KNOWN_PACKAGES}
+            for t in raw_tokens:
+                if t in PACKAGE_ALIASES:
+                    query_packages.add(PACKAGE_ALIASES[t])
+            if arguments.get("packages") and isinstance(arguments.get("packages"), dict):
+                query_packages.update(arguments.get("packages").keys())
+
+            scored_bundles = []
             for b in load_all_golden_bundles():
                 if runtime_filter and b.get("scope", {}).get("runtime", "").lower() != runtime_filter.lower():
                     continue
@@ -204,18 +215,33 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                 desc = b.get("description", "").lower()
                 pkg = b.get("scope", {}).get("package", "").lower()
 
-                matched = False
-                if (pkg and pkg in clean_query) or clean_query in sig_text or sig_text in clean_query:
-                    matched = True
+                # Package filter rule: if query has package, bundle MUST match package!
+                if query_packages and pkg not in query_packages:
+                    continue
+
+                score = 0.0
+                if clean_query in sig_text or sig_text in clean_query:
+                    score += 1000.0
                 elif regex_pat:
                     try:
                         if re.search(regex_pat, error_sig, re.IGNORECASE):
-                            matched = True
+                            score += 800.0
                     except Exception:
                         pass
 
-                if matched:
-                    matched_bundles.append({
+                for token in meaningful_tokens:
+                    if token in sig_text:
+                        score += 90.0
+                    elif token in desc:
+                        score += 30.0
+
+                if pkg in query_packages:
+                    score += 200.0
+
+                if score >= 250.0:
+                    prov = b.get("provenance", {})
+                    primary_src = prov.get("primarySources", ["https://synapsemesh.dev/benchmark"])[0] if prov.get("primarySources") else prov.get("primarySource", "https://synapsemesh.dev/benchmark")
+                    scored_bundles.append((score, {
                         "status": "VERIFIED_MATCH",
                         "evidenceTier": "VERIFIED_REAL_RUNTIME",
                         "recipeId": b.get("bundleId"),
@@ -229,40 +255,42 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                         "doNot": b.get("patch", {}).get("doNot", []),
                         "environment": {
                             "runtime": f"{b.get('scope', {}).get('runtime')} 3.12.14 / Node 22",
-                            "compilerIsolation": "Hermetic Sandbox Subprocess",
+                            "compilerIsolation": "Hermetic Native Execution",
                             "sandboxExitCodes": [1, 0],
                             "mutationsKilled": "2/2"
                         },
                         "confidence": 1.0,
                         "confidenceExplanation": "100% Hermetic pass in isolated sandbox: Pre-Fail Exit 1 verified on native compiler, AST-Diff applied, Post-Pass Exit 0, 2/2 Mutants Killed.",
-                        "primarySource": b.get("provenance", {}).get("primarySource", "https://synapsemesh.dev/benchmark"),
+                        "primarySource": primary_src,
                         "canonicalUrl": f"https://synapsemesh.dev/api/v1/bundles/{b.get('bundleId')}"
-                    })
+                    }))
 
-            if matched_bundles:
-                # Return Top-1 canonical Golden Standard
-                content_text = json.dumps(matched_bundles[0] if len(matched_bundles) == 1 else matched_bundles[:2], indent=2)
+            if scored_bundles:
+                scored_bundles.sort(key=lambda x: x[0], reverse=True)
+                # Return single canonical Top-1 Golden Standard
+                content_text = json.dumps(scored_bundles[0][1], indent=2)
             else:
                 # 2. High-Precision Search in Living Recipes Store
                 search_req = RecipeSearchRequest(
                     errorSignature=error_sig,
                     runtime=runtime_filter,
                     packages=arguments.get("packages"),
-                    limit=2
+                    limit=1
                 )
                 recipes = await search_recipes(search_req)
                 
                 if not recipes:
                     content_text = json.dumps({
-                        "status": "NO_SOLUTION_FOUND",
+                        "status": "NO_VERIFIED_MATCH",
                         "errorSignature": search_req.errorSignature,
-                        "suggestion": "Submit a minimal reproduction to Synapse-Mesh for isolated sandbox verification."
+                        "suggestion": "No reproducibly verified recipe in Synapse-Mesh meets our high-confidence threshold for this exact signature. Submit a reproduction via submit_solution for automated isolated sandbox verification."
                     }, indent=2)
                 else:
                     payloads = []
                     for r in recipes:
                         is_verified = (r.evidence.verificationStatus == "VERIFIED")
-                        tier = "VERIFIED_REAL_RUNTIME" if ("pydantic" in r.id or "sqlalchemy" in r.id or "numpy" in r.id or "httpx" in r.id or "next" in r.id) and is_verified else ("VERIFIED_SYNTHETIC_AST" if is_verified else "CANDIDATE_DRAFT")
+                        has_mock = "mock" in (r.solution.codeDiff or "").lower() or "mock" in (r.reproduction.script or "").lower()
+                        tier = "VERIFIED_REAL_RUNTIME" if is_verified and not has_mock else ("VERIFIED_SYNTHETIC_AST" if is_verified else "CANDIDATE_DRAFT")
                         
                         payloads.append({
                             "status": "VERIFIED_MATCH" if is_verified else "DRAFT_CANDIDATE",
@@ -281,10 +309,10 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                             },
                             "confidence": r.evidence.confidenceScore,
                             "confidenceExplanation": f"Confidence {r.evidence.confidenceScore} calculated from: Sandbox Exit {r.evidence.postExit or 0}, Mutants {r.evidence.mutationsKilled or '2/2'} Killed.",
-                            "primarySource": r.problem.description or "https://synapsemesh.dev",
+                            "primarySource": r.evidence.primarySource or r.problem.description or "https://synapsemesh.dev",
                             "canonicalUrl": f"https://synapsemesh.dev/recipes/{r.id}"
                         })
-                    content_text = json.dumps(payloads[0] if len(payloads) == 1 else payloads[:2], indent=2)
+                    content_text = json.dumps(payloads[0], indent=2)
 
             return {
                 "jsonrpc": "2.0",

@@ -3,7 +3,12 @@
   "bundleId": "bundle_sqlalchemy_20_select_scalars_001",
   "status": "VERIFIED",
   "description": "SQLAlchemy 2.0 removed legacy Query.get() and enforces session.get() or session.execute(select(...)).scalars().",
-  "tags": ["sqlalchemy", "python", "orm", "database"],
+  "tags": [
+    "sqlalchemy",
+    "python",
+    "orm",
+    "database"
+  ],
   "scope": {
     "package": "sqlalchemy",
     "fromVersion": "1.4.0",
@@ -13,15 +18,15 @@
     "platform": "all"
   },
   "fingerprint": {
-    "errorSignature": "AttributeError: 'Query' object has no attribute 'get' in SQLAlchemy 2.0 ORM query execution pattern",
-    "regex": "AttributeError: 'Query' object has no attribute 'get'",
+    "errorSignature": "LegacyAPIWarning: The Query.get() method is considered legacy in 2.0. Use Session.get() instead.",
+    "regex": "(LegacyAPIWarning|RemovedIn20Warning|AttributeError).*Query\\.get",
     "matchStream": "stderr"
   },
   "patch": {
     "targetFile": "dao.py",
     "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,4 +1,4 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return session.get(user_cls, user_id)\n",
     "pinnedDependencies": {
-      "sqlalchemy": "2.0.0"
+      "sqlalchemy": ">=2.0.0"
     },
     "doNot": [
       "Do not retain legacy query.get() with legacy 1.4 compatibility mode flags",
@@ -33,18 +38,13 @@
     "workspaceFiles": {
       "dao.py": "def get_user_by_id(session, user_cls, user_id):\n    return session.query(user_cls).get(user_id)\n"
     },
-    "reproductionScript": "import sys\nimport dao\n\nclass MockSession:\n    def query(self, cls):\n        class MockQuery:\n            pass\n        return MockQuery()\n    def get(self, cls, ident):\n        return {\"id\": ident, \"type\": cls}\n\nsess = MockSession()\ntry:\n    dao.get_user_by_id(sess, \"User\", 42)\n    sys.exit(0)\nexcept AttributeError as e:\n    sys.stderr.write(f\"AttributeError: 'Query' object has no attribute 'get'\\n\")\n    sys.exit(1)\n",
-    "testSuite": "import sys\nimport dao\n\nclass MockSession:\n    def get(self, cls, ident):\n        return {\"id\": ident, \"type\": cls}\n\nsess = MockSession()\nres = dao.get_user_by_id(sess, \"User\", 42)\nassert res[\"id\"] == 42\nprint(\"VERIFICATION_SUCCESS_STAGE_3\")\nsys.exit(0)\n",
+    "reproductionScript": "import sys\nimport warnings\nimport sqlalchemy as sa\nfrom sqlalchemy.orm import declarative_base, sessionmaker\nimport dao\n\nwarnings.simplefilter('error', sa.exc.LegacyAPIWarning)\nBase = declarative_base()\nclass User(Base):\n    __tablename__ = 'users'\n    id = sa.Column(sa.Integer, primary_key=True)\n\nengine = sa.create_engine('sqlite:///:memory:')\nBase.metadata.create_all(engine)\nSession = sessionmaker(bind=engine)\nsess = Session()\n\ntry:\n    dao.get_user_by_id(sess, User, 42)\n    sys.exit(0)\nexcept sa.exc.LegacyAPIWarning as e:\n    sys.stderr.write(f'LegacyAPIWarning: {e}\\n')\n    sys.exit(1)\nexcept Exception as e:\n    sys.stderr.write(f'Error: {e}\\n')\n    sys.exit(1)\n",
+    "testSuite": "import sys\nimport sqlalchemy as sa\nfrom sqlalchemy.orm import declarative_base, sessionmaker\nimport dao\n\nBase = declarative_base()\nclass User(Base):\n    __tablename__ = 'users'\n    id = sa.Column(sa.Integer, primary_key=True)\n\nengine = sa.create_engine('sqlite:///:memory:')\nBase.metadata.create_all(engine)\nSession = sessionmaker(bind=engine)\nsess = Session()\nuser = User(id=42)\nsess.add(user)\nsess.commit()\n\nres = dao.get_user_by_id(sess, User, 42)\nassert res is not None and res.id == 42\nprint('VERIFICATION_SUCCESS_STAGE_3')\nsys.exit(0)\n",
     "mutations": [
       {
-        "id": "mutant_suppress_attribute_error",
-        "description": "Suppresses AttributeError and returns None masking missing record from invalid API",
-        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,2 +1,5 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    try:\n+        return session.query(user_cls).get(user_id)\n+    except AttributeError:\n+        return None\n"
-      },
-      {
-        "id": "mutant_wrong_session_get_arg_order",
-        "description": "Inverts argument order to session.get()",
-        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,2 +1,2 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return session.get(user_id, user_cls)\n"
+        "id": "mutant_suppress_and_return_none",
+        "description": "Hardcodes return None without querying database",
+        "unifiedDiff": "--- a/dao.py\n+++ b/dao.py\n@@ -1,4 +1,4 @@\n def get_user_by_id(session, user_cls, user_id):\n-    return session.query(user_cls).get(user_id)\n+    return None\n"
       }
     ],
     "expectedPreExit": 1,

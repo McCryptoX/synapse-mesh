@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_pandas_20_dataframe_append_001",
+  "status": "VERIFIED",
+  "description": "pandas 2.0 completely removed DataFrame.append() and Series.append(). Use pandas.concat([df1, df2], ignore_index=True) instead.",
+  "tags": [
+    "pandas",
+    "python",
+    "data-science",
+    "v20"
+  ],
+  "scope": {
+    "package": "pandas",
+    "fromVersion": "1.5.3",
+    "toVersion": "2.0.0",
+    "runtime": "python",
+    "runtimeVersion": "3.12.0",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
+    "regex": "AttributeError:.*'DataFrame' object has no attribute 'append'",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "merge_data.py",
+    "unifiedDiff": "--- a/merge_data.py\n+++ b/merge_data.py\n@@ -1,5 +1,5 @@\n import pandas as pd\n def combine_batches(df1, df2):\n-    return df1.append(df2, ignore_index=True)\n+    return pd.concat([df1, df2], ignore_index=True)\n",
+    "pinnedDependencies": {
+      "pandas": ">=2.0.0"
+    },
+    "doNot": [
+      "Do not monkeypatch DataFrame.append = pd.concat on global pandas module",
+      "Do not convert dataframes to raw dicts in Python loops"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "merge_data.py": "import pandas as pd\ndef combine_batches(df1, df2):\n    return df1.append(df2, ignore_index=True)\n"
+    },
+    "reproductionScript": "import sys\nimport pandas as pd\nimport merge_data\n\ndf1 = pd.DataFrame({'A': [1, 2]})\ndf2 = pd.DataFrame({'A': [3, 4]})\ntry:\n    merge_data.combine_batches(df1, df2)\n    sys.exit(0)\nexcept AttributeError as e:\n    sys.stderr.write(f'AttributeError: {e}\\n')\n    sys.exit(1)\n",
+    "testSuite": "import sys\nimport pandas as pd\nimport merge_data\n\ndf1 = pd.DataFrame({'A': [1, 2]})\ndf2 = pd.DataFrame({'A': [3, 4]})\nres = merge_data.combine_batches(df1, df2)\nexpected = pd.DataFrame({'A': [1, 2, 3, 4]})\npd.testing.assert_frame_equal(res, expected)\nprint('VERIFICATION_SUCCESS_STAGE_3')\nsys.exit(0)\n",
+    "mutations": [
+      {
+        "id": "mutant_concat_axis_1",
+        "description": "Concatenates along columns instead of rows",
+        "unifiedDiff": "--- a/merge_data.py\n+++ b/merge_data.py\n@@ -1,3 +1,3 @@\n import pandas as pd\n def combine_batches(df1, df2):\n-    return pd.concat([df1, df2], ignore_index=True)\n+    return pd.concat([df1, df2], axis=1)\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://pandas.pydata.org/docs/whatsnew/v2.0.0.html#removal-of-deprecated-methods"
+    ],
+    "verifiedAt": "2026-08-25T11:42:00Z"
+  }
+}

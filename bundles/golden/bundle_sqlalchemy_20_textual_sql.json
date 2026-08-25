@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "bundle_sqlalchemy_20_textual_sql_001",
+  "status": "VERIFIED",
+  "description": "SQLAlchemy 2.0 requires textual SQL expressions passed to execute() to be explicitly declared with text().",
+  "tags": [
+    "sqlalchemy",
+    "python",
+    "database",
+    "v20"
+  ],
+  "scope": {
+    "package": "sqlalchemy",
+    "fromVersion": "1.4.0",
+    "toVersion": "2.0.0",
+    "runtime": "python",
+    "runtimeVersion": "3.12.0",
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "sqlalchemy.exc.ObjectNotExecutableError: Not an executable object: 'SELECT 1'. Use text('SELECT 1') instead.",
+    "regex": "(ObjectNotExecutableError|ArgumentError).*Not an executable object|Textual SQL expression",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "db.py",
+    "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,4 +1,4 @@\n-from sqlalchemy import create_engine\n+from sqlalchemy import create_engine, text\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return conn.execute(text(query_str))\n",
+    "pinnedDependencies": {
+      "sqlalchemy": ">=2.0.0"
+    },
+    "doNot": [
+      "Do not pass raw unescaped strings directly to session.execute() in SQLAlchemy 2.0"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "db.py": "from sqlalchemy import create_engine\ndef run_query(conn, query_str):\n    return conn.execute(query_str)\n"
+    },
+    "reproductionScript": "import sys\nimport sqlalchemy as sa\nimport db\n\nengine = sa.create_engine('sqlite:///:memory:')\nwith engine.connect() as conn:\n    try:\n        db.run_query(conn, 'SELECT 1')\n        sys.exit(0)\n    except Exception as e:\n        sys.stderr.write(f'{type(e).__name__}: {e}\\n')\n        sys.exit(1)\n",
+    "testSuite": "import sys\nimport sqlalchemy as sa\nimport db\n\nengine = sa.create_engine('sqlite:///:memory:')\nwith engine.connect() as conn:\n    res = db.run_query(conn, 'SELECT 1').scalar()\n    assert res == 1\nprint('VERIFICATION_SUCCESS_STAGE_3')\nsys.exit(0)\n",
+    "mutations": [
+      {
+        "id": "mutant_suppress_without_text",
+        "description": "Returns raw int instead of executing parameterized text",
+        "unifiedDiff": "--- a/db.py\n+++ b/db.py\n@@ -1,4 +1,4 @@\n from sqlalchemy import create_engine\n def run_query(conn, query_str):\n-    return conn.execute(query_str)\n+    return 0\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://docs.sqlalchemy.org/en/20/core/sqlelement.html#sqlalchemy.sql.expression.text"
+    ],
+    "verifiedAt": "2026-08-25T11:42:00Z"
+  }
+}

@@ -98,9 +98,25 @@ STOPWORDS = {
 }
 
 KNOWN_PACKAGES = {
-    "numpy", "sqlalchemy", "pydantic", "fastapi", "httpx", "express", "next", 
+    "numpy", "pandas", "sqlalchemy", "pydantic", "fastapi", "httpx", "express", "next", 
     "tokio", "pytest", "docker", "compose", "typescript", "duckdb", "mysql", 
     "sqlite", "react", "vite", "flask", "django", "openai"
+}
+
+PACKAGE_ALIASES = {
+    "dataframe": "pandas",
+    "series": "pandas",
+    "read_csv": "pandas",
+    "read_parquet": "pandas",
+    "concat": "pandas",
+    "basemodel": "pydantic",
+    "field": "pydantic",
+    "validator": "pydantic",
+    "ndarray": "numpy",
+    "nan": "numpy",
+    "session": "sqlalchemy",
+    "select": "sqlalchemy",
+    "scalars": "sqlalchemy"
 }
 
 
@@ -111,8 +127,12 @@ async def search_recipes(req: RecipeSearchRequest):
     raw_tokens = [w.strip(".:(),'\"`") for w in clean_error.split()]
     meaningful_tokens = [t for t in raw_tokens if len(t) > 2 and t not in STOPWORDS]
     
-    # Detect target packages from query
+    # Detect target packages from query and symbol aliases
     query_packages = {t for t in raw_tokens if t in KNOWN_PACKAGES}
+    for t in raw_tokens:
+        if t in PACKAGE_ALIASES:
+            query_packages.add(PACKAGE_ALIASES[t])
+            
     if req.packages:
         query_packages.update(req.packages.keys())
 
@@ -146,26 +166,30 @@ async def search_recipes(req: RecipeSearchRequest):
 
             # 2. Package-Specific Relevance
             recipe_packages = {pkg.lower() for pkg in KNOWN_PACKAGES if pkg in rec_id or pkg in sig or pkg in desc}
+            for sym, mapped_pkg in PACKAGE_ALIASES.items():
+                if sym in sig or sym in desc:
+                    recipe_packages.add(mapped_pkg)
+                    
             if query_packages:
                 if query_packages.intersection(recipe_packages):
                     score += 500.0
                 elif recipe_packages and not query_packages.intersection(recipe_packages):
                     # Query clearly asked for package X, but this recipe is package Y -> penalize heavily
-                    score -= 800.0
+                    score -= 1000.0
 
             # 3. Meaningful Keyword Overlap
             for token in meaningful_tokens:
                 if token in sig:
-                    score += 60.0
+                    score += 80.0
                 elif token in desc:
-                    score += 20.0
+                    score += 25.0
 
             # 4. Verified Status Boost
             if row["verification_status"] == "VERIFIED":
                 score += 150.0
             score *= (row["confidence_score"] or 0.5)
 
-            if score > 50.0:
+            if score >= 120.0:
                 recipe_obj = VerifiedRecipe(
                     id=row["id"],
                     problem=ProblemDefinition(**prob),
@@ -177,7 +201,12 @@ async def search_recipes(req: RecipeSearchRequest):
 
         # Sort by relevance score descending
         scored_recipes.sort(key=lambda x: x[0], reverse=True)
-        return [r for _, r in scored_recipes[:req.limit]]
+        if not scored_recipes:
+            return []
+            
+        top_score = scored_recipes[0][0]
+        filtered = [r for score, r in scored_recipes if score >= (top_score * 0.55)]
+        return filtered[:req.limit]
     finally:
         await db.close()
 
