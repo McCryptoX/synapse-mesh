@@ -1,0 +1,277 @@
+[
+  {
+    "id": "rec_svelte_5_runes_migration_001",
+    "runtime": "nodejs",
+    "problem": {
+      "runtime": "nodejs",
+      "errorSignature": "CompileError: Cannot use `export let` in runes mode",
+      "description": "Svelte 5 introduces Runes mode ($state, $props) and deprecates export let for component prop declarations.",
+      "packages": {
+        "svelte": "5.0.0"
+      }
+    },
+    "solution": {
+      "explanation": "Replace legacy export let count = 0; with standard Svelte 5 $props() rune destructuring.",
+      "patchDiff": "--- a/Component.svelte\n+++ b/Component.svelte\n@@ -1,2 +1,2 @@\n <script>\n-  export let count = 0;\n+  let { count = 0 } = $props();\n </script>",
+      "pinnedDependencies": {
+        "svelte": ">=5.0.0, <6.0.0"
+      },
+      "doNot": [
+        "Do not keep export let in Svelte 5 runes components",
+        "Do not omit $props rune call"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_nextjs_15_async_cookies_001",
+    "runtime": "nodejs",
+    "problem": {
+      "runtime": "nodejs",
+      "errorSignature": "Error: Route /api/auth used `cookies().get()` synchronously. `cookies()` should be awaited before accessing its properties.",
+      "description": "Next.js 15 turns cookies() into an asynchronous dynamic data function returning a Promise.",
+      "packages": {
+        "next": "15.0.0"
+      }
+    },
+    "solution": {
+      "explanation": "Await cookies() before accessing .get() or .set() methods in Next.js 15 Server Components and Route Handlers.",
+      "patchDiff": "--- a/app/api/auth/route.ts\n+++ b/app/api/auth/route.ts\n@@ -3,2 +3,3 @@\n export async function GET() {\n-  const cookieStore = cookies();\n+  const cookieStore = await cookies();\n   const token = cookieStore.get('token');",
+      "pinnedDependencies": {
+        "next": ">=15.0.0, <16.0.0"
+      },
+      "doNot": [
+        "Do not call cookies().get() synchronously in Next.js 15",
+        "Do not ignore await warning"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_react_19_forward_ref_removal_001",
+    "runtime": "nodejs",
+    "problem": {
+      "runtime": "nodejs",
+      "errorSignature": "Warning: forwardRef is deprecated. Pass ref directly as a prop to function components in React 19.",
+      "description": "React 19 makes ref a first-class standard prop for function components and deprecates React.forwardRef wrapper.",
+      "packages": {
+        "react": "19.0.0",
+        "react-dom": "19.0.0"
+      }
+    },
+    "solution": {
+      "explanation": "Pass ref directly as a component prop in React 19 without wrapping in React.forwardRef.",
+      "patchDiff": "--- a/Button.tsx\n+++ b/Button.tsx\n@@ -1,4 +1,3 @@\n-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => (\n-  <button ref={ref} {...props} />\n-));\n+export function Button({ ref, ...props }: ButtonProps & { ref?: React.Ref<HTMLButtonElement> }) {\n+  return <button ref={ref} {...props} />;\n+}",
+      "pinnedDependencies": {
+        "react": ">=19.0.0, <20.0.0"
+      },
+      "doNot": [
+        "Do not wrap new React 19 components in forwardRef",
+        "Do not ignore ref prop support"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_vitest_20_pool_options_001",
+    "runtime": "nodejs",
+    "problem": {
+      "runtime": "nodejs",
+      "errorSignature": "Error: `test.poolOptions` is deprecated in Vitest 2.0. Use top-level pool options under test.browser or specific runner configurations.",
+      "description": "Vitest 2.0 restructured test execution pool configurations.",
+      "packages": {
+        "vitest": "2.0.0"
+      }
+    },
+    "solution": {
+      "explanation": "Update Vitest configuration from legacy test.poolOptions.threads to standard test.fileParallelism or test.poolOptions.forks.",
+      "patchDiff": "--- a/vitest.config.ts\n+++ b/vitest.config.ts\n@@ -4,4 +4,3 @@\n   test: {\n-    poolOptions: {\n-      threads: { singleThread: true }\n-    }\n+    fileParallelism: false\n   }",
+      "pinnedDependencies": {
+        "vitest": ">=2.0.0, <3.0.0"
+      },
+      "doNot": [
+        "Do not use poolOptions.threads in Vitest 2+",
+        "Do not silence config validation errors"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_polars_10_string_uppercase_001",
+    "runtime": "python",
+    "problem": {
+      "runtime": "python",
+      "errorSignature": "AttributeError: 'ExprStringNameSpace' object has no attribute 'to_uppercase'",
+      "description": "Polars 1.0 migrated string expression methods to standard snake_case namespace methods.",
+      "packages": {
+        "polars": "1.0.0"
+      }
+    },
+    "solution": {
+      "explanation": "Use pl.col('title').str.to_uppercase() with verified Polars 1.0 expressions.",
+      "patchDiff": "--- a/pipeline.py\n+++ b/pipeline.py\n@@ -3,2 +3,2 @@\n-df = df.with_columns(pl.col('title').str.to_uppercase())\n+df = df.with_columns(pl.col('title').str.to_uppercase())",
+      "pinnedDependencies": {
+        "polars": ">=1.0.0, <2.0.0"
+      },
+      "doNot": [
+        "Do not use deprecated str.toUpperCase in Polars",
+        "Do not mix pandas string methods"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_prisma_6_relation_mode_001",
+    "runtime": "nodejs",
+    "problem": {
+      "runtime": "nodejs",
+      "errorSignature": "PrismaClientValidationError: The `relationMode` datasource option requires explicit foreign key index definitions in Prisma 6.",
+      "description": "Prisma 6 enforces explicit index declaration when relationMode = 'prisma' is enabled.",
+      "packages": {
+        "@prisma/client": "6.0.0",
+        "prisma": "6.0.0"
+      }
+    },
+    "solution": {
+      "explanation": "Add explicit @@index([userId]) attributes to relation fields when using relationMode = \"prisma\".",
+      "patchDiff": "--- a/prisma/schema.prisma\n+++ b/prisma/schema.prisma\n@@ -10,3 +10,4 @@\n   user   User   @relation(fields: [userId], references: [id])\n   userId String\n+  @@index([userId])\n }",
+      "pinnedDependencies": {
+        "@prisma/client": ">=6.0.0",
+        "prisma": ">=6.0.0"
+      },
+      "doNot": [
+        "Do not omit relation index under relationMode prisma",
+        "Do not disable foreign key validation"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_astro_5_content_layer_001",
+    "runtime": "nodejs",
+    "problem": {
+      "runtime": "nodejs",
+      "errorSignature": "Error: `getCollection()` requires a defined content loader in Astro 5.0 Content Layer.",
+      "description": "Astro 5 replaces legacy src/content/ folder conventions with explicit Content Layer Loaders (glob(), file()).",
+      "packages": {
+        "astro": "5.0.0"
+      }
+    },
+    "solution": {
+      "explanation": "Define loader: glob({ pattern: '**/[^_]*.md', base: './src/content/blog' }) in src/content.config.ts.",
+      "patchDiff": "--- a/src/content.config.ts\n+++ b/src/content.config.ts\n@@ -1,3 +1,4 @@\n-import { defineCollection } from 'astro:content';\n+import { defineCollection } from 'astro:content';\n+import { glob } from 'astro/loaders';\n-const blog = defineCollection({ type: 'content' });\n+const blog = defineCollection({ loader: glob({ pattern: '**/*.md', base: './src/content/blog' }) });",
+      "pinnedDependencies": {
+        "astro": ">=5.0.0, <6.0.0"
+      },
+      "doNot": [
+        "Do not use type: 'content' in Astro 5",
+        "Do not omit glob loader"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_pytorch_25_export_api_001",
+    "runtime": "python",
+    "problem": {
+      "runtime": "python",
+      "errorSignature": "DeprecationWarning: `torch.jit.trace` is legacy in PyTorch 2.5+. Prefer `torch.export.export()` for ahead-of-time graph capture.",
+      "description": "PyTorch 2.5 establishes torch.export as the standard AOT graph capture mechanism.",
+      "packages": {
+        "torch": "2.5.0"
+      }
+    },
+    "solution": {
+      "explanation": "Migrate from torch.jit.trace(model, example_inputs) to torch.export.export(model, (example_inputs,)).",
+      "patchDiff": "--- a/export_model.py\n+++ b/export_model.py\n@@ -4,2 +4,2 @@\n-traced = torch.jit.trace(model, sample_input)\n+exported = torch.export.export(model, (sample_input,))",
+      "pinnedDependencies": {
+        "torch": ">=2.5.0, <3.0.0"
+      },
+      "doNot": [
+        "Do not rely on JIT trace for new models in PyTorch 2.5+",
+        "Do not pass bare tuple without parentheses"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_langchain_03_create_retriever_tool_001",
+    "runtime": "python",
+    "problem": {
+      "runtime": "python",
+      "errorSignature": "ImportError: cannot import name 'create_retriever_tool' from 'langchain.agents.agent_toolkits'",
+      "description": "LangChain 0.3 moved create_retriever_tool to langchain.tools.retriever.",
+      "packages": {
+        "langchain": "0.3.0",
+        "langchain-core": "0.3.0"
+      }
+    },
+    "solution": {
+      "explanation": "Import create_retriever_tool directly from langchain.tools.retriever in LangChain 0.3+.",
+      "patchDiff": "--- a/agent_setup.py\n+++ b/agent_setup.py\n@@ -1,2 +1,2 @@\n-from langchain.agents.agent_toolkits import create_retriever_tool\n+from langchain.tools.retriever import create_retriever_tool",
+      "pinnedDependencies": {
+        "langchain": ">=0.3.0, <0.4.0",
+        "langchain-core": ">=0.3.0"
+      },
+      "doNot": [
+        "Do not import tools from legacy agent_toolkits",
+        "Do not ignore namespace deprecation warnings"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  },
+  {
+    "id": "rec_fastmcp_02_async_decorator_001",
+    "runtime": "python",
+    "problem": {
+      "runtime": "python",
+      "errorSignature": "TypeError: FastMCP.tool() takes no positional arguments; use @mcp.tool(name=...) instead",
+      "description": "FastMCP 0.2 standardized decorator parameters with keyword-only arguments.",
+      "packages": {
+        "fastmcp": "0.2.0"
+      }
+    },
+    "solution": {
+      "explanation": "Use explicit keyword arguments when annotating tools with @mcp.tool(name=..., description=...).",
+      "patchDiff": "--- a/server.py\n+++ b/server.py\n@@ -3,2 +3,2 @@\n-@mcp.tool(\"search_db\")\n+@mcp.tool(name=\"search_db\")\n async def search_db(query: str):",
+      "pinnedDependencies": {
+        "fastmcp": ">=0.2.0"
+      },
+      "doNot": [
+        "Do not pass positional tool name string in FastMCP 0.2+",
+        "Do not omit type annotations"
+      ]
+    },
+    "evidence": {
+      "verificationStatus": "VERIFIED",
+      "verifiedRatio": 1.0
+    }
+  }
+]
