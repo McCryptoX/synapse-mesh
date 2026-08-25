@@ -1,26 +1,24 @@
 [
   {
-    "id": "P1_PYDANTIC_V2_BASE_SETTINGS",
+    "id": "P1_NUMPY_2_0_ABI_REMOVALS",
     "family": "Python",
-    "name": "Pydantic V2 BaseSettings Migration to pydantic-settings",
-    "yearIntroduced": "2023",
-    "breakingPackage": "pydantic>=2.0.0",
-    "errorSignature": "ImportError: cannot import name 'BaseSettings' from 'pydantic'",
-    "errorSignatureRegex": "(PydanticImportError|ImportError):.*[`'\\\"]BaseSettings[`'\\\"]",
-    "targetPatchFile": "config.py",
+    "name": "NumPy 2.0 Removal of Deprecated Aliases (np.NAN, np.bool8, np.core)",
+    "yearIntroduced": "2024",
+    "breakingPackage": "numpy>=2.0.0",
+    "errorSignature": "AttributeError: module 'numpy' has no attribute 'NAN'",
+    "errorSignatureRegex": "AttributeError:.*module ['\"]numpy['\"] has no attribute ['\"](NAN|bool8|core)['\"]",
+    "targetPatchFile": "math_module.py",
     "entrypoint": "test_runner.py",
-    "workspaceFiles": {
-      ".env": "APP_ENV=production\nPORT=8080\n"
-    },
-    "reproductionScript": "import sys\n# Real Pydantic v2 throws genuine ImportError when importing BaseSettings from root\ntry:\n    from pydantic import BaseSettings\nexcept ImportError as e:\n    sys.stderr.write(f\"{type(e).__name__}: {e}\\n\")\n    sys.exit(1)\nsys.exit(0)",
-    "validPatch": "from pydantic_settings import BaseSettings, SettingsConfigDict\n\nclass AppSettings(BaseSettings):\n    app_env: str = 'development'\n    port: int = 3000\n    model_config = SettingsConfigDict(env_file='.env', extra='ignore', env_prefix='', case_sensitive=False)",
+    "workspaceFiles": {},
+    "reproductionScript": "import numpy as np\n# Real NumPy 2.0 C-extension throws genuine AttributeError for removed np.NAN / np.core\nx = np.NAN",
+    "validPatch": "import numpy as np\n\ndef sanitize_array(arr):\n    data = np.asarray(arr, dtype=np.float64)\n    return np.nan_to_num(data, nan=0.0)\n\ndef get_nan_constant():\n    return np.nan",
     "mutationPatches": [
-      "# Web-Fehlfix 1: Use BaseModel instead of BaseSettings (does not read .env file)\nfrom pydantic import BaseModel\nclass AppSettings(BaseModel):\n    app_env: str = 'development'\n    port: int = 3000",
-      "# Web-Fehlfix 2: Legacy v1 class Config syntax in pydantic-settings\nfrom pydantic_settings import BaseSettings\nclass AppSettings(BaseSettings):\n    app_env: str = 'development'\n    port: int = 3000\n    class Config:\n        env_file = '.env'",
-      "# Web-Fehlfix 3: pydantic.v1 legacy namespace import\nfrom pydantic.v1 import BaseSettings\nclass AppSettings(BaseSettings):\n    app_env: str = 'development'\n    port: int = 3000"
+      "# Web-Fehlfix 1: Use removed np.NAN\nimport numpy as np\ndef sanitize_array(arr): return np.nan_to_num(np.asarray(arr))\ndef get_nan_constant(): return np.NAN",
+      "# Web-Fehlfix 2: Use removed np.core namespace\nimport numpy as np\ndef sanitize_array(arr): return np.core.multiarray.zeros(len(arr))\ndef get_nan_constant(): return np.nan",
+      "# Web-Fehlfix 3: Use removed np.bool8 type\nimport numpy as np\ndef sanitize_array(arr): return np.asarray(arr, dtype=np.bool8)\ndef get_nan_constant(): return np.nan"
     ],
-    "groundTruthTestSuite": "from config import AppSettings\nimport pydantic_settings\n\nsettings = AppSettings()\nassert settings.app_env == 'production', f\"Expected 'production' from .env, got {settings.app_env}\"\nassert settings.port == 8080, f\"Expected 8080 from .env, got {settings.port}\"\n\n# Ensure modern Pydantic-Settings v2 inheritance & model_config\nassert issubclass(AppSettings, pydantic_settings.BaseSettings), 'AppSettings must inherit from pydantic_settings.BaseSettings'\nassert hasattr(AppSettings, 'model_fields'), 'AppSettings must use Pydantic v2 model_fields'\nassert 'model_config' in AppSettings.__dict__, 'Must declare model_config directly on AppSettings'\nassert 'Config' not in AppSettings.__dict__, 'Must not use legacy v1 class Config'\nprint('ALL TESTS PASSED')",
-    "officialSource": "https://docs.pydantic.dev/2.0/migration/#basesettings-has-moved-to-pydantic-settings",
+    "groundTruthTestSuite": "import numpy as np\nimport importlib.metadata\nfrom packaging.version import parse as parse_version\nfrom math_module import sanitize_array, get_nan_constant\n\n# Anti-downgrade check: NumPy version MUST be >= 2.0.0\nnp_ver = parse_version(importlib.metadata.version('numpy'))\nassert np_ver >= parse_version('2.0.0'), f'NumPy must be >= 2.0.0, found {np_ver}'\n\n# Execution verification\nres = sanitize_array([1.0, np.nan, 3.0])\nassert res.tolist() == [1.0, 0.0, 3.0]\nassert np.isnan(get_nan_constant())\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://numpy.org/devdocs/numpy_2_0_migration_guide.html",
     "antiDowngradeEnforced": true
   },
   {
@@ -46,25 +44,25 @@
     "antiDowngradeEnforced": true
   },
   {
-    "id": "P3_PYTHON_312_SHUTIL_RMTREE_ONEXC",
+    "id": "P3_PYTHON_312_DATETIME_UTC_AWARE",
     "family": "Python",
-    "name": "Python 3.12 shutil.rmtree onerror Deprecation in Favor of onexc",
+    "name": "Python 3.12 datetime.utcnow() Deprecation in Favor of datetime.now(timezone.utc)",
     "yearIntroduced": "2023",
     "breakingPackage": "python>=3.12.0",
-    "errorSignature": "DeprecationWarning: onerror is deprecated, use onexc instead",
-    "errorSignatureRegex": "(DeprecationWarning:.*onerror is deprecated.*onexc|TypeError:.*rmtree.*onerror)",
-    "targetPatchFile": "cleaner.py",
+    "errorSignature": "DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version",
+    "errorSignatureRegex": "DeprecationWarning:.*datetime.*utcnow.*is deprecated",
+    "targetPatchFile": "time_utils.py",
     "entrypoint": "test_runner.py",
     "workspaceFiles": {},
-    "reproductionScript": "import shutil, sys, inspect\n# Python 3.12+ deprecated onerror in favor of onexc\nsig = inspect.signature(shutil.rmtree)\nif 'onerror' in sig.parameters and 'onexc' in sig.parameters:\n    sys.stderr.write(\"DeprecationWarning: onerror is deprecated, use onexc instead\\n\")\n    sys.exit(1)\nsys.exit(0)",
-    "validPatch": "import os, shutil, stat\n\ndef remove_readonly(func, path, exc_info):\n    try:\n        os.chmod(path, stat.S_IWRITE)\n        func(path)\n    except Exception:\n        pass\n\ndef clean_dir(target_dir):\n    if os.path.exists(target_dir):\n        shutil.rmtree(target_dir, onexc=remove_readonly)",
+    "reproductionScript": "import warnings\nfrom datetime import datetime\n# Real Python 3.12 runtime throws genuine DeprecationWarning on datetime.utcnow()\nwarnings.simplefilter('error', DeprecationWarning)\ndatetime.utcnow()",
+    "validPatch": "from datetime import datetime, timezone\n\ndef get_utc_timestamp() -> datetime:\n    return datetime.now(timezone.utc)",
     "mutationPatches": [
-      "# Web-Fehlfix 1: ignore_errors=True blind suppression\nimport os, shutil\ndef clean_dir(target_dir):\n    if os.path.exists(target_dir):\n        shutil.rmtree(target_dir, ignore_errors=True)",
-      "# Web-Fehlfix 2: Shell execution os.system rm -rf (security risk)\nimport os\ndef clean_dir(target_dir):\n    os.system(f'rm -rf {target_dir}')",
-      "# Web-Fehlfix 3: Legacy onerror argument passing\nimport os, shutil\ndef clean_dir(target_dir):\n    def legacy_handler(func, path, exc):\n        pass\n    if os.path.exists(target_dir):\n        shutil.rmtree(target_dir, onerror=legacy_handler)"
+      "# Web-Fehlfix 1: Use deprecated datetime.utcnow()\nfrom datetime import datetime\ndef get_utc_timestamp() -> datetime:\n    return datetime.utcnow()",
+      "# Web-Fehlfix 2: Naive datetime.now() without timezone\nfrom datetime import datetime\ndef get_utc_timestamp() -> datetime:\n    return datetime.now()",
+      "# Web-Fehlfix 3: Return string instead of timezone-aware datetime object\nimport time\ndef get_utc_timestamp():\n    return time.strftime('%Y-%m-%d %H:%M:%S')"
     ],
-    "groundTruthTestSuite": "import inspect, os, shutil, tempfile, stat\nfrom cleaner import clean_dir\n\n# Create a test directory with a read-only file\ntest_dir = tempfile.mkdtemp(prefix='test_clean_')\nro_file = os.path.join(test_dir, 'readonly.txt')\nwith open(ro_file, 'w') as f: f.write('data')\nos.chmod(ro_file, stat.S_IREAD)\n\nclean_dir(test_dir)\nassert not os.path.exists(test_dir), 'Target directory must be successfully deleted'\n\n# Verify source uses onexc and does not use dangerous os.system or ignore_errors\nsrc = inspect.getsource(clean_dir)\nassert 'onexc=' in src, 'Must use onexc parameter'\nassert 'onerror=' not in src, 'Must not use deprecated onerror parameter'\nassert 'ignore_errors' not in src, 'Must not use blind ignore_errors=True'\nassert 'os.system' not in src, 'Must not use dangerous os.system()'\nprint('ALL TESTS PASSED')",
-    "officialSource": "https://docs.python.org/3/whatsnew/3.12.html#shutil",
+    "groundTruthTestSuite": "import warnings\nfrom datetime import datetime, timezone\nfrom time_utils import get_utc_timestamp\n\nwarnings.simplefilter('error', DeprecationWarning)\nts = get_utc_timestamp()\nassert isinstance(ts, datetime), 'Must return a datetime instance'\nassert ts.tzinfo is not None, 'Timestamp must be timezone-aware (tzinfo is not None)'\nassert ts.tzinfo == timezone.utc, 'Timestamp must be UTC'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://docs.python.org/3/whatsnew/3.12.html#deprecated",
     "antiDowngradeEnforced": true
   },
   {
@@ -92,25 +90,25 @@
     "antiDowngradeEnforced": true
   },
   {
-    "id": "N2_NODEJS_NATIVE_FETCH_HEADERS",
+    "id": "N2_TYPESCRIPT_56_STRICT_MAP_LOOKUP",
     "family": "Node.js",
-    "name": "Node.js Native Global fetch and Headers Iteration in Node 18+",
-    "yearIntroduced": "2023",
-    "breakingPackage": "node>=18.0.0",
-    "errorSignature": "TypeError: node-fetch is not required, use native global fetch",
-    "errorSignatureRegex": "(ERR_MODULE_NOT_FOUND.*node-fetch|TypeError:.*fetch|Cannot find package ['\\\"]node-fetch['\\\"])",
-    "targetPatchFile": "fetcher.mjs",
-    "entrypoint": "test.mjs",
+    "name": "TypeScript 5.6 Strict Type Safety on Optional Lookups",
+    "yearIntroduced": "2024",
+    "breakingPackage": "typescript>=5.6.0",
+    "errorSignature": "error TS2322: Type 'number | undefined' is not assignable to type 'number'",
+    "errorSignatureRegex": "error TS2322:.*Type.*number \\| undefined.*is not assignable to type ['\"]number['\"]",
+    "targetPatchFile": "cache.ts",
+    "entrypoint": "test_runner.py",
     "workspaceFiles": {},
-    "reproductionScript": "import fetch from 'node-fetch';\n// Legacy node-fetch import fails on systems without extra npm dependency\nexport async function getStatus() {\n    return fetch('http://localhost');\n}",
-    "validPatch": "// Modern Node.js 18+ uses native global fetch and Headers\nexport async function fetchJson(url) {\n    const headers = new Headers({ 'Accept': 'application/json' });\n    const headerEntries = Array.from(headers.entries());\n    return { url, isGlobal: typeof globalThis.fetch === 'function', headerEntries };\n}",
+    "reproductionScript": "import subprocess, sys\n# Real TypeScript compiler throws TS2322 under strict checks\ncode = \"export function getScore(map: Map<string, number>, key: string): number { return map.get(key); }\\n\"\nwith open('cache.ts', 'w') as f: f.write(code)\nres = subprocess.run(['tsc', '--strict', '--noUncheckedIndexedAccess', '--noEmit', 'cache.ts'], capture_output=True, text=True)\nif res.returncode != 0:\n    sys.stderr.write(res.stdout + res.stderr)\n    sys.exit(res.returncode)\nsys.exit(0)",
+    "validPatch": "export function getScore(map: Map<string, number>, key: string, fallback: number = 0): number {\n    const val = map.get(key);\n    return val !== undefined ? val : fallback;\n}",
     "mutationPatches": [
-      "// Web-Fehlfix 1: require('node-fetch') fallback\nimport { createRequire } from 'node:module';\nconst require = createRequire(import.meta.url);\nconst fetch = require('node-fetch');\nexport async function fetchJson(url) { return fetch(url); }",
-      "// Web-Fehlfix 2: axios fallback\nimport axios from 'axios';\nexport async function fetchJson(url) { return axios.get(url); }",
-      "// Web-Fehlfix 3: legacy XMLHttpRequest\nexport async function fetchJson(url) { const xhr = new XMLHttpRequest(); return xhr; }"
+      "// Web-Fehlfix 1: Unsafe non-null assertion map.get(key)!\nexport function getScore(map: Map<string, number>, key: string): number {\n    return map.get(key)!;\n}",
+      "// Web-Fehlfix 2: Type cast (as number)\nexport function getScore(map: Map<string, number>, key: string): number {\n    return map.get(key) as number;\n}",
+      "// Web-Fehlfix 3: Loose falsy check failing on 0\nexport function getScore(map: Map<string, number>, key: string, fallback: number = 100): number {\n    return map.get(key) || fallback;\n}"
     ],
-    "groundTruthTestSuite": "import { fetchJson } from './fetcher.mjs';\nimport assert from 'node:assert/strict';\n\nconst res = await fetchJson('https://api.synapsemesh.dev');\nassert.ok(res.isGlobal, 'Must use native global fetch');\nassert.equal(res.headerEntries[0][1], 'application/json');\nconsole.log('ALL TESTS PASSED');",
-    "officialSource": "https://nodejs.org/api/globals.html#fetch",
+    "groundTruthTestSuite": "import subprocess, sys, re\n# 1. Real tsc compilation check\nres = subprocess.run(['tsc', '--strict', '--noUncheckedIndexedAccess', '--noEmit', 'cache.ts'], capture_output=True, text=True)\nassert res.returncode == 0, f'TypeScript compilation failed: {res.stdout + res.stderr}'\n\n# 2. Semantic checks: must not use non-null assertion postfix, type cast, or loose falsy ||\nwith open('cache.ts', 'r') as f: src = f.read()\nassert '!' not in src.replace('!==', '').replace('!=', ''), 'Must not use unsafe non-null assertion postfix operator !'\nassert 'as number' not in src, 'Must not use unsafe type casting (as number)'\nassert '||' not in src, 'Must not use loose falsy check || that breaks on score 0'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://devblogs.microsoft.com/typescript/announcing-typescript-5-6/",
     "antiDowngradeEnforced": true
   },
   {
@@ -165,19 +163,22 @@
     "name": "Cargo Lockfile v4 Format and Checksum Specification",
     "yearIntroduced": "2024",
     "breakingPackage": "cargo>=1.84.0",
-    "errorSignature": "error: lock file version `4` requires modern Cargo parser",
-    "errorSignatureRegex": "(error:.*lock file version|lockfile_version = 4)",
+    "errorSignature": "error: failed to parse lock file",
+    "errorSignatureRegex": "(cannot update the lock file|failed to parse lock file|lock file)",
     "targetPatchFile": "Cargo.lock",
     "entrypoint": "test_runner.py",
-    "workspaceFiles": {},
-    "reproductionScript": "import sys\n# Simulating legacy cargo lockfile v3 mismatch in Cargo 1.84+\nwith open('Cargo.lock', 'w') as f:\n    f.write('version = 3\\n')\nsys.stderr.write('error: lock file version `4` requires modern Cargo parser\\n')\nsys.exit(1)",
-    "validPatch": "# Modern Cargo Lockfile version 4 format\nversion = 4\n\n[[package]]\nname = \"synapse-mesh\"\nversion = \"0.1.0\"\nchecksum = \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"",
+    "workspaceFiles": {
+      "Cargo.toml": "[package]\nname = \"synapse-test\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+      "src/main.rs": "fn main() { println!(\"OK\"); }\n"
+    },
+    "reproductionScript": "import subprocess, sys\n# Writing corrupt lockfile causes real cargo to fail\nwith open('Cargo.lock', 'w') as f: f.write('invalid_lockfile_format = true\\n')\nres = subprocess.run(['cargo', 'check', '--locked'], capture_output=True, text=True)\nif res.returncode != 0:\n    sys.stderr.write(res.stdout + res.stderr)\n    sys.exit(res.returncode)\nsys.exit(0)",
+    "validPatch": "# Modern Cargo Lockfile v4 format\nversion = 4\n\n[[package]]\nname = \"synapse-test\"\nversion = \"0.1.0\"\n",
     "mutationPatches": [
-      "# Web-Fehlfix 1: Downgrade to version 2 lockfile\nversion = 2\n[[package]]\nname = \"synapse-mesh\"\nversion = \"0.1.0\"",
-      "# Web-Fehlfix 2: Omit checksum in v4 lockfile\nversion = 4\n[[package]]\nname = \"synapse-mesh\"\nversion = \"0.1.0\"",
-      "# Web-Fehlfix 3: Invalid v4 header string\nlock_version = \"4.0\""
+      "# Web-Fehlfix 1: Corrupt syntax\ninvalid = toml",
+      "# Web-Fehlfix 2: Invalid version key type\nversion = \"four\"",
+      "# Web-Fehlfix 3: Empty lockfile\n"
     ],
-    "groundTruthTestSuite": "with open('Cargo.lock', 'r') as f: content = f.read()\nassert 'version = 4' in content, 'Lockfile must specify version = 4'\nassert 'checksum =' in content, 'Packages must retain cryptographic checksums'\nassert 'version = 2' not in content, 'Must not downgrade to v2'\nprint('ALL TESTS PASSED')",
+    "groundTruthTestSuite": "import subprocess\nres = subprocess.run(['cargo', 'check', '--locked'], capture_output=True, text=True)\nassert res.returncode == 0, f'Cargo check --locked failed: {res.stderr}'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://blog.rust-lang.org/2024/11/28/Rust-1.84.0.html#cargo-lockfile-v4",
     "antiDowngradeEnforced": true
   },
@@ -187,42 +188,42 @@
     "name": "Rust Edition 2024 gen Keyword Reservation Migration",
     "yearIntroduced": "2024",
     "breakingPackage": "rustc>=1.85.0",
-    "errorSignature": "error: `gen` is a reserved keyword in Edition 2024",
-    "errorSignatureRegex": "(error: `gen` is a reserved keyword|expected identifier, found reserved keyword `gen`)",
-    "targetPatchFile": "generator.rs",
+    "errorSignature": "error: expected identifier, found reserved keyword `gen`",
+    "errorSignatureRegex": "error: expected identifier, found reserved keyword `gen`",
+    "targetPatchFile": "src/main.rs",
     "entrypoint": "test_runner.py",
     "workspaceFiles": {},
-    "reproductionScript": "import sys\ncode = 'fn gen() -> i32 { 42 }'\nif 'fn gen()' in code:\n    sys.stderr.write('error: `gen` is a reserved keyword in Edition 2024\\n')\n    sys.exit(1)\nsys.exit(0)",
-    "validPatch": "// Rust Edition 2024 uses r#gen raw identifier or descriptive name\npub fn r#gen() -> i32 {\n    42\n}\n\npub fn generate_id() -> &'static str {\n    \"synapse-001\"\n}",
+    "reproductionScript": "import subprocess, sys\n# Real rustc --edition 2024 throws genuine compiler error on reserved keyword gen\ncode = 'fn gen() -> i32 { 42 }\\nfn main() { println!(\"{}\", gen()); }\\n'\nwith open('src_test.rs', 'w') as f: f.write(code)\nres = subprocess.run(['rustc', '--edition', '2024', 'src_test.rs'], capture_output=True, text=True)\nif res.returncode != 0:\n    sys.stderr.write(res.stderr)\n    sys.exit(res.returncode)\nsys.exit(0)",
+    "validPatch": "pub fn r#gen() -> i32 {\n    42\n}\n\nfn main() {\n    println!(\"{}\", r#gen());\n}",
     "mutationPatches": [
-      "// Web-Fehlfix 1: Unescaped gen function definition\npub fn gen() -> i32 { 42 }",
-      "// Web-Fehlfix 2: #[allow(keyword_idents)] obsolete lint override\n#[allow(keyword_idents)]\npub fn gen() -> i32 { 42 }",
-      "// Web-Fehlfix 3: Macro definition using raw gen\nmacro_rules! gen { () => { 42 }; }"
+      "// Web-Fehlfix 1: Unescaped gen identifier\nfn gen() -> i32 { 42 }\nfn main() { println!(\"{}\", gen()); }",
+      "// Web-Fehlfix 2: Invalid raw identifier syntax\nfn #gen() -> i32 { 42 }\nfn main() { println!(\"{}\", #gen()); }",
+      "// Web-Fehlfix 3: Macro definition with unescaped gen\nmacro_rules! gen { () => { 42 }; }\nfn main() { println!(\"{}\", gen!()); }"
     ],
-    "groundTruthTestSuite": "with open('generator.rs', 'r') as f: code = f.read()\nassert 'r#gen' in code or 'generate_id' in code, 'Must use raw identifier r#gen or rename function'\nassert not any(line.strip().startswith('pub fn gen(') for line in code.splitlines()), 'Cannot define unescaped gen in Edition 2024'\nprint('ALL TESTS PASSED')",
+    "groundTruthTestSuite": "import subprocess\nres = subprocess.run(['rustc', '--edition', '2024', 'src/main.rs', '-o', 'main_bin'], capture_output=True, text=True)\nassert res.returncode == 0, f'Rust compilation failed: {res.stderr}'\nrun_res = subprocess.run(['./main_bin'], capture_output=True, text=True)\nassert run_res.stdout.strip() == '42', f'Expected 42, got {run_res.stdout}'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://doc.rust-lang.org/edition-guide/rust-2024/gen-keyword.html",
     "antiDowngradeEnforced": true
   },
   {
-    "id": "S1_POSTGRESQL_16_NON_DETERMINISTIC_COLLATION",
+    "id": "S1_DUCKDB_0_10_IMPLICIT_CASTING",
     "family": "SQL",
-    "name": "PostgreSQL 16 Non-Deterministic Collation and ICU Locale Syntax",
-    "yearIntroduced": "2023",
-    "breakingPackage": "postgresql>=16.0",
-    "errorSignature": "ERROR: nondeterministic collations not supported with legacy locale provider",
-    "errorSignatureRegex": "(ERROR:.*nondeterministic collations|provider = icu)",
-    "targetPatchFile": "schema.sql",
+    "name": "DuckDB 0.10 Removal of Implicit Type Casting for Substring",
+    "yearIntroduced": "2024",
+    "breakingPackage": "duckdb>=0.10.0",
+    "errorSignature": "Binder Error: No function matches the given name and argument types 'substring(INTEGER_LITERAL, INTEGER_LITERAL, INTEGER_LITERAL)'",
+    "errorSignatureRegex": "Binder Error:.*No function matches.*substring",
+    "targetPatchFile": "query_module.py",
     "entrypoint": "test_runner.py",
     "workspaceFiles": {},
-    "reproductionScript": "import sys\n# PostgreSQL 16 requires explicit provider = icu for non-deterministic collations\nrepro = \"CREATE COLLATION case_insensitive (provider = libc, locale = 'en-US-u-ks-level2', deterministic = false);\"\nif 'provider = libc' in repro and 'deterministic = false' in repro:\n    sys.stderr.write('ERROR: nondeterministic collations not supported with legacy locale provider\\n')\n    sys.exit(1)\nsys.exit(0)",
-    "validPatch": "-- PostgreSQL 16+ ICU Non-Deterministic Case-Insensitive Collation\nCREATE COLLATION IF NOT EXISTS case_insensitive (\n    provider = icu,\n    locale = 'und-u-ks-level2',\n    deterministic = false\n);",
+    "reproductionScript": "import duckdb\ncon = duckdb.connect()\n# Real DuckDB 0.10+ engine throws genuine BinderException when passing integers to substring\ncon.execute(\"SELECT substring(12345, 2, 3);\")",
+    "validPatch": "import duckdb\n\ndef extract_part(con, num_val):\n    cursor = con.execute(\"SELECT substring(CAST(? AS VARCHAR), 2, 3);\", [num_val])\n    return cursor.fetchone()[0]",
     "mutationPatches": [
-      "-- Web-Fehlfix 1: provider = libc with deterministic = false (fails on PG16)\nCREATE COLLATION case_insensitive (provider = libc, deterministic = false);",
-      "-- Web-Fehlfix 2: deterministic = true assumption (breaks CI search)\nCREATE COLLATION case_insensitive (provider = icu, deterministic = true);",
-      "-- Web-Fehlfix 3: Omit provider parameter\nCREATE COLLATION case_insensitive (locale = 'en_US.utf8', deterministic = false);"
+      "# Web-Fehlfix 1: Un-cast integer argument (throws BinderException)\nimport duckdb\ndef extract_part(con, num_val):\n    return con.execute('SELECT substring(?, 2, 3);', [num_val]).fetchone()[0]",
+      "# Web-Fehlfix 2: Set deprecated old_implicit_casting knob\nimport duckdb\ndef extract_part(con, num_val):\n    con.execute('SET old_implicit_casting = true;')\n    return con.execute('SELECT substring(?, 2, 3);', [num_val]).fetchone()[0]",
+      "# Web-Fehlfix 3: String slicing without SQL query\nimport duckdb\ndef extract_part(con, num_val):\n    return str(num_val)[1:4]"
     ],
-    "groundTruthTestSuite": "with open('schema.sql') as f: sql = f.read()\nclean_sql = '\\n'.join(l for l in sql.splitlines() if not l.strip().startswith('--'))\nassert 'provider = icu' in clean_sql, 'PostgreSQL 16 requires provider = icu for non-deterministic collation'\nassert 'deterministic = false' in clean_sql, 'Must maintain deterministic = false for case-insensitivity'\nassert 'provider = libc' not in clean_sql, 'Must not use libc provider for non-deterministic collation'\nprint('ALL TESTS PASSED')",
-    "officialSource": "https://www.postgresql.org/docs/16/release-16.html#RELEASE-16-ICU",
+    "groundTruthTestSuite": "import duckdb, inspect\nfrom query_module import extract_part\n\ncon = duckdb.connect()\nval = extract_part(con, 98765)\nassert val == '876', f'Expected 876, got {val}'\n\nsrc = inspect.getsource(extract_part)\nassert 'CAST(' in src or '::VARCHAR' in src, 'Must use explicit SQL CAST'\nassert 'old_implicit_casting' not in src, 'Must not use deprecated old_implicit_casting configuration'\nprint('ALL TESTS PASSED')",
+    "officialSource": "https://duckdb.org/2024/02/13/announcing-duckdb-0100.html#breaking-changes",
     "antiDowngradeEnforced": true
   },
   {
@@ -260,7 +261,7 @@
     "targetPatchFile": "query.py",
     "entrypoint": "test_runner.py",
     "workspaceFiles": {},
-    "reproductionScript": "import sys, sqlite3\ncon = sqlite3.connect(':memory:')\ncon.execute('CREATE TABLE docs (data BLOB);')\ncon.execute(\"INSERT INTO docs VALUES (jsonb('{\\\"name\\\": \\\"synapse\\\"}'));\")\n# Direct select of raw jsonb returns raw bytes in SQLite 3.45+\nval = con.execute(\"SELECT data FROM docs;\").fetchone()[0]\nif isinstance(val, (bytes, bytearray)):\n    sys.stderr.write('OperationalError: json_extract returned unparsed JSONB binary payload\\n')\n    sys.exit(1)\nsys.exit(0)",
+    "reproductionScript": "import sys, sqlite3\ncon = sqlite3.connect(':memory:')\ncon.execute('CREATE TABLE docs (data BLOB);')\ncon.execute(\"INSERT INTO docs VALUES (jsonb('{\\\"name\\\": \\\"synapse\\\"}'));\")\nval = con.execute(\"SELECT data FROM docs;\").fetchone()[0]\nif isinstance(val, (bytes, bytearray)):\n    sys.stderr.write('OperationalError: json_extract returned unparsed JSONB binary payload\\n')\n    sys.exit(1)\nsys.exit(0)",
     "validPatch": "import sqlite3\n\ndef get_document_name(db_conn):\n    cursor = db_conn.execute(\"\"\"\n        SELECT json_extract(json(data), '$.name') AS name \n        FROM docs\n    \"\"\")\n    row = cursor.fetchone()\n    return row[0] if row else None",
     "mutationPatches": [
       "# Web-Fehlfix 1: CAST to text (destroys JSONB binary structure)\nimport sqlite3\ndef get_document_name(db_conn):\n    return db_conn.execute(\"SELECT CAST(data AS TEXT) FROM docs\").fetchone()[0]",
@@ -284,7 +285,7 @@
     "workspaceFiles": {
       "compose.yaml": "version: '3.8'\nservices:\n  api:\n    image: synapse-mesh-api:latest\n"
     },
-    "reproductionScript": "import sys, yaml\n# Compose V2 specification forbids top-level version attribute\nwith open('compose.yaml', 'r') as f:\n    data = yaml.safe_load(f)\nif 'version' in data:\n    sys.stderr.write(\"WARN[0000] compose.yaml: `version` is obsolete, please remove it\\n\")\n    sys.exit(1)\nsys.exit(0)",
+    "reproductionScript": "import sys, yaml\nwith open('compose.yaml', 'r') as f:\n    data = yaml.safe_load(f)\nif 'version' in data:\n    sys.stderr.write(\"WARN[0000] compose.yaml: `version` is obsolete, please remove it\\n\")\n    sys.exit(1)\nsys.exit(0)",
     "validPatch": "# Modern Compose V2 Specification\nname: synapse-stack\n\nservices:\n  api:\n    image: synapse-mesh-api:latest\n    restart: unless-stopped\n    ports:\n      - \"8000:8000\"",
     "mutationPatches": [
       "# Web-Fehlfix 1: Keep legacy version: '3.8'\nversion: '3.8'\nservices:\n  api:\n    image: synapse-mesh-api:latest",

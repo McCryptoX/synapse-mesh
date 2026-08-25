@@ -13,7 +13,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates gnupg gosu rustc cargo \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g express@5.0.1 supertest \
+    && npm install -g express@5.0.1 supertest typescript \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONPATH="/app"
