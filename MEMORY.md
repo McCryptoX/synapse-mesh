@@ -117,3 +117,11 @@ Implementiert in `benchmark/agent_orchestrator.py`:
 12. [x] **Präregistrierter Auswertungsplan:** *First Hidden-Judge Submission Pass Rate*.
 
 *Zuletzt aktualisiert: 25. August 2026, 06:59 Uhr*
+
+
+### 8. Webserver-Datenschutz & Rechtssicherheit
+- **Zero-Log & IP-Anonymization Webserver-Härtung:**
+  - Caddy Edge Reverse-Proxy läuft mit `log { output discard }` (keine Speicherung von Zugriffs-Logfiles oder Client-IPs auf der Festplatte).
+  - Upstream-Proxy-Header werden auf Loopback (`127.0.0.1`) anonymisiert.
+  - Python Backend (Uvicorn) läuft mit `--no-access-log` (kein Logging von Client-Verbindungsmetadaten).
+  - Datenschutzerklärung (`/datenschutz`) und Impressum (`/impressum`) vollständig nach DSGVO / § 5 DDG mit technischen und organisatorischen Maßnahmen (TOMs) synchronisiert.
