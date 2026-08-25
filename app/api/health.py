@@ -15,6 +15,19 @@ DATENSCHUTZ_HTML_PATH = TEMPLATES_DIR / "datenschutz.html"
 VERIFICATION_HTML_PATH = TEMPLATES_DIR / "verification.html"
 FAVICON_SVG_PATH = STATIC_DIR / "favicon.svg"
 OG_IMAGE_PATH = STATIC_DIR / "og-image.png"
+STYLE_CSS_PATH = STATIC_DIR / "style.min.css"
+
+@router.get("/static/style.min.css", tags=["Assets"])
+@router.get("/style.min.css", tags=["Assets"])
+async def style_css():
+    """Serves ultra-optimized, pre-compiled and minified standalone CSS stylesheet for 100/100 PageSpeed."""
+    if STYLE_CSS_PATH.exists():
+        return FileResponse(
+            path=STYLE_CSS_PATH,
+            media_type="text/css",
+            headers={"Cache-Control": "public, max-age=31536000, immutable"}
+        )
+    return Response(status_code=404)
 
 
 @router.get("/og-image.png", tags=["Assets"])
