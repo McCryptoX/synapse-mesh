@@ -88,6 +88,7 @@ def summarize_user_agent(ua: str) -> str:
 
 
 async def log_agent_access(source_type: str, action: str, query: str, request: Request):
+    db = None
     try:
         ua_summary = summarize_user_agent(request.headers.get("user-agent", ""))
         db = await get_db_connection()
@@ -96,9 +97,11 @@ async def log_agent_access(source_type: str, action: str, query: str, request: R
             (source_type, action, (query or "")[:100], ua_summary)
         )
         await db.commit()
-        await db.close()
     except Exception as e:
         logger.warning(f"Failed to log agent access: {e}")
+    finally:
+        if db:
+            await db.close()
 
 
 async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[str, Any]:
@@ -453,7 +456,7 @@ async def handle_mcp_get(request: Request):
     # If client requests SSE stream (ChatGPT / Claude SSE Transport)
     if "text/event-stream" in accept:
         session_id = str(uuid.uuid4())
-        queue: asyncio.Queue = asyncio.Queue()
+        queue: asyncio.Queue = asyncio.Queue(maxsize=100)
         sse_sessions[session_id] = queue
         
         async def event_generator():
@@ -464,6 +467,8 @@ async def handle_mcp_get(request: Request):
                 
                 # 2. Stream message events from queue or send periodic keep-alives
                 while True:
+                    if await request.is_disconnected():
+                        break
                     try:
                         msg = await asyncio.wait_for(queue.get(), timeout=15.0)
                         yield f"event: message\ndata: {json.dumps(msg)}\n\n"

@@ -97,7 +97,11 @@ class SandboxRunner:
                 stdout = stdout_bytes.decode(errors="replace")
                 stderr = stderr_bytes.decode(errors="replace")
             except asyncio.TimeoutError:
-                process.kill()
+                try:
+                    process.kill()
+                    await process.wait()
+                except Exception:
+                    pass
                 exit_code = -1
                 stdout = ""
                 stderr = f"Sandbox execution timed out after {cls.TIMEOUT_SECONDS}s"
