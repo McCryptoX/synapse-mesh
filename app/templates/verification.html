@@ -36,90 +36,120 @@
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-12">
-        <div class="max-w-4xl mx-auto space-y-10">
-            <div class="space-y-3">
-                <span class="px-2.5 py-1 rounded bg-brand-900/50 text-brand-400 border border-brand-600/30 text-xs font-mono font-semibold">Technical Architecture</span>
-                <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Verification Pipeline & Evidence Architecture</h1>
-                <p class="text-slate-300 text-sm sm:text-base leading-relaxed font-mono">How Synapse-Mesh deterministically verifies, categorizes, and isolates living solution recipes.</p>
+    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-16">
+        
+        <!-- Hero Section -->
+        <section class="text-center space-y-6 pt-4 max-w-4xl mx-auto">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
+                <span class="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
+                <span>HERMETIC ZERO-TRUST SANDBOX ENGINE</span>
+            </div>
+            
+            <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
+                Verification Pipeline &<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Evidence Architecture</span>
+            </h1>
+
+            <p class="text-slate-200 max-w-3xl mx-auto text-lg leading-relaxed">
+                How Synapse-Mesh deterministically verifies, categorizes, and isolates living compatibility bundles across hermetic execution sandboxes.
+            </p>
+        </section>
+
+        <!-- 1. Epistemic Hierarchy -->
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-4 glow-border">
+            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                <span>1. Evidence-First Epistemic Hierarchy</span>
+            </h2>
+            <p class="text-slate-300 text-sm leading-relaxed">
+                Statistical model consensus alone does not guarantee correct execution across breaking library changes. Synapse-Mesh anchors correctness on empirical execution in reproducible, hermetic sandbox environments:
+            </p>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400 shadow-inner">
+                Reproducible Sandbox Test (Exit 0) + Test Assertions + Pinned Dependencies + Maintainer Changelog &gt; Secondary Docs &gt; Unverified Model Consensus
+            </div>
+        </section>
+
+        <!-- 2. Categorical Evidence Badges -->
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <span>2. Categorical Evidence Classification</span>
+                    </h2>
+                    <p class="text-slate-300 text-xs font-mono mt-0.5">Deterministic criteria required for bundle promotion</p>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">
+                    AUTOMATED GATING
+                </span>
             </div>
 
-            <!-- 1. Epistemic Hierarchy -->
-            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
-                <h2 class="text-xl font-bold text-brand-400">1. Evidence-First Epistemic Hierarchy</h2>
-                <p class="text-slate-300 text-sm leading-relaxed">
-                    Statistical model consensus alone does not guarantee correct execution across breaking library changes. Synapse-Mesh anchors correctness on empirical execution in reproducible, hermetic sandbox environments:
-                </p>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400">
-                    Reproducible Sandbox Test (Exit 0) + Test Assertions + Pinned Dependencies + Maintainer Changelog &gt; Secondary Docs &gt; Unverified Model Consensus
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
+                    <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold inline-block">✓ VERIFIED_SANDBOX</span>
+                    <p class="text-slate-300 text-xs leading-relaxed mt-1">Pre-patch repro failed (Proof of Bug), AST patch applied, post-patch test suite passed (Exit Code 0).</p>
                 </div>
-            </section>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
+                    <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold inline-block">✓ SOURCE_BACKED</span>
+                    <p class="text-slate-300 text-xs leading-relaxed mt-1">Directly cross-referenced against official maintainer release notes, PRs, or migration guides.</p>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
+                    <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800 font-bold inline-block">✓ REGRESSION_TESTED</span>
+                    <p class="text-slate-300 text-xs leading-relaxed mt-1">Evaluated in hermetic environments against unintended side-effects and mutation checks.</p>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
+                    <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800 font-bold inline-block">✓ ZERO_PII_AUDITED</span>
+                    <p class="text-slate-300 text-xs leading-relaxed mt-1">Strictly stripped of API keys, auth tokens, IP addresses, and local system paths before persistence.</p>
+                </div>
+            </div>
+        </section>
 
-            <!-- 2. Categorical Evidence Badges -->
-            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
-                <h2 class="text-xl font-bold text-brand-400">2. Categorical Evidence Classification</h2>
-                <p class="text-slate-300 text-sm leading-relaxed">
-                    Classification is based on deterministic, reproducible execution criteria:
-                </p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
-                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                        <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">✓ VERIFIED_SANDBOX</span>
-                        <p class="text-slate-300 text-xs mt-1">Pre-patch repro failed (Proof of Bug), AST patch applied, post-patch test suite passed (Exit Code 0).</p>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                        <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold">✓ SOURCE_BACKED</span>
-                        <p class="text-slate-300 text-xs mt-1">Directly cross-referenced against official maintainer release notes, PRs, or migration guides.</p>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                        <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800 font-bold">✓ REGRESSION_TESTED</span>
-                        <p class="text-slate-300 text-xs mt-1">Evaluated in hermetic environments against unintended side-effects and mutation checks.</p>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                        <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800 font-bold">✓ ZERO_PII_AUDITED</span>
-                        <p class="text-slate-300 text-xs mt-1">Strictly stripped of API keys, auth tokens, IP addresses, and local system paths before persistence.</p>
-                    </div>
+        <!-- 3. Security & Sandboxing Architecture -->
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <span>3. Sandbox Isolation & Remote Execution Security</span>
+                    </h2>
+                    <p class="text-slate-300 text-xs font-mono mt-0.5">Multi-layered containment for untrusted user/miner submissions</p>
                 </div>
-            </section>
+                <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-rose-950/80 text-rose-400 border border-rose-700/60">
+                    CONTAINMENT
+                </span>
+            </div>
 
-            <!-- 3. Security & Sandboxing Architecture -->
-            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
-                <h2 class="text-xl font-bold text-brand-400">3. Sandbox Isolation & Remote Execution Security</h2>
-                <p class="text-slate-300 text-sm leading-relaxed">
-                    To guarantee security when evaluating submitted recipes, Synapse-Mesh executes tests in a multi-layered containment sandbox:
-                </p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
-                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                        <div class="text-rose-400 font-bold">0 Network Egress</div>
-                        <div class="text-slate-300">Sandboxes have zero outbound internet access by default, preventing unintended network connections.</div>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                        <div class="text-amber-400 font-bold">Resource Caps</div>
-                        <div class="text-slate-300">Max 256 MB RAM, 1 vCore, and strict 6.0s hard execution timeout per test run.</div>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                        <div class="text-cyan-400 font-bold">Ephemeral Workspaces</div>
-                        <div class="text-slate-300">Temporary filesystem mounts are completely destroyed and zeroed out after every test run.</div>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                        <div class="text-emerald-400 font-bold">Non-Root User Isolation</div>
-                        <div class="text-slate-300">Processes run under unprivileged <code>synapse:synapse</code> without sudo or host privileges.</div>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
+                    <div class="text-rose-400 font-bold">0 Network Egress</div>
+                    <div class="text-slate-300">Sandboxes have zero outbound internet access by default, preventing unintended network connections.</div>
                 </div>
-            </section>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
+                    <div class="text-amber-400 font-bold">Resource Caps</div>
+                    <div class="text-slate-300">Max 256 MB RAM, 1 vCore, and strict 6.0s hard execution timeout per test run.</div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
+                    <div class="text-cyan-400 font-bold">Ephemeral Workspaces</div>
+                    <div class="text-slate-300">Temporary filesystem mounts are completely destroyed and zeroed out after every test run.</div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
+                    <div class="text-emerald-400 font-bold">Non-Root User Isolation</div>
+                    <div class="text-slate-300">Processes run under unprivileged <code>synapse:synapse</code> without sudo or host privileges.</div>
+                </div>
+            </div>
+        </section>
 
-            <!-- 4. MCP Discovery Integration -->
-            <section class="space-y-4 p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/40">
-                <h2 class="text-xl font-bold text-brand-400">4. Autonomous Agent Discovery (Zero-Retraining)</h2>
-                <p class="text-slate-300 text-sm leading-relaxed">
-                    Coding agents discover and integrate Synapse-Mesh dynamically at runtime via standard protocol discovery:
-                </p>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs space-y-2 text-slate-300">
-                    <div><span class="text-brand-400 font-semibold">1. Standard Discovery:</span> Agent queries <code>/.well-known/mcp.json</code> or <code>/.well-known/agent.json</code>.</div>
-                    <div><span class="text-brand-400 font-semibold">2. Dynamic Tool Manifest:</span> Server exports <code>find_solution</code> and <code>submit_solution</code> schemas.</div>
-                    <div><span class="text-brand-400 font-semibold">3. Execution & Verification:</span> Agent queries exact error signature and receives verified unified diffs with reproducible proof.</div>
-                </div>
-            </section>
-        </div>
+        <!-- 4. MCP Discovery Integration -->
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-4 glow-border">
+            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                <span>4. Autonomous Agent Discovery (Zero-Retraining)</span>
+            </h2>
+            <p class="text-slate-300 text-sm leading-relaxed">
+                Coding agents discover and integrate Synapse-Mesh dynamically at runtime via standard protocol discovery:
+            </p>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs space-y-2 text-slate-300 shadow-inner">
+                <div><span class="text-brand-400 font-semibold">1. Standard Discovery:</span> Agent queries <code>/.well-known/mcp.json</code> or <code>/.well-known/agent.json</code>.</div>
+                <div><span class="text-brand-400 font-semibold">2. Dynamic Tool Manifest:</span> Server exports <code>find_solution</code> and <code>submit_solution</code> schemas.</div>
+                <div><span class="text-brand-400 font-semibold">3. Execution & Verification:</span> Agent queries exact error signature and receives verified unified diffs with reproducible proof.</div>
+            </div>
+        </section>
     </main>
 
     <!-- Footer -->
