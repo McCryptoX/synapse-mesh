@@ -102,12 +102,22 @@
     "attestedAt": "2026-08-25T21:40:00Z",
     "observedMetrics": {
       "pidNamespace": true,
+      "ipcNamespace": true,
       "network": "none",
       "rootFs": "read-only",
+      "backendMountsVisible": false,
+      "dockerSocketPresent": false,
       "noNewPrivs": true,
       "seccompMode": 2,
       "effectiveCapabilities": "0x0000000000000000",
-      "privateTmpfs": true
+      "privateTmpfs": true,
+      "blockedSyscalls": ["mount", "ptrace", "bpf", "setns", "unshare", "raw_socket"]
+    },
+    "observedCgroup": {
+      "memoryMaxBytes": 536870912,
+      "memorySwapMaxBytes": 0,
+      "pidsMax": 64,
+      "cpuMax": "100000 100000"
     },
     "configuredPolicy": {
       "seccompProfile": "synapse-v1",
