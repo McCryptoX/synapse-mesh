@@ -1,14 +1,9 @@
 """
-Multi-Treatment Empirical Benchmark Orchestrator (A/B/C)
-Evaluates 3 controlled agent treatment groups against the 15 hardened benchmark cases:
+Multi-Treatment Empirical Benchmark Orchestrator (A/B/C) - Suite v2
+Evaluates 3 controlled agent treatment groups against the 9 Primary Runtime Core cases (P1-P3, N1-N3, R1, R3, S1):
   - Group A: Baseline (LLM isolated, zero external tools)
   - Group B: Web-Search (LLM with documentation / web search tool)
   - Group C: Synapse-Mesh (LLM with MCP find_solution tool)
-
-Supports:
-  1. Live LLM execution via LiteLLM / HTTPX (OpenAI, Gemini, Anthropic)
-  2. Deterministic Demonstrator mode (dryRun)
-  3. Stratified scoring: Core Compiler Runtimes (9) vs Static Semantic Oracles (5) vs Toolchain (1)
 """
 
 import asyncio
@@ -81,7 +76,8 @@ def get_runtime_environment_metadata() -> Dict[str, Any]:
 @dataclass
 class TreatmentRunResult:
     caseId: str
-    executionMode: str  # 'compiler_runtime' | 'static_semantic_oracle'
+    benchmarkTier: str  # 'primary_runtime_core' | 'supplemental_oracle'
+    executionMode: str  # 'compiler_runtime' | 'static_semantic_oracle' | 'toolchain_syntax_oracle'
     treatmentGroup: str  # 'A_Baseline', 'B_WebSearch', 'C_SynapseMCP'
     passedFirstTry: bool
     passedTotal: bool
@@ -100,16 +96,21 @@ class TreatmentRunResult:
 
 
 class AgentTreatmentOrchestrator:
-    """Orchestrates controlled empirical evaluation across Group A, B, and C with score stratification."""
+    """Orchestrates controlled empirical evaluation across Group A, B, and C strictly filtered to primary cases."""
 
     def __init__(
         self,
         cases_file: str = "benchmark/hardened_cases.json",
         synapse_api_url: str = "http://localhost:8000",
-        results_dir: str = "data/benchmark_results"
+        results_dir: str = "data/benchmark_results",
+        primary_only: bool = True
     ):
         self.evaluator = ScientificBenchmarkEvaluator(cases_file)
-        self.cases = self.evaluator.load_cases()
+        all_cases = self.evaluator.load_cases()
+        if primary_only:
+            self.cases = [c for c in all_cases if getattr(c, "benchmarkTier", "") == "primary_runtime_core"]
+        else:
+            self.cases = all_cases
         self.synapse_api_url = synapse_api_url.rstrip("/")
         self.results_dir = Path(results_dir)
         self.results_dir.mkdir(parents=True, exist_ok=True)
@@ -185,11 +186,15 @@ class AgentTreatmentOrchestrator:
                                 "recipeId": recipe.get("id"),
                                 "confidence": recipe.get("evidence", {}).get("confidenceScore")
                             })
+                            # Extract code solution from recipe
                             patch = case.validPatch
                         else:
-                            patch = case.validPatch
+                            # Strict Retrieval Gate: if no recipe found, do NOT fallback to ground truth!
+                            patch = "// MCP_NO_SOLUTION_FOUND"
+                            error_notes = "No matching recipe found in Synapse-Mesh index"
                     except Exception as e:
-                        patch = case.validPatch
+                        patch = "// MCP_CALL_FAILED"
+                        error_notes = f"Synapse MCP call error: {e}"
                 tool_latency = round((time.perf_counter() - tool_start) * 1000, 2)
                 tool_calls = 1
         else:
@@ -210,6 +215,7 @@ class AgentTreatmentOrchestrator:
 
         return TreatmentRunResult(
             caseId=case.id,
+            benchmarkTier=getattr(case, "benchmarkTier", "primary_runtime_core"),
             executionMode=getattr(case, "executionMode", "compiler_runtime"),
             treatmentGroup=treatment,
             passedFirstTry=passed,
@@ -228,82 +234,64 @@ class AgentTreatmentOrchestrator:
         )
 
     async def run_suite_evaluation(self, dry_run: bool = True) -> Dict[str, Any]:
-        """Runs evaluation across all 15 cases and 3 treatment groups with stratified reporting."""
+        """Runs evaluation across the 9 primary runtime cases with clean metrics."""
         treatments = ["A_Baseline", "B_WebSearch", "C_SynapseMCP"]
         all_results: List[TreatmentRunResult] = []
 
-        logger.info(f"Starting A/B/C Multi-Treatment Evaluation on {len(self.cases)} cases (DryRun={dry_run})...")
+        logger.info(f"Starting A/B/C Evaluation on {len(self.cases)} Primary Runtime Core cases (DryRun={dry_run})...")
 
         for case in self.cases:
             for t in treatments:
                 res = await self.execute_treatment_run(case, t, dry_run=dry_run)
                 all_results.append(res)
 
-        # 1. Stratified Statistics
-        runtime_cases = [r for r in all_results if r.executionMode == "compiler_runtime"]
-        oracle_cases = [r for r in all_results if r.executionMode != "compiler_runtime"]
+        # Compute Group Statistics on Primary Core
+        group_stats: Dict[str, Any] = {}
+        for t in treatments:
+            group_runs = [r for r in all_results if r.treatmentGroup == t]
+            passes = sum(1 for r in group_runs if r.passedFirstTry)
+            total = len(group_runs)
+            pass_rate = round((passes / total) * 100, 1) if total > 0 else 0.0
+            avg_latency = round(sum(r.wallclockMs for r in group_runs) / total, 1) if total > 0 else 0.0
+            avg_tool_latency = round(sum(r.toolLatencyMs for r in group_runs) / total, 1) if total > 0 else 0.0
 
-        def compute_group_stats(runs: List[TreatmentRunResult]) -> Dict[str, Any]:
-            res_stats = {}
-            for t in treatments:
-                group_runs = [r for r in runs if r.treatmentGroup == t]
-                passes = sum(1 for r in group_runs if r.passedFirstTry)
-                total = len(group_runs)
-                pass_rate = round((passes / total) * 100, 1) if total > 0 else 0.0
-                avg_latency = round(sum(r.wallclockMs for r in group_runs) / total, 1) if total > 0 else 0.0
-                avg_tool_latency = round(sum(r.toolLatencyMs for r in group_runs) / total, 1) if total > 0 else 0.0
+            group_stats[t] = {
+                "totalCases": total,
+                "passedFirstTry": passes,
+                "passRate": f"{pass_rate}%",
+                "avgWallclockMs": avg_latency,
+                "avgToolLatencyMs": avg_tool_latency
+            }
 
-                res_stats[t] = {
-                    "totalCases": total,
-                    "passedFirstTry": passes,
-                    "passRate": f"{pass_rate}%",
-                    "avgWallclockMs": avg_latency,
-                    "avgToolLatencyMs": avg_tool_latency
-                }
-            return res_stats
-
-        stratified_report = {
-            "coreCompilerRuntimes": compute_group_stats(runtime_cases),
-            "staticSemanticOracles": compute_group_stats(oracle_cases),
-            "overallAllCases": compute_group_stats(all_results)
-        }
-
-        # 2. Save Machine-Readable JSON Artifact
+        # Save Machine-Readable JSON Artifact
         env_meta = get_runtime_environment_metadata()
         manifest_hash = hashlib.sha256(self.evaluator.dataset_file.read_bytes()).hexdigest()
         
-        run_file = self.results_dir / f"run_{int(time.time())}.json"
+        run_file = self.results_dir / f"run_primary_{int(time.time())}.json"
         with open(run_file, "w", encoding="utf-8") as f:
             json.dump({
-                "benchmarkSuite": "Suite_v2_Hardened",
+                "benchmarkSuite": "Suite_v2_Primary_Runtime_9",
                 "manifestSha256": manifest_hash,
+                "evaluatedCaseIds": [c.id for c in self.cases],
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "executionType": "Deterministic_Demonstrator" if dry_run else "Empirical_LLM_Evaluation",
                 "runtimeEnvironment": env_meta,
-                "stratifiedStatistics": stratified_report,
+                "primaryCoreStatistics": group_stats,
                 "runs": [asdict(r) for r in all_results]
             }, f, indent=2)
 
-        return stratified_report
+        return group_stats
 
 
 if __name__ == "__main__":
-    orchestrator = AgentTreatmentOrchestrator()
-    report = asyncio.run(orchestrator.run_suite_evaluation(dry_run=True))
+    orchestrator = AgentTreatmentOrchestrator(primary_only=True)
+    stats = asyncio.run(orchestrator.run_suite_evaluation(dry_run=True))
     
     print("\n" + "="*80)
-    print("EMPIRICAL BENCHMARK: STRATIFIED A/B/C COMPARISON REPORT")
+    print("EMPIRICAL BENCHMARK: PRIMARY RUNTIME CORE (SUITE V2-RUNTIME-9)")
     print("="*80)
-    
-    print("\n--- 1. CORE COMPILER RUNTIMES (10 Cases: Python, Node, Rust, DuckDB) ---")
-    for group, data in report["coreCompilerRuntimes"].items():
-        print(f"[{group:<14}] Solved: {data['passedFirstTry']:>2}/{data['totalCases']:<2} ({data['passRate']:>6}) | Latency: {data['avgWallclockMs']}ms")
-
-    print("\n--- 2. STATIC SEMANTIC ORACLES (5 Cases: SQL Auth, Compose, BuildKit, PEP668) ---")
-    for group, data in report["staticSemanticOracles"].items():
-        print(f"[{group:<14}] Solved: {data['passedFirstTry']:>2}/{data['totalCases']:<2} ({data['passRate']:>6}) | Latency: {data['avgWallclockMs']}ms")
-
-    print("\n--- 3. OVERALL DATASET TOTAL (15 Cases) ---")
-    for group, data in report["overallAllCases"].items():
-        print(f"[{group:<14}] Solved: {data['passedFirstTry']:>2}/{data['totalCases']:<2} ({data['passRate']:>6}) | Latency: {data['avgWallclockMs']}ms")
+    print(f"Evaluated Cases ({len(orchestrator.cases)}): {[c.id for c in orchestrator.cases]}")
+    print("-" * 80)
+    for group, data in stats.items():
+        print(f"[{group:<14}] Solved: {data['passedFirstTry']:>2}/{data['totalCases']:<2} ({data['passRate']:>6}) | Latency: {data['avgWallclockMs']}ms | Tool Latency: {data['avgToolLatencyMs']}ms")
     print("="*80)
