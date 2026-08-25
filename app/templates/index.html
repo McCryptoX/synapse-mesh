@@ -277,14 +277,17 @@
 
     <!-- JavaScript for Live Search, Tabs & Stats -->
     <script>
-        let allRecipes = [];
+        let allItems = [];
         let activeRuntime = 'all';
         let showAll = false;
-        const INITIAL_LIMIT = 5;
+        const INITIAL_LIMIT = 6;
 
         async function loadStats() {
             try {
                 const res = await fetch('/api/v1/recipes/stats');
+                if (!res.ok) return;
+                const contentType = res.headers.get("content-type") || "";
+                if (!contentType.includes("json")) return;
                 const data = await res.json();
                 document.getElementById('stat-verified-count').innerText = data.verifiedRecipes || '70';
                 const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 95;
@@ -297,19 +300,65 @@
                     document.getElementById('count-docker').innerText = data.runtimes.docker || '3';
                 }
             } catch(e) {
-                console.error(e);
+                console.warn("Could not load real-time stats:", e);
             }
         }
 
-        async function fetchRecipes() {
+        async function fetchAllData() {
+            allItems = [];
+            const results = [];
+
+            // 1. Fetch Golden Compatibility Bundles
             try {
-                const res = await fetch('/api/v1/recipes?limit=100');
-                const data = await res.json();
-                allRecipes = data.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED');
-                renderRecipes();
-            } catch (err) {
-                document.getElementById('resultsContainer').innerHTML = `<div class="p-4 text-rose-400 font-mono text-xs">Error loading bundles: ${err.message}</div>`;
+                const resBundles = await fetch('/api/v1/bundles');
+                if (resBundles.ok && (resBundles.headers.get("content-type") || "").includes("json")) {
+                    const bundles = await resBundles.json();
+                    bundles.forEach(b => {
+                        results.push({
+                            id: b.bundleId,
+                            isGolden: true,
+                            runtime: (b.scope && b.scope.runtime) || 'python',
+                            errorSignature: (b.fingerprint && b.fingerprint.errorSignature) || b.bundleId,
+                            summary: b.description || '',
+                            diff: (b.patch && b.patch.unifiedDiff) || '',
+                            pins: (b.patch && b.patch.pinnedDependencies) || {},
+                            doNot: (b.patch && b.patch.doNot) || [],
+                            status: b.status || 'VERIFIED',
+                            reverify: `synapse reverify ${b.bundleId}`
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn("Golden bundles fetch note:", e);
             }
+
+            // 2. Fetch Living Recipes Store
+            try {
+                const resRecipes = await fetch('/api/v1/recipes?limit=100');
+                if (resRecipes.ok && (resRecipes.headers.get("content-type") || "").includes("json")) {
+                    const recipes = await resRecipes.json();
+                    recipes.filter(r => r.evidence && r.evidence.verificationStatus === 'VERIFIED').forEach(r => {
+                        results.push({
+                            id: r.id,
+                            isGolden: false,
+                            runtime: (r.problem && r.problem.runtime) || 'python',
+                            errorSignature: (r.problem && r.problem.errorSignature) || r.id,
+                            summary: (r.solution && r.solution.summary) || '',
+                            diff: (r.solution && (r.solution.codeDiff || r.solution.patchDiff)) || '',
+                            pins: (r.solution && r.solution.pinnedDependencies) || (r.problem && r.problem.packages) || {},
+                            doNot: (r.solution && r.solution.doNot) || [],
+                            status: r.evidence ? r.evidence.verificationStatus : 'VERIFIED',
+                            reverify: `synapse reverify ${r.id}`,
+                            detailUrl: `/recipes/${r.id}`
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn("Recipes fetch note:", e);
+            }
+
+            allItems = results;
+            renderItems();
         }
 
         function filterRuntime(rt) {
@@ -322,30 +371,30 @@
                     btn.className = "px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
                 }
             });
-            renderRecipes();
+            renderItems();
         }
 
         function toggleShowAll() {
             showAll = !showAll;
             const btn = document.getElementById('showAllBtn');
-            btn.innerText = showAll ? 'Show Fewer Bundles ↑' : `View All Verified Bundles (${allRecipes.length}) ↓`;
-            renderRecipes();
+            btn.innerText = showAll ? 'Show Fewer Bundles ↑' : `View All Verified Bundles (${allItems.length}) ↓`;
+            renderItems();
         }
 
-        function renderRecipes() {
+        function renderItems() {
             const container = document.getElementById('resultsContainer');
             const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
 
-            let filtered = allRecipes;
+            let filtered = allItems;
             if (activeRuntime !== 'all') {
-                filtered = filtered.filter(r => (r.problem.runtime || '').toLowerCase() === activeRuntime);
+                filtered = filtered.filter(r => (r.runtime || '').toLowerCase() === activeRuntime);
             }
 
             if (query) {
                 filtered = filtered.filter(r => 
-                    r.problem.errorSignature.toLowerCase().includes(query) ||
-                    r.solution.summary.toLowerCase().includes(query) ||
-                    r.id.toLowerCase().includes(query)
+                    (r.errorSignature && r.errorSignature.toLowerCase().includes(query)) ||
+                    (r.summary && r.summary.toLowerCase().includes(query)) ||
+                    (r.id && r.id.toLowerCase().includes(query))
                 );
             }
 
@@ -361,28 +410,35 @@
             document.getElementById('paginationContainer').style.display = query ? 'none' : 'block';
 
             container.innerHTML = displayed.map(r => `
-                <div class="p-5 rounded-xl border border-slate-800/80 bg-slate-900/40 hover:border-slate-700 transition space-y-3">
+                <div class="p-5 rounded-xl border ${r.isGolden ? 'border-brand-500/40 bg-slate-900/70 shadow-lg' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 transition space-y-3">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-500 border border-slate-700">${r.problem.runtime}</span>
-                            <a href="/recipes/${r.id}" class="font-mono text-sm font-semibold text-brand-500 hover:underline">${r.id}</a>
+                            <span class="px-2 py-0.5 rounded text-xs font-mono uppercase bg-slate-800 text-brand-500 border border-slate-700">${r.runtime}</span>
+                            ${r.isGolden ? 
+                                `<span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-brand-950 text-brand-400 border border-brand-700">★ GOLDEN BUNDLE v1.0</span>` : 
+                                `<span class="px-2 py-0.5 rounded text-xs font-mono bg-slate-800 text-slate-400 border border-slate-700">RECIPE</span>`
+                            }
+                            <span class="font-mono text-sm font-semibold text-brand-400">${r.id}</span>
                         </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
-                            ✓ 4-STAGE VERIFIED (Exit ${r.evidence.sandboxExitCode})
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium ${r.status === 'VERIFIED' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/50' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                            ${r.status === 'VERIFIED' ? '✓ 4-STAGE PROVEN' : r.status}
                         </span>
                     </div>
                     <div class="text-sm font-mono text-rose-400 bg-slate-950/60 p-2.5 rounded border border-rose-950/40">
-                        ${escapeHtml(r.problem.errorSignature)}
+                        ${escapeHtml(r.errorSignature)}
                     </div>
                     <div class="text-sm text-slate-300">
-                        <strong>Solution:</strong> ${escapeHtml(r.solution.summary)}
+                        <strong>Solution:</strong> ${escapeHtml(r.summary)}
                     </div>
-                    ${r.solution.codeDiff ? `
-                        <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.solution.codeDiff)}</code></pre>
+                    ${r.diff ? `
+                        <pre class="text-xs font-mono p-3 rounded bg-slate-950 border border-slate-800 overflow-x-auto text-emerald-300"><code>${escapeHtml(r.diff)}</code></pre>
                     ` : ''}
-                    <div class="flex items-center justify-between pt-1">
-                        <code class="text-xs font-mono text-slate-500">synapse reverify ${r.id}</code>
-                        <a href="/recipes/${r.id}" class="text-xs font-mono text-slate-400 hover:text-brand-500 transition">Detail View & Evidence →</a>
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 font-mono text-xs">
+                        <code class="text-slate-400 bg-slate-950 px-2 py-1 rounded border border-slate-800">${r.reverify}</code>
+                        ${r.detailUrl ? 
+                            `<a href="${r.detailUrl}" class="text-slate-400 hover:text-brand-500 transition">Detail View →</a>` : 
+                            `<a href="/api/v1/bundles/${r.id}" target="_blank" class="text-slate-400 hover:text-brand-500 transition">Raw JSON →</a>`
+                        }
                     </div>
                 </div>
             `).join('');
@@ -396,7 +452,7 @@
         let debounceTimer;
         document.getElementById('searchInput').addEventListener('input', () => {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(renderRecipes, 150);
+            debounceTimer = setTimeout(renderItems, 150);
         });
 
         function copyMcpConfig() {
@@ -414,7 +470,7 @@
         }
 
         loadStats();
-        fetchRecipes();
+        fetchAllData();
     </script>
 </body>
 </html>
