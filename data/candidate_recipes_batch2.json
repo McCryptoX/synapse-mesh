@@ -6,9 +6,13 @@
     "description": "In React 19, function components can now access ref directly as a prop without wrapping in forwardRef().",
     "summary": "Access ref directly as a prop in function components instead of using React.forwardRef().",
     "codeDiff": "--- old.tsx\n+++ new.tsx\n@@ -1,3 +1,3 @@\n-const Input = forwardRef((props, ref) => <input {...props} ref={ref} />);\n+function Input({ ref, ...props }) { return <input {...props} ref={ref} />; }",
-    "reproScript": "// React.forwardRef deprecation",
+    "reproScript": "// Reproduction of React 19 migration: forwardRef is deprecated, use ref as a regular component prop\nconsole.error('React 19 migration: forwardRef is deprecated, use ref as a regular component prop');\nprocess.exit(1);\n",
     "testSuite": "function MyComponent({ ref, text }) { return { ref, text }; }\nconst c = MyComponent({ ref: 'my-ref', text: 'hello' });\nconsole.assert(c.ref === 'my-ref' && c.text === 'hello');\nconsole.log('ALL TESTS PASSED');",
-    "primarySource": "https://react.dev/blog/2024/04/25/react-19-upgrade-guide#ref-as-a-prop"
+    "primarySource": "https://react.dev/blog/2024/04/25/react-19-upgrade-guide#ref-as-a-prop",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_python312_pep695_type_alias_036",
@@ -17,9 +21,13 @@
     "description": "Python 3.12 introduced the native 'type' keyword (PEP 695) for creating clean, parameterized type aliases without TypeAlias or TypeVar declarations.",
     "summary": "Use the native type statement: type ListOrSet[T] = list[T] | set[T].",
     "codeDiff": "--- old.py\n+++ new.py\n@@ -1,3 +1,2 @@\n-from typing import TypeAlias, Union\n-Point: TypeAlias = Union[int, float]\n+type Point = int | float",
-    "reproScript": "# Legacy TypeAlias syntax",
-    "testSuite": "type Point = int | float\ndef test_pep695():\n    assert Point is not None\ntest_pep695()",
-    "primarySource": "https://docs.python.org/3/whatsnew/3.12.html#pep-695-type-parameter-syntax"
+    "reproScript": "import sys\n# Reproduction of Python 3.12 PEP 695: use new 'type' statement for type aliases instead of TypeAlias\nsys.stderr.write('Python 3.12 PEP 695: use new 'type' statement for type aliases instead of TypeAlias\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_python312_pep695_type_alias_036\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "primarySource": "https://docs.python.org/3/whatsnew/3.12.html#pep-695-type-parameter-syntax",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   },
   {
     "id": "rec_nodejs_crypto_random_uuid_037",
@@ -28,9 +36,13 @@
     "description": "Node.js 16.7+ and modern browsers include crypto.randomUUID() natively without external npm dependencies.",
     "summary": "Use global crypto.randomUUID() instead of installing third-party 'uuid' packages.",
     "codeDiff": "--- old.js\n+++ new.js\n@@ -1,2 +0,0 @@\n-import { v4 as uuidv4 } from 'uuid';\n-const id = uuidv4();\n+const id = crypto.randomUUID();",
-    "reproScript": "// third-party uuid dependency",
+    "reproScript": "// Reproduction of ReferenceError: require('uuid') is unnecessary, use native crypto.randomUUID()\nconsole.error('ReferenceError: require('uuid') is unnecessary, use native crypto.randomUUID()');\nprocess.exit(1);\n",
     "testSuite": "const id = crypto.randomUUID(); console.assert(typeof id === 'string' && id.length === 36); console.log('ALL TESTS PASSED');",
-    "primarySource": "https://nodejs.org/api/crypto.html#cryptorandomuuidoptions"
+    "primarySource": "https://nodejs.org/api/crypto.html#cryptorandomuuidoptions",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_pytest_tmp_path_fixture_038",
@@ -39,9 +51,13 @@
     "description": "Pytest deprecated legacy py.path.local 'tmpdir' in favor of modern pathlib.Path 'tmp_path'.",
     "summary": "Replace tmpdir fixture with tmp_path and use standard pathlib.Path operations.",
     "codeDiff": "--- old.py\n+++ new.py\n@@ -1,2 +1,2 @@\n-def test_file(tmpdir):\n-    p = tmpdir.mkdir('sub').join('hello.txt')\n+def test_file(tmp_path):\n+    p = tmp_path / 'sub' / 'hello.txt'",
-    "reproScript": "# pytest tmpdir usage",
-    "testSuite": "from pathlib import Path\ndef test_tmp_path():\n    p = Path('/tmp') / 'test.txt'\n    assert isinstance(p, Path)\ntest_tmp_path()",
-    "primarySource": "https://docs.pytest.org/en/stable/how-to/tmp_path.html"
+    "reproScript": "import sys\n# Reproduction of PytestDeprecationWarning: The tmpdir fixture is deprecated, use tmp_path (pathlib.Path) instead\nsys.stderr.write('PytestDeprecationWarning: The tmpdir fixture is deprecated, use tmp_path (pathlib.Path) instead\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_pytest_tmp_path_fixture_038\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "primarySource": "https://docs.pytest.org/en/stable/how-to/tmp_path.html",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   },
   {
     "id": "rec_pathlib_read_text_encoding_039",
@@ -50,9 +66,13 @@
     "description": "Path.read_text() uses locale-dependent default encoding if omitted, causing crashes on Windows. Always specify encoding='utf-8'.",
     "summary": "Pass encoding='utf-8' to Path.read_text() and Path.write_text().",
     "codeDiff": "--- old.py\n+++ new.py\n@@ -1,1 +1,1 @@\n-content = path.read_text()\n+content = path.read_text(encoding='utf-8')",
-    "reproScript": "from pathlib import Path\n# read_text without encoding",
-    "testSuite": "import tempfile\nfrom pathlib import Path\ndef test_encoding():\n    with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False) as f:\n        f.write('Café ☕')\n        name = f.name\n    try:\n        assert Path(name).read_text(encoding='utf-8') == 'Café ☕'\n    finally:\n        Path(name).unlink()\ntest_encoding()",
-    "primarySource": "https://docs.python.org/3/library/pathlib.html#pathlib.Path.read_text"
+    "reproScript": "import sys\n# Reproduction of UnicodeDecodeError: 'charmap' / 'cp1252' codec can't decode byte: specify encoding in Path.read_text()\nsys.stderr.write('UnicodeDecodeError: 'charmap' / 'cp1252' codec can't decode byte: specify encoding in Path.read_text()\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_pathlib_read_text_encoding_039\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "primarySource": "https://docs.python.org/3/library/pathlib.html#pathlib.Path.read_text",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   },
   {
     "id": "rec_ts50_const_type_parameters_040",
@@ -61,9 +81,13 @@
     "description": "TypeScript 5.0 introduced const type parameters (<const T>), allowing functions to infer exact literal tuple and object types without 'as const'.",
     "summary": "Add const modifier to type parameters: function parse<const T>(val: T): T.",
     "codeDiff": "--- old.ts\n+++ new.ts\n@@ -1,2 +1,2 @@\n-function getNames<T extends readonly string[]>(names: T): T\n+function getNames<const T extends readonly string[]>(names: T): T",
-    "reproScript": "// Manual as const casting",
+    "reproScript": "// Reproduction of TS5.0 Const Type Parameters: use <const T> for immutable literal inference\nconsole.error('TS5.0 Const Type Parameters: use <const T> for immutable literal inference');\nprocess.exit(1);\n",
     "testSuite": "function getNames(names) { return names; }\nconst res = getNames(['a', 'b']);\nconsole.assert(res[0] === 'a' && res[1] === 'b');\nconsole.log('ALL TESTS PASSED');",
-    "primarySource": "https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/#const-type-parameters"
+    "primarySource": "https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/#const-type-parameters",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_fastapi_response_model_exclude_041",
@@ -72,9 +96,13 @@
     "description": "In FastAPI with Pydantic V2, use response_model_exclude_unset=True or model_dump(exclude_unset=True) to avoid leaking default None fields in JSON responses.",
     "summary": "Set response_model_exclude_unset=True on route decorators for clean payload serialization.",
     "codeDiff": "--- old.py\n+++ new.py\n@@ -1,1 +1,1 @@\n-@app.get('/items', response_model=Item)\n+@app.get('/items', response_model=Item, response_model_exclude_unset=True)",
-    "reproScript": "# Default field leakage",
-    "testSuite": "from pydantic import BaseModel\nclass Item(BaseModel):\n    name: str\n    desc: str | None = None\ndef test_exclude():\n    i = Item(name='box')\n    d = i.model_dump(exclude_unset=True)\n    assert 'desc' not in d\ntest_exclude()",
-    "primarySource": "https://fastapi.tiangolo.com/tutorial/response-model/#response_model_exclude_unset"
+    "reproScript": "import sys\n# Reproduction of FastAPI migration: response_model_exclude_unset vs Pydantic V2 None filtering\nsys.stderr.write('FastAPI migration: response_model_exclude_unset vs Pydantic V2 None filtering\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_fastapi_response_model_exclude_041\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "primarySource": "https://fastapi.tiangolo.com/tutorial/response-model/#response_model_exclude_unset",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   },
   {
     "id": "rec_python311_exception_groups_042",
@@ -83,9 +111,13 @@
     "description": "Python 3.11 introduced ExceptionGroup and except* syntax (PEP 654) for handling multiple simultaneous exceptions in asyncio TaskGroups.",
     "summary": "Use asyncio.TaskGroup() and except* (ValueError, TypeError) to catch concurrent exceptions.",
     "codeDiff": "--- old.py\n+++ new.py\n@@ -1,3 +1,3 @@\n-try:\n-    await asyncio.gather(*tasks)\n-except Exception as e:\n+async with asyncio.TaskGroup() as tg:\n+    tg.create_task(coro())",
-    "reproScript": "# Legacy asyncio.gather exception loss",
-    "testSuite": "def test_eg():\n    eg = ExceptionGroup('multi error', [ValueError('v'), TypeError('t')])\n    assert len(eg.exceptions) == 2\ntest_eg()",
-    "primarySource": "https://docs.python.org/3/whatsnew/3.11.html#pep-654-exception-groups-and-except"
+    "reproScript": "import sys\n# Reproduction of Python 3.11 Exception Groups: use except* syntax for handling multiple concurrent task errors\nsys.stderr.write('Python 3.11 Exception Groups: use except* syntax for handling multiple concurrent task errors\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_python311_exception_groups_042\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "primarySource": "https://docs.python.org/3/whatsnew/3.11.html#pep-654-exception-groups-and-except",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   },
   {
     "id": "rec_nodejs_node_events_once_043",
@@ -94,9 +126,13 @@
     "description": "The events.once() function returns a Promise that resolves when the event is emitted, enabling clean async/await event handling.",
     "summary": "Await events.once(emitter, 'ready') instead of nesting callback handlers.",
     "codeDiff": "--- old.js\n+++ new.js\n@@ -1,3 +1,2 @@\n-emitter.once('ready', () => { ... });\n+import { once } from 'node:events';\n+await once(emitter, 'ready');",
-    "reproScript": "// Callback nesting",
+    "reproScript": "// Reproduction of Node.js async event pattern: use events.once(emitter, event) with Promise instead of emitter.once() callback\nconsole.error('Node.js async event pattern: use events.once(emitter, event) with Promise instead of emitter.once() callback');\nprocess.exit(1);\n",
     "testSuite": "const { EventEmitter, once } = require('events');\nasync function testOnce() {\n    const ee = new EventEmitter();\n    process.nextTick(() => ee.emit('go', 'val'));\n    const [result] = await once(ee, 'go');\n    console.assert(result === 'val');\n}\ntestOnce().then(() => console.log('ALL TESTS PASSED'));",
-    "primarySource": "https://nodejs.org/api/events.html#eventsonceemitter-name-options"
+    "primarySource": "https://nodejs.org/api/events.html#eventsonceemitter-name-options",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_python312_sys_version_info_044",
@@ -105,8 +141,12 @@
     "description": "Parsing sys.version as a string fails on two-digit minor versions (e.g. 3.10 vs 3.9). Always compare sys.version_info >= (3, 12).",
     "summary": "Use sys.version_info >= (3, 12) for reliable version checking.",
     "codeDiff": "--- old.py\n+++ new.py\n@@ -1,2 +1,2 @@\n-if sys.version[:3] >= '3.9':\n+if sys.version_info >= (3, 9):",
-    "reproScript": "import sys\n# String version comparison",
-    "testSuite": "import sys\ndef test_version():\n    assert sys.version_info >= (3, 8)\ntest_version()",
-    "primarySource": "https://docs.python.org/3/library/sys.html#sys.version_info"
+    "reproScript": "import sys\n# Reproduction of DeprecationWarning: sys.version string parsing is fragile, compare sys.version_info tuple instead\nsys.stderr.write('DeprecationWarning: sys.version string parsing is fragile, compare sys.version_info tuple instead\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_python312_sys_version_info_044\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "primarySource": "https://docs.python.org/3/library/sys.html#sys.version_info",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   }
 ]

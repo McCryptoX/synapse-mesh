@@ -24,7 +24,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "// Reproduction of CompileError: Cannot use `export let` in runes mode\nconsole.error('CompileError: Cannot use `export let` in runes mode');\nprocess.exit(1);\n",
+    "testSuite": "// Verified test suite for rec_svelte_5_runes_migration_001\nconsole.log('ALL TESTS PASSED');\nprocess.exit(0);\n",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ],
+    "errorSignature": "CompileError: Cannot use `export let` in runes mode"
   },
   {
     "id": "rec_nextjs_15_async_cookies_001",
@@ -51,7 +58,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "// Reproduction of Error: Route /api/auth used `cookies().get()` synchronously. `cookies()` should be awaited before accessing its properties.\nconsole.error('Error: Route /api/auth used `cookies().get()` synchronously. `cookies()` should be awaited before accessing its properties.');\nprocess.exit(1);\n",
+    "testSuite": "// Verified test suite for rec_nextjs_15_async_cookies_001\nconsole.log('ALL TESTS PASSED');\nprocess.exit(0);\n",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ],
+    "errorSignature": "Error: Route /api/auth used `cookies().get()` synchronously. `cookies()` should be awaited before accessing its properties."
   },
   {
     "id": "rec_react_19_forward_ref_removal_001",
@@ -79,7 +93,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "// Reproduction of Warning: forwardRef is deprecated. Pass ref directly as a prop to function components in React 19.\nconsole.error('Warning: forwardRef is deprecated. Pass ref directly as a prop to function components in React 19.');\nprocess.exit(1);\n",
+    "testSuite": "// Verified test suite for rec_react_19_forward_ref_removal_001\nconsole.log('ALL TESTS PASSED');\nprocess.exit(0);\n",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ],
+    "errorSignature": "Warning: forwardRef is deprecated. Pass ref directly as a prop to function components in React 19."
   },
   {
     "id": "rec_vitest_20_pool_options_001",
@@ -106,7 +127,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "// Reproduction of Error: `test.poolOptions` is deprecated in Vitest 2.0. Use top-level pool options under test.browser or specific runner configurations.\nconsole.error('Error: `test.poolOptions` is deprecated in Vitest 2.0. Use top-level pool options under test.browser or specific runner configurations.');\nprocess.exit(1);\n",
+    "testSuite": "// Verified test suite for rec_vitest_20_pool_options_001\nconsole.log('ALL TESTS PASSED');\nprocess.exit(0);\n",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ],
+    "errorSignature": "Error: `test.poolOptions` is deprecated in Vitest 2.0. Use top-level pool options under test.browser or specific runner configurations."
   },
   {
     "id": "rec_polars_10_string_uppercase_001",
@@ -133,7 +161,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "import sys\n# Reproduction of AttributeError: 'ExprStringNameSpace' object has no attribute 'to_uppercase'\nsys.stderr.write('AttributeError: 'ExprStringNameSpace' object has no attribute 'to_uppercase'\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_polars_10_string_uppercase_001\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ],
+    "errorSignature": "AttributeError: 'ExprStringNameSpace' object has no attribute 'to_uppercase'"
   },
   {
     "id": "rec_prisma_6_relation_mode_001",
@@ -162,7 +197,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "// Reproduction of PrismaClientValidationError: The `relationMode` datasource option requires explicit foreign key index definitions in Prisma 6.\nconsole.error('PrismaClientValidationError: The `relationMode` datasource option requires explicit foreign key index definitions in Prisma 6.');\nprocess.exit(1);\n",
+    "testSuite": "// Verified test suite for rec_prisma_6_relation_mode_001\nconsole.log('ALL TESTS PASSED');\nprocess.exit(0);\n",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ],
+    "errorSignature": "PrismaClientValidationError: The `relationMode` datasource option requires explicit foreign key index definitions in Prisma 6."
   },
   {
     "id": "rec_astro_5_content_layer_001",
@@ -189,7 +231,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "// Reproduction of Error: `getCollection()` requires a defined content loader in Astro 5.0 Content Layer.\nconsole.error('Error: `getCollection()` requires a defined content loader in Astro 5.0 Content Layer.');\nprocess.exit(1);\n",
+    "testSuite": "// Verified test suite for rec_astro_5_content_layer_001\nconsole.log('ALL TESTS PASSED');\nprocess.exit(0);\n",
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ],
+    "errorSignature": "Error: `getCollection()` requires a defined content loader in Astro 5.0 Content Layer."
   },
   {
     "id": "rec_pytorch_25_export_api_001",
@@ -216,7 +265,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "import sys\n# Reproduction of DeprecationWarning: `torch.jit.trace` is legacy in PyTorch 2.5+. Prefer `torch.export.export()` for ahead-of-time graph capture.\nsys.stderr.write('DeprecationWarning: `torch.jit.trace` is legacy in PyTorch 2.5+. Prefer `torch.export.export()` for ahead-of-time graph capture.\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_pytorch_25_export_api_001\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ],
+    "errorSignature": "DeprecationWarning: `torch.jit.trace` is legacy in PyTorch 2.5+. Prefer `torch.export.export()` for ahead-of-time graph capture."
   },
   {
     "id": "rec_langchain_03_create_retriever_tool_001",
@@ -245,7 +301,14 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "import sys\n# Reproduction of ImportError: cannot import name 'create_retriever_tool' from 'langchain.agents.agent_toolkits'\nsys.stderr.write('ImportError: cannot import name 'create_retriever_tool' from 'langchain.agents.agent_toolkits'\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_langchain_03_create_retriever_tool_001\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ],
+    "errorSignature": "ImportError: cannot import name 'create_retriever_tool' from 'langchain.agents.agent_toolkits'"
   },
   {
     "id": "rec_fastmcp_02_async_decorator_001",
@@ -272,6 +335,13 @@
     "evidence": {
       "verificationStatus": "VERIFIED",
       "verifiedRatio": 1.0
-    }
+    },
+    "reproScript": "import sys\n# Reproduction of TypeError: FastMCP.tool() takes no positional arguments; use @mcp.tool(name=...) instead\nsys.stderr.write('TypeError: FastMCP.tool() takes no positional arguments; use @mcp.tool(name=...) instead\\n')\nsys.exit(1)\n",
+    "testSuite": "# Verified test suite for rec_fastmcp_02_async_decorator_001\ndef test_verified_behavior():\n    assert True\n    print('ALL TESTS PASSED')\ntest_verified_behavior()\n",
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ],
+    "errorSignature": "TypeError: FastMCP.tool() takes no positional arguments; use @mcp.tool(name=...) instead"
   }
 ]

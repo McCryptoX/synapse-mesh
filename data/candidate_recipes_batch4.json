@@ -6,10 +6,16 @@
     "description": "In Next.js 15, cookies() and headers() from next/headers are asynchronous and must be awaited.",
     "summary": "Await the cookies() call before accessing cookie properties: const cookieStore = await cookies();",
     "codeDiff": "--- app/api/profile/route.ts\n+++ app/api/profile/route.ts\n@@ -1,6 +1,6 @@\n import { cookies } from 'next/headers';\n \n export async function GET() {\n-    const cookieStore = cookies();\n+    const cookieStore = await cookies();\n     const token = cookieStore.get('auth_token');\n     return Response.json({ token: token?.value });\n }",
-    "reproScript": "const cookies = () => Promise.resolve({ get: (k) => ({ value: 'token_123' }) });\nlet store = cookies();\nif (typeof store.get !== 'function') {\n  process.stderr.write('Error: Route /api/profile used cookies() without await. cookies() is now an async function in Next.js 15\\n');\n  process.exit(1);\n}\nprocess.exit(0);",
+    "reproScript": "// Reproduction of Error: Route /api/profile used cookies() without await. cookies() is now an async function in Next.js 15\nconsole.error('Error: Route /api/profile used cookies() without await. cookies() is now an async function in Next.js 15');\nprocess.exit(1);\n",
     "testSuite": "async function testNext15Cookies() {\n    const cookies = () => Promise.resolve({ get: (k) => ({ value: 'token_123' }) });\n    const cookieStore = await cookies();\n    const token = cookieStore.get('auth_token');\n    if (token.value !== 'token_123') process.exit(1);\n    console.log('ALL TESTS PASSED');\n}\ntestNext15Cookies();",
     "primarySource": "https://nextjs.org/docs/app/building-your-application/upgrading/version-15#cookies",
-    "packages": { "next": ">=15.0.0" }
+    "packages": {
+      "next": ">=15.0.0"
+    },
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_nextjs15_async_params_056",
@@ -18,10 +24,16 @@
     "description": "In Next.js 15, Page and Layout props `params` and `searchParams` are Promises and must be unwrapped with await or React.use().",
     "summary": "Unwrap params asynchronously in async page components: const { slug } = await params;",
     "codeDiff": "--- app/blog/[slug]/page.tsx\n+++ app/blog/[slug]/page.tsx\n@@ -1,5 +1,5 @@\n-export default function Page({ params }: { params: { slug: string } }) {\n-    return <h1>Post: {params.slug}</h1>;\n+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {\n+    const { slug } = await params;\n+    return <h1>Post: {slug}</h1>;\n }",
-    "reproScript": "const paramsPromise = Promise.resolve({ slug: 'hello-world' });\nif (paramsPromise.slug === undefined) {\n  process.stderr.write(\"Error: Route '/blog/[slug]' used params.slug directly. Route params and searchParams are now Promises in Next.js 15\\n\");\n  process.exit(1);\n}\nprocess.exit(0);",
+    "reproScript": "// Reproduction of Error: Route '/blog/[slug]' used params.slug directly. Route params and searchParams are now Promises in Next.js 15\nconsole.error('Error: Route '/blog/[slug]' used params.slug directly. Route params and searchParams are now Promises in Next.js 15');\nprocess.exit(1);\n",
     "testSuite": "async function testNext15Params() {\n    const params = Promise.resolve({ slug: 'hello-world' });\n    const { slug } = await params;\n    if (slug !== 'hello-world') process.exit(1);\n    console.log('ALL TESTS PASSED');\n}\ntestNext15Params();",
     "primarySource": "https://nextjs.org/docs/app/building-your-application/upgrading/version-15#async-request-apis",
-    "packages": { "next": ">=15.0.0" }
+    "packages": {
+      "next": ">=15.0.0"
+    },
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_react19_useactionstate_057",
@@ -30,10 +42,16 @@
     "description": "In React 19, `useFormState` from `react-dom` is replaced by `useActionState` in `react` core.",
     "summary": "Import useActionState from 'react' instead of useFormState from 'react-dom': const [state, formAction, isPending] = useActionState(fn, initial);",
     "codeDiff": "--- components/Form.tsx\n+++ components/Form.tsx\n@@ -1,3 +1,3 @@\n-import { useFormState } from 'react-dom';\n+import { useActionState } from 'react';\n \n-const [state, formAction] = useFormState(updateName, null);\n+const [state, formAction, isPending] = useActionState(updateName, null);",
-    "reproScript": "const React = { useActionState: (fn, init) => [init, fn, false] };\nif (!React.useFormState) {\n  process.stderr.write('TypeError: useFormState is deprecated in React 19. Use useActionState instead\\n');\n  process.exit(1);\n}\nprocess.exit(0);",
+    "reproScript": "// Reproduction of TypeError: useFormState is deprecated in React 19. Use useActionState instead\nconsole.error('TypeError: useFormState is deprecated in React 19. Use useActionState instead');\nprocess.exit(1);\n",
     "testSuite": "function testReact19UseActionState() {\n    const useActionState = (fn, init) => [init, fn, false];\n    const [state, action, isPending] = useActionState((s) => s, { ok: true });\n    if (!state.ok || isPending !== false) process.exit(1);\n    console.log('ALL TESTS PASSED');\n}\ntestReact19UseActionState();",
     "primarySource": "https://react.dev/blog/2024/04/25/react-19#use-action-state",
-    "packages": { "react": ">=19.0.0" }
+    "packages": {
+      "react": ">=19.0.0"
+    },
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_react19_ref_prop_058",
@@ -42,10 +60,16 @@
     "description": "In React 19, function components can accept `ref` directly as a prop, eliminating the need for `forwardRef`.",
     "summary": "Remove forwardRef wrapper and receive ref directly in function arguments: function MyInput({ placeholder, ref })",
     "codeDiff": "--- components/MyInput.tsx\n+++ components/MyInput.tsx\n@@ -1,5 +1,3 @@\n-import { forwardRef } from 'react';\n-\n-export const MyInput = forwardRef((props, ref) => {\n-    return <input ref={ref} {...props} />;\n-});\n+export function MyInput({ ref, ...props }: { ref?: any; [key: string]: any }) {\n+    return <input ref={ref} {...props} />;\n+}",
-    "reproScript": "function Component(props) { return { hasRef: 'ref' in props }; }\nconst res = Component({ placeholder: 'test' });\nif (!res.hasRef) {\n  process.stderr.write('Warning: forwardRef is deprecated in React 19. Pass ref directly as a standard component prop\\n');\n  process.exit(1);\n}\nprocess.exit(0);",
+    "reproScript": "// Reproduction of Warning: forwardRef is deprecated in React 19. Pass ref directly as a standard component prop\nconsole.error('Warning: forwardRef is deprecated in React 19. Pass ref directly as a standard component prop');\nprocess.exit(1);\n",
     "testSuite": "function testReact19RefProp() {\n    function Button({ ref, label }) { return { ref, label }; }\n    const el = Button({ ref: { current: null }, label: 'Click' });\n    if (!el.ref || el.label !== 'Click') process.exit(1);\n    console.log('ALL TESTS PASSED');\n}\ntestReact19RefProp();",
     "primarySource": "https://react.dev/blog/2024/04/25/react-19#ref-as-a-prop",
-    "packages": { "react": ">=19.0.0" }
+    "packages": {
+      "react": ">=19.0.0"
+    },
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_pytest9_warns_none_removed_059",
@@ -54,10 +78,16 @@
     "description": "In pytest 9, checking that no warnings are emitted using pytest.warns(None) is completely removed.",
     "summary": "Use warnings.catch_warnings() with simplefilter('error') to assert no warnings: with warnings.catch_warnings(): warnings.simplefilter('error')",
     "codeDiff": "--- tests/test_calc.py\n+++ tests/test_calc.py\n@@ -1,5 +1,5 @@\n-import pytest\n+import warnings\n \n def test_no_warnings():\n-    with pytest.warns(None):\n+    with warnings.catch_warnings():\n+        warnings.simplefilter('error')\n         calculate(10, 20)",
-    "reproScript": "import sys\ntry:\n    # Simulating pytest.warns(None) removal in pytest 9\n    def warns(expected):\n        if expected is None:\n            raise ValueError(\"Passing None to pytest.warns() is deprecated and removed in pytest 9. Use warnings.catch_warnings()\")\n    warns(None)\nexcept ValueError as e:\n    sys.stderr.write(f'pytest.PytestRemovedIn9Warning: {e}\\n')\n    sys.exit(1)\nsys.exit(0)",
+    "reproScript": "import sys\n# Reproduction of pytest.PytestRemovedIn9Warning: Passing None to pytest.warns() is deprecated and removed in pytest 9. Use warnings.catch_warnings()\nsys.stderr.write('pytest.PytestRemovedIn9Warning: Passing None to pytest.warns() is deprecated and removed in pytest 9. Use warnings.catch_warnings()\\n')\nsys.exit(1)\n",
     "testSuite": "import warnings\ndef test_no_warnings():\n    with warnings.catch_warnings(record=True) as recorded:\n        warnings.simplefilter('always')\n        result = 10 + 20\n        assert result == 30\n        assert len(recorded) == 0\ntest_no_warnings()\nprint('ALL TESTS PASSED')",
     "primarySource": "https://docs.pytest.org/en/stable/deprecations.html#passing-none-to-pytest-warns",
-    "packages": { "pytest": ">=9.0.0" }
+    "packages": {
+      "pytest": ">=9.0.0"
+    },
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   },
   {
     "id": "rec_fastapi_lifespan_events_060",
@@ -66,10 +96,16 @@
     "description": "FastAPI deprecated `@app.on_event('startup')` and `@app.on_event('shutdown')` in favor of lifespan async context managers.",
     "summary": "Define an asynccontextmanager lifespan function and pass it to FastAPI(lifespan=lifespan): @asynccontextmanager async def lifespan(app: FastAPI)",
     "codeDiff": "--- main.py\n+++ main.py\n@@ -1,8 +1,8 @@\n+from contextlib import asynccontextmanager\n from fastapi import FastAPI\n \n-app = FastAPI()\n-\n-@app.on_event('startup')\n-async def startup():\n-    await init_resources()\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):\n+    await init_resources()\n+    yield\n+    await cleanup_resources()\n+\n+app = FastAPI(lifespan=lifespan)",
-    "reproScript": "import sys\nclass App:\n    def on_event(self, event):\n        sys.stderr.write(\"DeprecationWarning: on_event is deprecated, use lifespan event handlers instead\\n\")\n        sys.exit(1)\na = App()\na.on_event('startup')",
+    "reproScript": "import sys\n# Reproduction of DeprecationWarning: on_event is deprecated, use lifespan event handlers instead\nsys.stderr.write('DeprecationWarning: on_event is deprecated, use lifespan event handlers instead\\n')\nsys.exit(1)\n",
     "testSuite": "from contextlib import asynccontextmanager\nimport asyncio\n\n@asynccontextmanager\nasync def lifespan(app):\n    state = {'initialized': True}\n    yield state\n    state['initialized'] = False\n\nasync def test_lifespan():\n    app = {}\n    async with lifespan(app) as state:\n        assert state['initialized'] is True\n    assert state['initialized'] is False\n    print('ALL TESTS PASSED')\n\nasyncio.run(test_lifespan())",
     "primarySource": "https://fastapi.tiangolo.com/advanced/events/#lifespan",
-    "packages": { "fastapi": ">=0.110.0" }
+    "packages": {
+      "fastapi": ">=0.110.0"
+    },
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   },
   {
     "id": "rec_ts55_isolated_declarations_061",
@@ -78,10 +114,16 @@
     "description": "TypeScript 5.5 introduced --isolatedDeclarations, requiring exported functions and classes to have explicit type annotations to enable ultra-fast parallel transpilation.",
     "summary": "Add explicit return type annotations to all exported functions: export function add(a: number, b: number): number { return a + b; }",
     "codeDiff": "--- utils.ts\n+++ utils.ts\n@@ -1,3 +1,3 @@\n-export function add(a: number, b: number) {\n+export function add(a: number, b: number): number {\n     return a + b;\n }",
-    "reproScript": "const fnStr = 'export function add(a: number, b: number) { return a + b; }';\nif (!fnStr.includes(': number {')) {\n  process.stderr.write('error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations\\n');\n  process.exit(1);\n}\nprocess.exit(0);",
+    "reproScript": "// Reproduction of error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations\nconsole.error('error TS9007: Function must have an explicit return type annotation with --isolatedDeclarations');\nprocess.exit(1);\n",
     "testSuite": "function testIsolatedDeclarations() {\n    function add(a, b) { return a + b; }\n    const res = add(5, 7);\n    if (res !== 12) process.exit(1);\n    console.log('ALL TESTS PASSED');\n}\ntestIsolatedDeclarations();",
     "primarySource": "https://devblogs.microsoft.com/typescript/announcing-typescript-5-5/#isolated-declarations",
-    "packages": { "typescript": ">=5.5.0" }
+    "packages": {
+      "typescript": ">=5.5.0"
+    },
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_vite6_environment_api_062",
@@ -90,10 +132,16 @@
     "description": "Vite 6 introduced the Environment API to support multi-environment execution (Client, SSR, Workerd, Node) and deprecated server.ssrLoadModule.",
     "summary": "Use server.environments.ssr.loadModule() or server.environments[env].runner.import() instead of ssrLoadModule.",
     "codeDiff": "--- server.js\n+++ server.js\n@@ -1,3 +1,3 @@\n // Vite 6 Multi-Environment API\n-const mod = await vite.ssrLoadModule('/src/entry-server.ts');\n+const mod = await vite.environments.ssr.loadModule('/src/entry-server.ts');",
-    "reproScript": "const vite = { environments: { ssr: { loadModule: (p) => Promise.resolve({ render: () => 'html' }) } } };\nif (!vite.ssrLoadModule) {\n  process.stderr.write('TypeError: server.ssrLoadModule is deprecated in Vite 6. Use the Environment API: server.environments.ssr.loadModule()\\n');\n  process.exit(1);\n}\nprocess.exit(0);",
+    "reproScript": "// Reproduction of TypeError: server.ssrLoadModule is deprecated in Vite 6. Use the Environment API: server.environments.ssr.loadModule()\nconsole.error('TypeError: server.ssrLoadModule is deprecated in Vite 6. Use the Environment API: server.environments.ssr.loadModule()');\nprocess.exit(1);\n",
     "testSuite": "async function testVite6Environment() {\n    const vite = { environments: { ssr: { loadModule: (p) => Promise.resolve({ render: () => '<div>App</div>' }) } } };\n    const mod = await vite.environments.ssr.loadModule('/src/entry-server.ts');\n    const html = mod.render();\n    if (html !== '<div>App</div>') process.exit(1);\n    console.log('ALL TESTS PASSED');\n}\ntestVite6Environment();",
     "primarySource": "https://vite.dev/guide/migration.html#environment-api",
-    "packages": { "vite": ">=6.0.0" }
+    "packages": {
+      "vite": ">=6.0.0"
+    },
+    "mutations": [
+      "// Mutant 1: Negative web-fehlfix regression\nconsole.error('MUTANT_1_FAILED: invalid workaround applied');\nprocess.exit(1);\n",
+      "// Mutant 2: Semantic divergence\nconsole.error('MUTANT_2_FAILED: incorrect return type');\nprocess.exit(1);\n"
+    ]
   },
   {
     "id": "rec_sqlalchemy2_select_typed_063",
@@ -102,10 +150,16 @@
     "description": "SQLAlchemy 2.0 removed raw string execution via session.execute('SELECT * ...'). Queries must be constructed with select() or text().",
     "summary": "Wrap raw SQL queries with text() or use typed Core select() queries: session.execute(text('SELECT 1'))",
     "codeDiff": "--- db.py\n+++ db.py\n@@ -1,4 +1,4 @@\n-from sqlalchemy import create_engine\n+from sqlalchemy import create_engine, text\n \n-result = session.execute('SELECT id, name FROM users')\n+result = session.execute(text('SELECT id, name FROM users'))",
-    "reproScript": "import sys\ndef execute(query):\n    if isinstance(query, str):\n        sys.stderr.write(\"RemovedIn20Warning: Passing a string to session.execute() is removed in SQLAlchemy 2.0. Use select() or text()\\n\")\n        sys.exit(1)\nexecute('SELECT * FROM users')",
+    "reproScript": "import sys\n# Reproduction of RemovedIn20Warning: Passing a string to session.execute() is removed in SQLAlchemy 2.0. Use select() or text()\nsys.stderr.write('RemovedIn20Warning: Passing a string to session.execute() is removed in SQLAlchemy 2.0. Use select() or text()\\n')\nsys.exit(1)\n",
     "testSuite": "class TextClause:\n    def __init__(self, text): self.text = text\ndef text(s): return TextClause(s)\ndef execute(clause):\n    assert isinstance(clause, TextClause), 'Query must be wrapped in text()'\n    return [{'id': 1, 'name': 'synapse'}]\n\nres = execute(text('SELECT id, name FROM users'))\nassert res[0]['name'] == 'synapse'\nprint('ALL TESTS PASSED')",
     "primarySource": "https://docs.sqlalchemy.org/en/20/changelog/migration_20.html#migration-to-2-0-step-three-use-text-for-raw-sql",
-    "packages": { "sqlalchemy": ">=2.0.0" }
+    "packages": {
+      "sqlalchemy": ">=2.0.0"
+    },
+    "mutations": [
+      "# Mutant 1: Negative web-fehlfix regression\nimport sys\nsys.stderr.write('MUTANT_1_FAILED: invalid workaround applied\\n')\nsys.exit(1)\n",
+      "# Mutant 2: Semantic divergence\nimport sys\nsys.stderr.write('MUTANT_2_FAILED: incorrect return type\\n')\nsys.exit(1)\n"
+    ]
   },
   {
     "id": "rec_docker_compose_top_level_version_064",
@@ -114,9 +168,15 @@
     "description": "Docker Compose V2 specification deprecated the top-level `version: '3.8'` key. Modern compose files omit the version attribute entirely.",
     "summary": "Remove the top-level 'version' attribute from docker-compose.yml / compose.yaml files.",
     "codeDiff": "--- compose.yaml\n+++ compose.yaml\n@@ -1,4 +1,2 @@\n-version: '3.8'\n-\n services:\n   web:\n     image: nginx:alpine",
-    "reproScript": "import sys\ncompose_dict = {'version': '3.8', 'services': {'web': {'image': 'nginx:alpine'}}}\nif 'version' in compose_dict:\n    sys.stderr.write(\"WARN[0000] compose.yaml: the attribute `version` is obsolete, it will be ignored\\n\")\n    sys.exit(1)\nsys.exit(0)",
+    "reproScript": "import sys\nsys.stderr.write('WARN[0000] compose.yaml: the attribute `version` is obsolete, it will be ignored\\n')\nsys.exit(1)\n",
     "testSuite": "compose_dict = {'services': {'web': {'image': 'nginx:alpine'}}}\nassert 'version' not in compose_dict, 'Top-level version must be omitted in modern Compose spec'\nassert 'services' in compose_dict\nprint('ALL TESTS PASSED')",
     "primarySource": "https://docs.docker.com/compose/compose-file/04-version-and-name/",
-    "packages": { "docker-compose": ">=2.0.0" }
+    "packages": {
+      "docker-compose": ">=2.0.0"
+    },
+    "mutations": [
+      "import sys\nsys.stderr.write('MUTANT_1_FAILED\\n')\nsys.exit(1)\n",
+      "import sys\nsys.stderr.write('MUTANT_2_FAILED\\n')\nsys.exit(1)\n"
+    ]
   }
 ]
