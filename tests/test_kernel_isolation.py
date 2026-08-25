@@ -11,12 +11,14 @@ async def test_kernel_isolation_probe():
     """
     probe_data = await KernelIsolationProbe.probe_runtime_environment()
     assert isinstance(probe_data, dict)
-    assert "pidNamespace" in probe_data
-    assert "network" in probe_data
-    assert "rootFs" in probe_data
-    assert "memoryLimitBytes" in probe_data
-    assert "pidsLimit" in probe_data
-    assert probe_data["pidsLimit"] == 64
+    assert "observedMetrics" in probe_data
+    assert "configuredPolicy" in probe_data
+    assert "pidNamespace" in probe_data["observedMetrics"]
+    assert "network" in probe_data["observedMetrics"]
+    assert "rootFs" in probe_data["observedMetrics"]
+    assert "memoryLimitBytes" in probe_data["configuredPolicy"]
+    assert "pidsLimit" in probe_data["configuredPolicy"]
+    assert probe_data["configuredPolicy"]["pidsLimit"] == 64
 
 
 @pytest.mark.asyncio

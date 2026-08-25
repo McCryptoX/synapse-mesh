@@ -79,5 +79,27 @@
       "https://pandas.pydata.org/docs/whatsnew/v2.0.0.html#removal-of-deprecated-methods"
     ],
     "verifiedAt": "2026-08-25T11:42:00Z"
+  },
+  "isolationProfile": {
+    "verificationProfile": "synapse-kernel-v1",
+    "isolationStatus": "ATTESTED",
+    "attestedAt": "2026-08-25T21:45:00Z",
+    "observedMetrics": {
+      "pidNamespace": true,
+      "network": "none",
+      "rootFs": "read-only",
+      "noNewPrivs": true,
+      "seccompMode": 2,
+      "effectiveCapabilities": "0x0000000000000000",
+      "privateTmpfs": true
+    },
+    "configuredPolicy": {
+      "seccompProfile": "synapse-v1",
+      "seccompProfileDigest": "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
+      "memoryLimitBytes": 536870912,
+      "tmpfsLimitBytes": 33554432,
+      "pidsLimit": 64,
+      "cpuLimitSeconds": 10
+    }
   }
 }
