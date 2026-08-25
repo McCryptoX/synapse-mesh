@@ -78,6 +78,11 @@
         "id": "mutant_global_monkeypatch",
         "description": "Monkeypatches global module attribute instead of fixing callsite",
         "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,3 +1,4 @@\n import numpy as np\n+np.NAN = np.nan\n def fill_missing_values(val):\n     return np.NAN if val is None else val\n"
+      },
+      {
+        "id": "mutant_hardcode_zero",
+        "description": "Returns integer zero instead of NaN value",
+        "unifiedDiff": "--- a/cleaner.py\n+++ b/cleaner.py\n@@ -1,3 +1,3 @@\n import numpy as np\n def fill_missing_values(val):\n-    return np.NAN if val is None else val\n+    return 0.0 if val is None else val\n"
       }
     ],
     "expectedPreExit": 1,
