@@ -261,7 +261,7 @@ async def trigger_manual_verification_sweep(request: Request, key: Optional[str]
         import glob
         from pathlib import Path
         from scripts.batch_importer import process_candidate_recipes
-        from app.core.verifier import verify_golden_bundle
+        from scripts.synapse_reverify import verify_bundle_data
 
         logs = []
         logs.append("[*] Initializing Synapse-Mesh 4-Stage Hermetic Sandbox Sweep...")
@@ -273,7 +273,7 @@ async def trigger_manual_verification_sweep(request: Request, key: Optional[str]
             try:
                 b_data = json.loads(Path(gf).read_text(encoding="utf-8"))
                 b_id = b_data.get("bundleId", Path(gf).stem)
-                is_ok = verify_golden_bundle(b_data)
+                is_ok = verify_bundle_data(b_data)
                 if is_ok:
                     logs.append(f"[✓ GOLDEN PASS] {b_id} -> Pre:Exit 1, Post:Exit 0, 2/2 Mutants Killed")
                 else:
