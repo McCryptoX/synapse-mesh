@@ -10,8 +10,8 @@ router = APIRouter()
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 INDEX_HTML_PATH = TEMPLATES_DIR / "index.html"
-IMPRESSUM_HTML_PATH = TEMPLATES_DIR / "impressum.html"
-DATENSCHUTZ_HTML_PATH = TEMPLATES_DIR / "datenschutz.html"
+LEGAL_HTML_PATH = TEMPLATES_DIR / "legal.html"
+PRIVACY_HTML_PATH = TEMPLATES_DIR / "privacy.html"
 VERIFICATION_HTML_PATH = TEMPLATES_DIR / "verification.html"
 BENCHMARK_HTML_PATH = TEMPLATES_DIR / "benchmark.html"
 FAVICON_SVG_PATH = STATIC_DIR / "favicon.svg"
@@ -89,12 +89,17 @@ async def sitemap_xml():
     <priority>0.9</priority>
   </url>""",
         f"""  <url>
-    <loc>{settings.base_url}/impressum</loc>
+    <loc>{settings.base_url}/benchmark</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>""",
+        f"""  <url>
+    <loc>{settings.base_url}/legal</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>""",
         f"""  <url>
-    <loc>{settings.base_url}/datenschutz</loc>
+    <loc>{settings.base_url}/privacy</loc>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>"""
@@ -113,7 +118,11 @@ async def sitemap_xml():
 {chr(10).join(xml_entries)}
 </urlset>"""
 
-    return Response(content=sitemap_content, media_type="application/xml")
+    return Response(
+        content=sitemap_content,
+        media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"}
+    )
 
 
 @router.get("/health", tags=["System"])
@@ -145,21 +154,17 @@ async def verification_page():
 
 
 @router.get("/legal", tags=["Legal"], response_class=HTMLResponse)
-@router.get("/impressum", tags=["Legal"], response_class=HTMLResponse)
-@router.get("/imprint", tags=["Legal"], response_class=HTMLResponse)
-async def impressum_page():
-    if IMPRESSUM_HTML_PATH.exists():
-        with open(IMPRESSUM_HTML_PATH, "r", encoding="utf-8") as f:
+async def legal_page():
+    if LEGAL_HTML_PATH.exists():
+        with open(LEGAL_HTML_PATH, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     return HTMLResponse("<h1>Legal Notice</h1><p>Synapse-Mesh Operator - mesh-direct@synapsemesh.dev</p>")
 
 
 @router.get("/privacy", tags=["Legal"], response_class=HTMLResponse)
-@router.get("/datenschutz", tags=["Legal"], response_class=HTMLResponse)
-@router.get("/privacy-policy", tags=["Legal"], response_class=HTMLResponse)
-async def datenschutz_page():
-    if DATENSCHUTZ_HTML_PATH.exists():
-        with open(DATENSCHUTZ_HTML_PATH, "r", encoding="utf-8") as f:
+async def privacy_page():
+    if PRIVACY_HTML_PATH.exists():
+        with open(PRIVACY_HTML_PATH, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     return HTMLResponse("<h1>Privacy Policy</h1><p>Zero-PII Architecture.</p>")
 
