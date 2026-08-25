@@ -151,7 +151,7 @@ async def impressum_page():
     if IMPRESSUM_HTML_PATH.exists():
         with open(IMPRESSUM_HTML_PATH, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Legal Notice</h1><p>Synapse-Mesh Operator - contact@synapsemesh.dev</p>")
+    return HTMLResponse("<h1>Legal Notice</h1><p>Synapse-Mesh Operator - mesh-direct@synapsemesh.dev</p>")
 
 
 @router.get("/privacy", tags=["Legal"], response_class=HTMLResponse)
