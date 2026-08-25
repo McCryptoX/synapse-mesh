@@ -136,6 +136,7 @@ async def benchmark_page():
     return HTMLResponse("<h1>Benchmark Dashboard</h1>")
 
 @router.get("/verification", tags=["Architecture"], response_class=HTMLResponse)
+@router.get("/architecture", tags=["Architecture"], response_class=HTMLResponse)
 async def verification_page():
     if VERIFICATION_HTML_PATH.exists():
         with open(VERIFICATION_HTML_PATH, "r", encoding="utf-8") as f:
