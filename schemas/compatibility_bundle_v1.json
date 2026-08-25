@@ -298,7 +298,7 @@
           "additionalProperties": {
             "$ref": "#/$defs/exactVersion"
           },
-          "description": "The complete package-version pins required by the fixture. Values are concrete versions, never ranges or mutable tags."
+          "description": "Exact package versions asserted by environment preflight. The scoped package is mandatory, and publishers should include every dependency that can affect the result. Values are never ranges or mutable tags."
         },
         "doNot": {
           "type": "array",

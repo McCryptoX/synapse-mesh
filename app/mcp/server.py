@@ -193,6 +193,7 @@ async def mcp_json_rpc(request: Request):
 
                 if matched:
                     matched_bundles.append({
+                        "source": "golden_v1",
                         "bundleId": b.get("bundleId"),
                         "runtime": b.get("scope", {}).get("runtime"),
                         "status": b.get("status", "VERIFIED"),
@@ -226,6 +227,7 @@ async def mcp_json_rpc(request: Request):
                     payloads = []
                     for r in recipes:
                         payloads.append({
+                            "source": "legacy_recipe",
                             "recipeId": r.id,
                             "runtime": r.problem.runtime,
                             "errorSignature": r.problem.errorSignature,

@@ -72,6 +72,7 @@ function normalizedHostPlatform() {
 function testRegexSafely(pattern, flags, input, timeoutMs = REGEX_TIMEOUT_MS) {
   return new Promise((resolve) => {
     let settled = false;
+    let terminationRequested = false;
     const finish = (result) => {
       if (settled) return;
       settled = true;
@@ -96,6 +97,7 @@ function testRegexSafely(pattern, flags, input, timeoutMs = REGEX_TIMEOUT_MS) {
       }
     );
     const timer = setTimeout(() => {
+      terminationRequested = true;
       worker.terminate()
         .then(() => finish({ matched: false, timedOut: true, error: 'regular expression evaluation timed out' }))
         .catch((error) => finish({ matched: false, timedOut: true, error: error.message }));
@@ -103,7 +105,11 @@ function testRegexSafely(pattern, flags, input, timeoutMs = REGEX_TIMEOUT_MS) {
     worker.once('message', finish);
     worker.once('error', (error) => finish({ matched: false, timedOut: false, error: error.message }));
     worker.once('exit', (code) => {
-      if (!settled && code !== 0) finish({ matched: false, timedOut: false, error: `regex worker exited with code ${code}` });
+      if (!settled && terminationRequested) {
+        finish({ matched: false, timedOut: true, error: 'regular expression evaluation timed out' });
+      } else if (!settled && code !== 0) {
+        finish({ matched: false, timedOut: false, error: `regex worker exited with code ${code}` });
+      }
     });
   });
 }
@@ -434,6 +440,15 @@ function validateBundle(bundle, schema = null) {
 
     if (!['javascript', 'python'].includes(bundle.verification.scriptLanguage)) {
       errors.push('/verification/scriptLanguage: must be javascript or python');
+    }
+    const pinnedDependencies = bundle.patch.pinnedDependencies;
+    if (!isPlainObject(pinnedDependencies) || !(bundle.scope.package in pinnedDependencies)) {
+      errors.push(`/patch/pinnedDependencies: must pin the scoped package ${bundle.scope.package}`);
+    } else if (/^[0-9][0-9A-Za-z]*(?:[.!_+-][0-9A-Za-z]+)*$/.test(bundle.scope.toVersion) &&
+      pinnedDependencies[bundle.scope.package] !== bundle.scope.toVersion) {
+      errors.push(
+        `/scope/toVersion: exact target ${bundle.scope.toVersion} must equal patch.pinnedDependencies[${bundle.scope.package}]`
+      );
     }
     if (bundle.verification.expectedPreExit === 0) {
       errors.push('/verification/expectedPreExit: must be non-zero');
@@ -1141,17 +1156,30 @@ async function loadJsonSource(source, options = {}) {
   return { value, sha256: sha256(bytes), bytes };
 }
 
+function sanitizeEvidenceSource(source) {
+  if (typeof source !== 'string' || source.length === 0) return null;
+  if (/^https:\/\//i.test(source)) {
+    try {
+      return new URL(source).origin;
+    } catch {
+      return 'https://invalid-source';
+    }
+  }
+  return path.basename(source);
+}
+
 function createAttestation(result, source) {
+  const evidenceSource = sanitizeEvidenceSource(source);
   return {
     _type: 'https://in-toto.io/Statement/v1',
     subject: result.bundleSha256 ? [{
-      name: result.bundleId || source || 'unknown-bundle',
+      name: result.bundleId || evidenceSource || 'unknown-bundle',
       digest: { sha256: result.bundleSha256 }
     }] : [],
     predicateType: 'https://synapsemesh.dev/attestations/compatibility-verification/v1',
     predicate: {
       generatedAt: new Date().toISOString(),
-      source: source || null,
+      source: evidenceSource,
       verified: Boolean(result.verified),
       validationOnly: Boolean(result.validationOnly),
       validationPassed: result.validationPassed === undefined ? null : Boolean(result.validationPassed),
@@ -1192,8 +1220,11 @@ module.exports = {
   createAttestation,
   inspectUnifiedDiff,
   loadJsonSource,
+  normalizedHostPlatform,
+  sanitizeEvidenceSource,
   sha256,
   stableStringify,
+  testRegexSafely,
   validateBundle,
   validateInstanceAgainstSchema,
   verifyBundle,

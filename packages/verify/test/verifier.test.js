@@ -5,11 +5,15 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
+const { spawnSync } = require('node:child_process');
 
 const {
   BundleValidationError,
   VerificationError,
   applyUnifiedDiff,
+  createAttestation,
+  sanitizeEvidenceSource,
+  testRegexSafely,
   validateBundle,
   validateInstanceAgainstSchema,
   verifyBundle
@@ -44,7 +48,7 @@ function syntheticBundle() {
         '+module.exports = () => "new";',
         ''
       ].join('\n'),
-      pinnedDependencies: { node: '20.0.0' },
+      pinnedDependencies: { 'example-package': '2.0.0' },
       doNot: ['Return a value other than new']
     },
     verification: {
@@ -118,6 +122,15 @@ test('rejects unsafe paths and malformed mutation contracts', () => {
   assert.throws(() => validateBundle(bundle), BundleValidationError);
 });
 
+test('binds an exact scope target to the pinned scoped package', () => {
+  const bundle = syntheticBundle();
+  bundle.patch.pinnedDependencies['example-package'] = '2.0.1';
+  assert.throws(
+    () => validateBundle(bundle),
+    (error) => error instanceof BundleValidationError && /exact target 2\.0\.0/.test(error.errors.join('\n'))
+  );
+});
+
 test('validates the contract against the shipped Draft 2020-12 schema subset', () => {
   const schema = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../schemas/compatibility_bundle_v1.json'), 'utf8'));
   const bundle = syntheticBundle();
@@ -134,6 +147,49 @@ test('validates the contract against the shipped Draft 2020-12 schema subset', (
   bundle.patch.pinnedDependencies.node = '>=20';
   const rangedPin = validateInstanceAgainstSchema(bundle, schema);
   assert.equal(rangedPin.valid, false);
+});
+
+test('time-boxes fingerprint regex evaluation in a worker', async () => {
+  const normal = await testRegexSafely('BREAKING_CHANGE', '', 'prefix BREAKING_CHANGE suffix', 500);
+  assert.deepEqual(normal, { matched: true, timedOut: false, error: null });
+
+  const pathological = await testRegexSafely('^(a+)+$', '', `${'a'.repeat(100_000)}!`, 25);
+  assert.equal(pathological.matched, false);
+  assert.equal(pathological.timedOut, true);
+});
+
+test('redacts local paths and remote URL details from attestation metadata', () => {
+  assert.equal(sanitizeEvidenceSource('/Users/alice/private/bundle.json'), 'bundle.json');
+  assert.equal(sanitizeEvidenceSource('https://example.com/private/bundle.json?token=secret'), 'https://example.com');
+  const statement = createAttestation({
+    bundleId: 'bundle_test_runtime_001',
+    bundleSha256: 'a'.repeat(64),
+    verified: false
+  }, '/Users/alice/private/bundle.json');
+  assert.equal(statement.predicate.source, 'bundle.json');
+  assert.doesNotMatch(JSON.stringify(statement), /Users\/alice/);
+});
+
+test('validate-only CLI exits non-zero for an invalid bundle', () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'synapse-verify-cli-test-'));
+  try {
+    const invalidPath = path.join(parent, 'invalid.json');
+    const invalid = syntheticBundle();
+    invalid.patch.pinnedDependencies['example-package'] = '>=2';
+    fs.writeFileSync(invalidPath, JSON.stringify(invalid));
+    const result = spawnSync(process.execPath, [
+      path.resolve(__dirname, '../bin.js'),
+      invalidPath,
+      '--schema', path.resolve(__dirname, '../../../schemas/compatibility_bundle_v1.json'),
+      '--validate-only'
+    ], { encoding: 'utf8', shell: false });
+    assert.equal(result.status, 1, result.stderr);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.validationOnly, true);
+    assert.equal(output.validationPassed, false);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
 });
 
 test('requires explicit code-execution authorization', async () => {

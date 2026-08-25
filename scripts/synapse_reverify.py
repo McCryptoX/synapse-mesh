@@ -128,8 +128,8 @@ def verify_golden_bundle(bundle: dict) -> bool:
     runtime = scope.get("runtime", "python").lower()
     
     fp = bundle.get("fingerprint", {})
-    error_sig = fp.get("errorSignature", "")
-    sig_regex = fp.get("regex", "")
+    error_sig = fp.get("errorSignature") or ""
+    sig_regex = fp.get("regex") or ""
     
     patch = bundle.get("patch", {})
     target_file_rel = patch.get("targetFile", "main.py")
@@ -166,16 +166,19 @@ def verify_golden_bundle(bundle: dict) -> bool:
     with tempfile.TemporaryDirectory(prefix="synapse_golden_ws_") as tmp_dir:
         workspace = Path(tmp_dir)
         
+        timeout_sec = float(verif.get("timeoutMs", 30000)) / 1000.0
+        env = dict(os.environ)
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        if "SYNAPSE_DEPENDENCY_ROOT" not in env:
+            env["SYNAPSE_DEPENDENCY_ROOT"] = str(workspace)
+
         def materialize_workspace():
+            for pycache in workspace.glob("**/__pycache__"):
+                shutil.rmtree(pycache, ignore_errors=True)
             for rel_p, content in ws_files.items():
                 dest = workspace / rel_p
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 dest.write_text(content, encoding="utf-8")
-
-        timeout_sec = float(verif.get("timeoutMs", 30000)) / 1000.0
-        env = dict(os.environ)
-        if "SYNAPSE_DEPENDENCY_ROOT" not in env:
-            env["SYNAPSE_DEPENDENCY_ROOT"] = str(workspace)
 
         # -------------------------------------------------------------
         # Stage 1: Pre-Fail Validation (Unpatched Workspace)

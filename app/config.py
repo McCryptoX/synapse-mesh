@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     # Database
     db_path: str = "data/synapse_mesh.sqlite3"
     
+    # Security
+    admin_token: str = ""
+    
     # CORS
     cors_origins: list[str] = ["*"]
 

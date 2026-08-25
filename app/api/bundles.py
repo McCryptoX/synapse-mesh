@@ -94,7 +94,7 @@ async def verify_bundle_endpoint(
     x_admin_key: Optional[str] = Header(None, alias="X-Synapse-Admin-Key")
 ):
     """Authenticated endpoint for executing server-side sandbox verification on a bundle."""
-    if not x_admin_key or x_admin_key != settings.admin_token:
+    if not settings.admin_token or not x_admin_key or x_admin_key != settings.admin_token:
         raise HTTPException(
             status_code=403,
             detail="Forbidden: Server-side bundle verification requires a valid X-Synapse-Admin-Key. Use client-side 'synapse reverify' for unauthenticated local execution."
