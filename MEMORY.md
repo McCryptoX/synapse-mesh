@@ -134,10 +134,11 @@ Implementiert in `benchmark/agent_orchestrator.py`:
   - Datenschutzerklärung (`/datenschutz`) und Impressum (`/impressum`) vollständig nach DSGVO / § 5 DDG mit technischen und organisatorischen Maßnahmen (TOMs) synchronisiert.
 
 ### 9. Private Operations & Pipeline Observatory (`/ops`)
-- **Passwortschutz & Sessions:** Das Dashboard unter `https://synapsemesh.dev/ops` ist durch ein Passwort-Gate geschützt (Standard: `synapse-ops-2026`, konfigurierbar via `OPS_PASSWORD` / `ADMIN_TOKEN`).
-- **Nahtloser Direktzugriff:** Schneller Zugriff ist via URL-Key `https://synapsemesh.dev/ops?key=synapse-ops-2026` oder Login-Maske (mit sicherem 30-Tage-Session-Cookie `synapse_ops_session` und Logout-Funktion) möglich.
+- **Passwortschutz & In-Browser-Passwortänderung:** Das Dashboard unter `https://synapsemesh.dev/ops` ist durch ein sicheres Passwort-Gate geschützt (Initial: `synapse-ops-2026`). Über den Button `🔑 Passwort ändern` kann das Passwort direkt im Browser geändert werden; es wird persistent als gesalzener SHA-256-Hash in der `system_config`-Tabelle der SQLite-Datenbank hinterlegt.
+- **Nahtloser Direktzugriff & Sessions:** Schneller Zugriff ist via URL-Key `https://synapsemesh.dev/ops?key=<passwort>` oder Login-Maske (mit sicherem 30-Tage-Session-Cookie `synapse_ops_session` und Logout-Funktion) möglich.
 - **Echtzeit-Transparenz:** Zeigt in Echtzeit alle registrierten Rezepte, Candidate Drafts, 4-Stage-Sandbox-Exit-Codes, Confidence Scores und Diff-Vorschauen an (`robots: noindex, nofollow`).
 - **Interaktiver Sweep-Trigger:** Manueller Button `⚡ Run Verification Sweep Now` stößt die 4-Stufen-Sandbox-Prüfung über alle Candidate-Batches direkt im Browser an und liefert sofortiges Feedback.
 - **Autonome 4-Stunden-Pipeline:** Der Worker in `app/main.py` pollt kontinuierlich alle 4 Stunden PyPI, npm, crates.io und GitHub Releases, generiert Drafts und führt sie durch die Sandbox.
+
 
 
