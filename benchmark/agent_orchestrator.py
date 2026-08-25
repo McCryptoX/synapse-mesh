@@ -157,6 +157,7 @@ class AgentTreatmentOrchestrator:
             prompt_tokens = 450
             completion_tokens = 120
             if treatment == "A_Baseline":
+                # Baseline hallucination
                 patch = case.mutationPatches[0] if case.mutationPatches else "// Hal-1"
                 tool_calls = 0
             elif treatment == "B_WebSearch":
@@ -169,6 +170,7 @@ class AgentTreatmentOrchestrator:
                     "query": f"{case.breakingPackage} {case.errorSignature}",
                     "result": "Snippet from outdated forum thread (2022)"
                 })
+                # Outdated web snippet
                 patch = case.mutationPatches[1] if len(case.mutationPatches) > 1 else "// Hal-2"
             elif treatment == "C_SynapseMCP":
                 tool_start = time.perf_counter()
@@ -186,8 +188,15 @@ class AgentTreatmentOrchestrator:
                                 "recipeId": recipe.get("id"),
                                 "confidence": recipe.get("evidence", {}).get("confidenceScore")
                             })
-                            # Extract code solution from recipe
-                            patch = case.validPatch
+                            # Strict Extraction: Extract patch from recipe solution content
+                            sol_dict = recipe.get("solution", {})
+                            recipe_diff = sol_dict.get("codeDiff") or sol_dict.get("patchDiff") or sol_dict.get("summary", "")
+                            
+                            # If recipe contains valid solution text, use it; otherwise fail cleanly
+                            if recipe_diff and len(recipe_diff) > 5:
+                                patch = recipe_diff
+                            else:
+                                patch = "// RECIPE_MISSING_DIFF"
                         else:
                             # Strict Retrieval Gate: if no recipe found, do NOT fallback to ground truth!
                             patch = "// MCP_NO_SOLUTION_FOUND"
@@ -201,11 +210,12 @@ class AgentTreatmentOrchestrator:
             # Live LLM API mode: when API key is provided
             api_key = os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
             if not api_key:
-                logger.warning("No LLM API key found in environment (OPENAI_API_KEY/GEMINI_API_KEY/ANTHROPIC_API_KEY). Defaulting to Demonstrator mode.")
-                return await self.execute_treatment_run(case, treatment, dry_run=True)
-            
-            # Live LLM execution code path
-            patch = case.validPatch
+                raise RuntimeError(
+                    "Cannot execute live empirical evaluation: No LLM API key found in environment. "
+                    "Set OPENAI_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY, or run with dry_run=True."
+                )
+            # Live LLM agent loop
+            patch = "// LIVE_LLM_NOT_CONFIGURED"
 
         # Execute Hidden Judge out-of-process
         judge_res = await self.execute_hidden_judge(case, patch)
@@ -267,18 +277,31 @@ class AgentTreatmentOrchestrator:
         env_meta = get_runtime_environment_metadata()
         manifest_hash = hashlib.sha256(self.evaluator.dataset_file.read_bytes()).hexdigest()
         
+        # Save both to results_dir and repository root benchmark/results/
+        run_data = {
+            "benchmarkSuite": "Suite_v2_Primary_Runtime_9",
+            "manifestSha256": manifest_hash,
+            "evaluatedCaseIds": [c.id for c in self.cases],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "executionType": "Deterministic_Demonstrator" if dry_run else "Empirical_LLM_Evaluation",
+            "runtimeEnvironment": env_meta,
+            "primaryCoreStatistics": group_stats,
+            "runs": [asdict(r) for r in all_results]
+        }
+
+        # Save to data/benchmark_results/
         run_file = self.results_dir / f"run_primary_{int(time.time())}.json"
         with open(run_file, "w", encoding="utf-8") as f:
-            json.dump({
-                "benchmarkSuite": "Suite_v2_Primary_Runtime_9",
-                "manifestSha256": manifest_hash,
-                "evaluatedCaseIds": [c.id for c in self.cases],
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "executionType": "Deterministic_Demonstrator" if dry_run else "Empirical_LLM_Evaluation",
-                "runtimeEnvironment": env_meta,
-                "primaryCoreStatistics": group_stats,
-                "runs": [asdict(r) for r in all_results]
-            }, f, indent=2)
+            json.dump(run_data, f, indent=2)
+
+        # Save canonical repository artifact if directory is writable
+        try:
+            repo_artifact = Path("benchmark/results/run_primary_v2_frozen.json")
+            repo_artifact.parent.mkdir(parents=True, exist_ok=True)
+            with open(repo_artifact, "w", encoding="utf-8") as f:
+                json.dump(run_data, f, indent=2)
+        except OSError:
+            pass
 
         return group_stats
 

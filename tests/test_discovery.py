@@ -39,3 +39,11 @@ async def test_impressum_and_privacy_pages():
         assert res_priv.status_code == 200
         assert "Datenschutzerklärung" in res_priv.text
         assert "Zero-PII" in res_priv.text
+
+@pytest.mark.asyncio
+async def test_install_script_endpoint():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.get("/install.sh")
+        assert res.status_code == 200
+        assert "Synapse-Mesh" in res.text
+        assert "claude_desktop_config.json" in res.text

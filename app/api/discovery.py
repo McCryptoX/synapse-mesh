@@ -14,3 +14,17 @@ async def get_mcp_manifest():
 async def get_agent_manifest():
     """A2A (Agent-to-Agent) discovery descriptor."""
     return AgentManifest()
+
+from fastapi.responses import PlainTextResponse
+from pathlib import Path
+
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent.parent / "scripts"
+
+
+@router.get("/install.sh", tags=["Agent Tooling"], response_class=PlainTextResponse)
+async def get_install_script():
+    """One-command bash installer for Cursor, Claude Desktop, and Antigravity."""
+    install_file = SCRIPTS_DIR / "install.sh"
+    if install_file.exists():
+        return PlainTextResponse(install_file.read_text(encoding="utf-8"), media_type="text/x-shellscript")
+    return PlainTextResponse("#!/usr/bin/env bash\necho 'Installer not found'\nexit 1\n", status_code=404)

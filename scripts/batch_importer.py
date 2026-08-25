@@ -43,14 +43,20 @@ async def process_candidate_recipes(json_file_path: str):
     try:
         for idx, item in enumerate(candidates, 1):
             recipe_id = item.get("id") or f"rec_ingest_{idx:03d}"
-            runtime = item["runtime"]
-            error_sig = item["errorSignature"]
-            desc = item.get("description", "")
-            summary = item["summary"]
-            diff = item.get("codeDiff", "")
-            repro_script = item.get("reproScript", "")
-            test_suite = item.get("testSuite", "")
-            primary_source = item.get("primarySource", "")
+            # Flexible support for flat or nested schema
+            prob_dict = item.get("problem", {})
+            sol_dict = item.get("solution", {})
+            repro_dict = item.get("reproduction", {})
+            evi_dict = item.get("evidence", {})
+
+            runtime = item.get("runtime") or prob_dict.get("runtime", "python")
+            error_sig = item.get("errorSignature") or prob_dict.get("errorSignature", "")
+            desc = item.get("description") or prob_dict.get("description", "")
+            summary = item.get("summary") or sol_dict.get("explanation", "")
+            diff = item.get("codeDiff") or sol_dict.get("patchDiff", "")
+            repro_script = item.get("reproScript") or repro_dict.get("script", "")
+            test_suite = item.get("testSuite") or repro_dict.get("testSuite", "")
+            primary_source = item.get("primarySource") or evi_dict.get("primarySource", "")
 
             # 1. Sanitize Data
             sanitized_desc = ZeroPiiSanitizer.sanitize_text(desc)
