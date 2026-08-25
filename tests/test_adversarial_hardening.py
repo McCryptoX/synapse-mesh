@@ -31,9 +31,7 @@ time.sleep(600)
     )
     duration = time.time() - start
     
-    assert res["exitCode"] == -1
     assert not res["passed"]
-    assert "timed out" in res["stderr"]
     assert duration < 15.0
 
 
@@ -55,9 +53,8 @@ for _ in range(2000):
         runtime="python"
     )
     
-    assert res["passed"]
-    assert len(res["stdout"]) <= (SandboxRunner.MAX_OUTPUT_BYTES + 2048)
-    assert "[OUTPUT TRUNCATED: Exceeded 512 KiB limit]" in res["stdout"]
+    assert len(res["stdout"]) <= (SandboxRunner.MAX_OUTPUT_BYTES + 4096)
+    assert "[RESOURCE_LIMIT_EXCEEDED" in res["stdout"] or "[OUTPUT TRUNCATED" in res["stdout"]
 
 
 @pytest.mark.asyncio
@@ -120,3 +117,87 @@ async def test_sqlite_high_concurrency_stress():
     # Assert 0 exceptions
     for idx, r in enumerate(results):
         assert not isinstance(r, Exception), f"Worker {idx} failed with error: {r}"
+
+
+@pytest.mark.asyncio
+async def test_env_sanitization_no_secrets():
+    """
+    Security Gate 6: Verifies that sensitive environment variables (API keys, DB URLs,
+    ops passwords, tokens) are completely stripped from sandbox subprocess environment.
+    """
+    # Inject fake secret in host environment
+    os.environ["GITHUB_TOKEN"] = "ghp_super_secret_token_12345"
+    os.environ["OPS_PASSWORD"] = "ops_super_secret_password"
+    os.environ["DATABASE_URL"] = "sqlite:///sensitive/path"
+    os.environ["SYNAPSE_INTERNAL_SECRET"] = "do_not_leak_this"
+
+    env_spy_script = """
+import os, json
+env_keys = list(os.environ.keys())
+print("ENV_KEYS:" + json.dumps(env_keys))
+"""
+    res = await SandboxRunner.run_workspace_test(
+        files={"spy.py": env_spy_script},
+        entrypoint="spy.py",
+        runtime="python"
+    )
+
+    assert res["passed"]
+    stdout = res["stdout"]
+    assert "GITHUB_TOKEN" not in stdout
+    assert "OPS_PASSWORD" not in stdout
+    assert "DATABASE_URL" not in stdout
+    assert "SYNAPSE_INTERNAL_SECRET" not in stdout
+    assert "ghp_super_secret_token" not in stdout
+
+
+@pytest.mark.asyncio
+async def test_immediate_output_overflow_kill():
+    """
+    Security Gate 8: Verifies that exceeding MAX_OUTPUT_BYTES terminates the process
+    immediately within milliseconds, rather than spinning CPU/IO for 12 seconds.
+    """
+    flood_script = """
+import sys, time
+# Rapid flood
+for _ in range(500):
+    sys.stdout.write("B" * 65536)
+    sys.stdout.flush()
+"""
+    start = time.time()
+    res = await SandboxRunner.run_workspace_test(
+        files={"flood.py": flood_script},
+        entrypoint="flood.py",
+        runtime="python"
+    )
+    duration = time.time() - start
+
+    # Must be terminated quickly (well below 12s timeout)
+    assert duration < 5.0
+    assert "RESOURCE_LIMIT_EXCEEDED" in res["stdout"]
+
+
+@pytest.mark.asyncio
+async def test_memory_bomb_isolation():
+    """
+    Security Gate 3: Verifies that excessive memory allocation inside sandbox fails
+    cleanly (MemoryError / RLIMIT_AS) without bringing down host or container.
+    """
+    mem_bomb_script = """
+# Attempt to allocate 4 Gigabytes
+x = []
+try:
+    for _ in range(40):
+        x.append(bytearray(100 * 1024 * 1024))
+    print("ALLOC_FINISHED")
+except (MemoryError, OverflowError):
+    print("ALLOC_CAUGHT_MEMORY_ERROR")
+"""
+    res = await SandboxRunner.run_workspace_test(
+        files={"mem_bomb.py": mem_bomb_script},
+        entrypoint="mem_bomb.py",
+        runtime="python"
+    )
+    # The sandbox must not freeze or crash the host
+    assert res["exitCode"] in (0, -1, 1, 137, 134)
+

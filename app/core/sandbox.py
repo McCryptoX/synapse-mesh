@@ -6,28 +6,77 @@ import shutil
 import sys
 import tempfile
 import time
+import resource
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Callable
 from app.models.recipe import EvidenceDefinition
 from datetime import datetime, timezone
 
 
-def kill_process_tree(pid: int):
+def kill_process_tree(process_or_pid):
     """Kills entire process tree (process group) to prevent orphan child leaks."""
+    pid = process_or_pid.pid if hasattr(process_or_pid, "pid") else process_or_pid
     try:
-        pgid = os.getpgid(pid)
-        os.killpg(pgid, signal.SIGKILL)
-    except ProcessLookupError:
+        os.killpg(pid, signal.SIGKILL)
+    except BaseException:
         pass
-    except Exception:
+    try:
+        os.kill(pid, signal.SIGKILL)
+    except BaseException:
+        pass
+    if hasattr(process_or_pid, "kill"):
         try:
-            os.kill(pid, signal.SIGKILL)
-        except Exception:
+            process_or_pid.kill()
+        except BaseException:
             pass
 
 
-async def read_stream_capped(stream: asyncio.StreamReader, max_bytes: int = 512 * 1024) -> str:
-    """Reads stream asynchronously with strict byte cap preventing memory bombs."""
+def sandbox_preexec_limits():
+    """Applies strict POSIX resource limits (RAM, CPU, Filesize, Process Count) to child process."""
+    # 1. Limit Virtual Memory to 512 MiB (prevents memory bombs)
+    max_mem = 512 * 1024 * 1024
+    try:
+        resource.setrlimit(resource.RLIMIT_AS, (max_mem, max_mem))
+    except BaseException:
+        pass
+
+    # 2. Limit Max Created File Size to 10 MiB (prevents disk filling /tmp bombs)
+    max_file = 10 * 1024 * 1024
+    try:
+        resource.setrlimit(resource.RLIMIT_FSIZE, (max_file, max_file))
+    except BaseException:
+        pass
+
+    # 3. Limit Max CPU Time to 10s (prevents CPU starvation)
+    try:
+        resource.setrlimit(resource.RLIMIT_CPU, (10, 12))
+    except BaseException:
+        pass
+
+    # 4. Limit Max Processes/Threads (prevents fork bombs)
+    try:
+        if hasattr(resource, "RLIMIT_NPROC"):
+            resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))
+    except BaseException:
+        pass
+
+    # 5. Linux-specific: Ensure death signal is sent if parent dies
+    if sys.platform.startswith("linux"):
+        try:
+            import ctypes
+            libc = ctypes.CDLL(None)
+            PR_SET_PDEATHSIG = 1
+            libc.prctl(PR_SET_PDEATHSIG, signal.SIGKILL)
+        except BaseException:
+            pass
+
+
+async def read_stream_capped(
+    stream: asyncio.StreamReader,
+    max_bytes: int = 512 * 1024,
+    on_limit_exceeded: Optional[Callable[[], None]] = None
+) -> str:
+    """Reads stream asynchronously with strict byte cap and immediate process termination on overflow."""
     buf = bytearray()
     truncated = False
     try:
@@ -42,8 +91,11 @@ async def read_stream_capped(stream: asyncio.StreamReader, max_bytes: int = 512 
                     remaining = max_bytes - len(buf)
                     if remaining > 0:
                         buf.extend(chunk[:remaining])
-                    buf.extend(b"\n[OUTPUT TRUNCATED: Exceeded 512 KiB limit]\n")
+                    buf.extend(b"\n[RESOURCE_LIMIT_EXCEEDED: Output exceeded 512 KiB limit]\n")
                     truncated = True
+                    if on_limit_exceeded:
+                        on_limit_exceeded()
+                # Continue draining remaining stream to allow child process to unblock and die
     except (asyncio.CancelledError, Exception):
         pass
     return buf.decode(errors="replace")
@@ -73,15 +125,27 @@ class SandboxRunner:
                 target_file.parent.mkdir(parents=True, exist_ok=True)
                 target_file.write_text(content, encoding="utf-8")
 
-            env = os.environ.copy()
+            # 2. Strict Environment Sanitization (Zero Secret / Token Leakage)
+            SAFE_ENV_VARS = {"PATH", "LANG", "LC_ALL", "TERM"}
+            env = {k: v for k, v in os.environ.items() if k in SAFE_ENV_VARS}
             env["PYTHONUNBUFFERED"] = "1"
             env["PYTHONDONTWRITEBYTECODE"] = "1"
-            if "NODE_PATH" not in env and os.path.exists("/usr/lib/node_modules"):
+            env["HOME"] = temp_dir
+            env["TMPDIR"] = temp_dir
+            env["TEMP"] = temp_dir
+            env["TMP"] = temp_dir
+            if os.path.exists("/usr/lib/node_modules"):
                 env["NODE_PATH"] = "/usr/lib/node_modules"
+
+            # Scrub all possible host/app secret variables
+            for forbidden_prefix in ("GITHUB_", "DATABASE_", "OPS_", "SECRET_", "ADMIN_", "AWS_", "SYNAPSE_"):
+                for env_k in list(env.keys()):
+                    if env_k.startswith(forbidden_prefix):
+                        env.pop(env_k, None)
 
             rt = runtime.lower()
 
-            # 2. Select Executable & Command Line
+            # 3. Select Executable & Command Line
             if rt == "python":
                 executable = sys.executable
                 args = [executable, entrypoint]
@@ -119,18 +183,26 @@ class SandboxRunner:
                 executable = sys.executable
                 args = [executable, entrypoint]
 
-            # Spawn process in new session / process group for clean tree kill
+            # Spawn process in isolated process group with kernel resource limits
             process = await asyncio.create_subprocess_exec(
                 *args,
                 cwd=temp_dir,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 env=env,
-                start_new_session=True
+                start_new_session=True,
+                preexec_fn=sandbox_preexec_limits
             )
 
-            stdout_task = asyncio.create_task(read_stream_capped(process.stdout, cls.MAX_OUTPUT_BYTES))
-            stderr_task = asyncio.create_task(read_stream_capped(process.stderr, cls.MAX_OUTPUT_BYTES))
+            def on_output_exceeded():
+                kill_process_tree(process)
+
+            stdout_task = asyncio.create_task(
+                read_stream_capped(process.stdout, cls.MAX_OUTPUT_BYTES, on_limit_exceeded=on_output_exceeded)
+            )
+            stderr_task = asyncio.create_task(
+                read_stream_capped(process.stderr, cls.MAX_OUTPUT_BYTES, on_limit_exceeded=on_output_exceeded)
+            )
 
             try:
                 await asyncio.wait_for(process.wait(), timeout=cls.TIMEOUT_SECONDS)
