@@ -64,7 +64,7 @@ async def test_llms_txt_standard():
         assert res.status_code == 200
         assert res.headers["content-type"].startswith("text/markdown")
         assert "# Synapse-Mesh" in res.text
-        assert "Golden Compatibility Bundles" in res.text
+        assert "Verified Compatibility Bundles" in res.text
 
         res_full = await ac.get("/llms-full.txt")
         assert res_full.status_code == 200

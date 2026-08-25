@@ -33,27 +33,26 @@ async def get_install_script():
 
 LLMS_TXT_CONTENT = """# Synapse-Mesh
 
-> The Open, Verified Compatibility Layer for AI Software Agents (Cursor, Claude Code, Codex, Grok, Gemini, Antigravity).
+> Open, verifiable compatibility and verification layer for AI software agents (MCP Spec 2026-07-28 & A2A protocol).
 
-Synapse-Mesh delivers portable, execution-verified compatibility bundles: exact package pins, clean unified git diffs, negative recipes (`doNot`), and a 4-stage client-side verifier (`synapse reverify <bundle_id>`).
+Synapse-Mesh delivers portable, execution-verified compatibility bundles: exact package pins, clean unified git diffs, negative recipes (doNot), and a 4-stage client verifier that every AI can prove in its own workspace.
 
-## Machine Endpoints
-- Canonical MCP Gateway: `https://mcp.synapsemesh.dev/mcp`
-- MCP Discovery Manifest: `https://synapsemesh.dev/.well-known/mcp.json`
-- A2A Agent Card Standard: `https://synapsemesh.dev/.well-known/agent-card.json`
-- Golden Compatibility Bundles v1.0 API: `https://synapsemesh.dev/api/v1/bundles`
-- OpenAPI Specification: `https://docs.synapsemesh.dev/openapi.json`
+## Documentation
+- [Architecture & Verification](https://synapsemesh.dev/verification): The 4-stage isolated sandbox verification contract and epistemic hierarchy.
+- [OpenAPI Specification](https://docs.synapsemesh.dev): Complete interactive API documentation and schemas.
+- [A2A Agent Card Standard](https://synapsemesh.dev/.well-known/agent-card.json): Autonomous Agent-to-Agent discovery manifest.
+- [MCP Discovery Manifest](https://synapsemesh.dev/.well-known/mcp.json): Model Context Protocol server capabilities and tool descriptor.
+- [One-Line CLI Installer](https://synapsemesh.dev/install.sh): Bash script to install Synapse CLI and configure Cursor, Claude, and Codex.
 
-## Golden Compatibility Bundles (4-Stage Execution Verified)
-- `bundle_httpx_028_asgi_transport_001`: HTTPX 0.28 explicit `ASGITransport(app=app)` migration.
-- `bundle_pydantic_v2_model_validator_001`: Pydantic v2 `@model_validator(mode="before")` migration.
-- `bundle_fastapi_0115_lifespan_context_001`: FastAPI `@asynccontextmanager lifespan(app)` context handler migration.
-- `bundle_python_312_datetime_utc_aware_001`: Python 3.12 `datetime.now(timezone.utc)` timezone-aware timestamps.
+## Verified Compatibility Bundles
+- [HTTPX 0.28 ASGI Transport](https://synapsemesh.dev/api/v1/bundles/bundle_httpx_028_asgi_transport_001): Migration for explicit ASGITransport in-process testing.
+- [Pydantic v2 Model Validator](https://synapsemesh.dev/api/v1/bundles/bundle_pydantic_v2_model_validator_001): Migration from root_validator to model_validator(mode="before").
+- [FastAPI Lifespan Context](https://synapsemesh.dev/api/v1/bundles/bundle_fastapi_0115_lifespan_context_001): Migration from on_event to asynccontextmanager lifespan handlers.
+- [Python 3.12 UTC Datetime](https://synapsemesh.dev/api/v1/bundles/bundle_python_312_datetime_utc_aware_001): Migration from naive utcnow() to timezone-aware datetime.now(timezone.utc).
 
-## CLI & Hermetic Re-Verification
-- Install: `curl -fsSL https://synapsemesh.dev/install.sh | bash`
-- Search: `synapse search "model_validator"`
-- Re-Verify: `synapse reverify bundle_httpx_028_asgi_transport_001`
+## Optional
+- [Full Context Documentation](https://synapsemesh.dev/llms-full.txt): Complete uncompressed documentation stream for LLMs.
+- [GitHub Repository](https://github.com/McCryptoX/synapse-mesh-mcp): Open source source code, CLI tooling, and test suites.
 """
 
 

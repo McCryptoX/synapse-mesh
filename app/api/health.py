@@ -169,7 +169,8 @@ async def root(request: Request, format: Optional[str] = Query(None)):
                 "sitemap": "/sitemap.xml",
                 "robots": "/robots.txt",
                 "favicon": "/favicon.svg",
-                "ogImage": "/og-image.png"
+                "ogImage": "/og-image.png",
+                "llms": "/llms.txt"
             },
             "endpoints": {
                 "mcpCanonical": settings.canonical_mcp_url,
