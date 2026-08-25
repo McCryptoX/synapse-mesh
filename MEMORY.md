@@ -48,40 +48,12 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 ---
 
 ## 3. Die Neue Positionierung: Verified Compatibility Layer
-## 3. Die Neue Positionierung: Verified Compatibility Layer
-- **Mobile & Responsive Optimization:** Header, Touch-Targets (min 48px), Schriftgrößen und Code-Diffs für Smartphones (iOS Safari / Android) optimiert mit horizontalem Scroll-Schutz (`overflow-x: hidden`).
+- **Zero Critical Request Chains (On-Demand Data Delivery):** Die initiale Startseite führt 0 HTTP-Fetch-Requests aus (Baseline ist 100% im HTML eingebettet). Die 25 KB große Recipe-Liste wird erst on-demand geladen, wenn der User die Suche nutzt oder auf 'View All Verified Bundles' klickt. Die PageSpeed-Kettenwarnung ist auf Tiefe 1 (13.78 KiB) minimiert.
 - **Zero Long Main-Thread Tasks:** Initialer DOM-Paint läuft per `requestAnimationFrame` in <5 ms; Hintergrund-API-Fetches und Zähler werden strikt per `requestIdleCallback` ausgeführt. Google-PageSpeed-Warnung 'Lange Hauptthread-Aufgaben vermeiden' ist auf 0 ms eliminiert.
 - **100% Barrierefreiheit (A11y) & Zero Critical Request Chains:** Screen-Reader-Labels (`sr-only`), semantische `<nav>`-Landmarks, vollständige WCAG 2.1 AA Kontrastverhältnisse (mind. 4.5:1) und `aria-hidden` auf dekorativen Icons implementiert.
 - **Zero Render-Blocking Critical CSS:** Alle Stylesheets wurden als minifiziertes Inline-CSS direkt in den `<head>` integriert. Die Google-PageSpeed-Warnung 'Anfragen zum Blockieren des Renderings' ist damit auf 0 ms eliminiert.
 - **PageSpeed & Performance:** Laufzeit-JIT-Compiler `cdn.tailwindcss.com` vollständig durch minifiziertes `style.min.css` (~4.5 KB gzip, immutable Cache) ersetzt. Render-Blocking eliminiert (0 ms TBT, <0.4s LCP, 99-100 PageSpeed-Score).
-## 3. Die Neue Positionierung: Verified Compatibility Layer
-## 3. Die Neue Positionierung: Verified Compatibility Layer
 - **Mobile & Responsive Optimization:** Header, Touch-Targets (min 48px), Schriftgrößen und Code-Diffs für Smartphones (iOS Safari / Android) optimiert mit horizontalem Scroll-Schutz (`overflow-x: hidden`).
-- **Zero Long Main-Thread Tasks:** Initialer DOM-Paint läuft per `requestAnimationFrame` in <5 ms; Hintergrund-API-Fetches und Zähler werden strikt per `requestIdleCallback` ausgeführt. Google-PageSpeed-Warnung 'Lange Hauptthread-Aufgaben vermeiden' ist auf 0 ms eliminiert.
-- **100% Barrierefreiheit (A11y) & Zero Critical Request Chains:** Screen-Reader-Labels (`sr-only`), semantische `<nav>`-Landmarks, vollständige WCAG 2.1 AA Kontrastverhältnisse (mind. 4.5:1) und `aria-hidden` auf dekorativen Icons implementiert.
-- **Zero Render-Blocking Critical CSS:** Alle Stylesheets wurden als minifiziertes Inline-CSS direkt in den `<head>` integriert. Die Google-PageSpeed-Warnung 'Anfragen zum Blockieren des Renderings' ist damit auf 0 ms eliminiert.
-- **PageSpeed & Performance:** Laufzeit-JIT-Compiler `cdn.tailwindcss.com` vollständig durch minifiziertes `style.min.css` (~4.5 KB gzip, immutable Cache) ersetzt. Render-Blocking eliminiert (0 ms TBT, <0.4s LCP, 99-100 PageSpeed-Score).
-- **UI-Fix:** `index.html` wurde gehärtet gegen HTML-Fehler-Responses und rendert nun nahtlos sowohl Golden Bundles (`/api/v1/bundles`) als auch Living Recipes.
-Grok & ChatGPT Codex Governance-Status:
-- **Agent-Bridge aktiv:** Sowohl MCP `find_solution` als auch `synapse search` fragen primär die verifizierten Golden Compatibility Bundles ab.
-- **Python-Goldens (HTTPX 0.28, Pydantic v2, FastAPI 0.115 Lifespan, Python 3.12 Datetime UTC):** 4 vollständige 4-Stufen-Verifikationen in CI (Pre-Fail unter `-W error` / Regex, Diff-Apply, Post-Pass mit State-Asserts, 2/2 echte Mutant-Kills).
-- **Next.js 15 Golden:** Ehrlich als `SCHEMA_VERIFIED` deklariert (Schema- & Fixture-Struktur).
-- **Sicherheits-Gate:** Server-seitiges `POST /api/v1/bundles/verify` ist durch `X-Synapse-Admin-Key` geschützt (`admin_token` in `Settings` fail-closed; positiver und negativer Test in CI).
-- **Provenienz-Transparenz:** MCP-Tool `find_solution` emittiert explizit `"source": "golden_v1"` bzw. `"source": "legacy_recipe"`.
-- **Test-Status:** 49 passed in 15.41s im Linux VPS-Container (100% grün).
-Nach übereinstimmendem Konsens des Advisory Boards (Grok & ChatGPT Codex):
-> *„Synapse-Mesh behauptet nicht, universelle Antworten zu kennen. Synapse liefert den kleinsten portablen Beweis (Verified Compatibility Bundle), mit dem jede autonome KI die Lösung in ihrer eigenen Umgebung selbst überprüfen kann.“*
-
-### Kern-Architektur des Bundles:
-- **Exakter Versions-Scope:** z. B. `httpx` von `0.27.2` auf `0.28.1` unter `python 3.12`.
-- **Echte Diffs:** Minimaler Unified Diff für `git apply`.
-- **doNot-Katalog:** Explizite Negativ-Rezepte (bekannte Web-Fehlfixes), die in der Sandbox scheitern.
-- **Client-Side Re-Verifier:** 2-Phasen-Prüfung (`Pre-Fail` auf Repro, `Post-Pass` auf Testsuite) via `scripts/synapse_reverify.py`.
-
-### Protokolle & Offene Governance:
-- **MCP Spezifikation 2026-07-28:** Vollständige Unterstützung von `server/discover`, `tools/list`, `tools/call`, `resources/list`.
-- **A2A Protokoll:** Standard-Discovery unter `/.well-known/agent-card.json`.
-- **Open Source Governance:** `LICENSE` (MIT), `SECURITY.md` (Zero-PII Disclosure Policy), `CONTRIBUTING.md`.
 
 ## 4. Multi-Treatment Agent Orchestrator (A/B/C)
 Implementiert in `benchmark/agent_orchestrator.py`:
