@@ -27,6 +27,14 @@
       {
         "errorSignature": "PydanticDeprecatedSince20: The `@root_validator` method is deprecated, use `@model_validator` instead.",
         "regex": "PydanticDeprecatedSince20.*@?root_validator.*deprecated"
+      },
+      {
+        "errorSignature": "PydanticUserError: If you use `@root_validator` with pre=False (the default) you MUST specify mode='after'",
+        "regex": "PydanticUserError.*root_validator"
+      },
+      {
+        "errorSignature": "PydanticDeprecatedSince20: The `dict` method is deprecated; use `model_dump` instead.",
+        "regex": "PydanticDeprecatedSince20.*dict.*deprecated.*model_dump"
       }
     ]
   },

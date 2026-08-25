@@ -21,10 +21,11 @@ class ZeroPiiSanitizer:
     
     # Prompt Injection & Dangerous Payload Patterns
     INJECTION_PATTERNS = [
-        re.compile(r'(?i)\b(?:ignore\s+(?:all\s+)?(?:previous|prior)\s+instructions|disregard\s+(?:all\s+)?(?:previous|prior)\s+instructions)\b'),
-        re.compile(r'(?i)\b(?:system\s*:\s*you\s+are|assistant\s*:\s*you\s+must|human\s*:\s*do\s+not)\b'),
-        re.compile(r'(?i)(?:curl|wget)\s+[^|\n]+\|\s*(?:ba)?sh'),
+        re.compile(r'(?i)\b(?:ignore|disregard|forget|override)\s+(?:all\s+)?(?:previous|prior|existing)\s+instructions\b'),
+        re.compile(r'(?i)\b(?:system|assistant|human|user)\s*:\s*(?:you\s+are|you\s+must|do\s+not|act\s+as)\b'),
+        re.compile(r'(?i)(?:curl|wget|nc|bash|sh|zsh)\s+[^|\n]+(?:\|\s*(?:ba)?sh|>|&)'),
         re.compile(r'(?i)<\s*script[\s\S]*?>[\s\S]*?<\s*/\s*script\s*>'),
+        re.compile(r'(?i)\b(?:eval|exec|os\.system|subprocess\.Popen)\s*\('),
     ]
 
     # User paths

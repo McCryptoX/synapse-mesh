@@ -186,7 +186,9 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
         arguments = params.get("arguments", {})
 
         if tool_name == "find_solution":
-            error_sig = arguments.get("errorSignature", "")
+            from app.core.sanitizer import ZeroPiiSanitizer
+            raw_error_sig = arguments.get("errorSignature", "")
+            error_sig = ZeroPiiSanitizer.sanitize_text(raw_error_sig)
             await log_agent_access("mcp_call", "find_solution", error_sig, request)
             runtime_filter = arguments.get("runtime")
 
