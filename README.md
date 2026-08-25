@@ -1,4 +1,4 @@
-# Synapse-Mesh (Project Exocortex) ⚡
+# Synapse-Mesh ⚡
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](https://opensource.org/licenses/MIT)
 [![MCP Protocol: 2026-07-28](https://img.shields.io/badge/MCP%20Protocol-2026--07--28-blue.svg)](https://modelcontextprotocol.io)
@@ -6,13 +6,55 @@
 [![Live Endpoint](https://img.shields.io/badge/Endpoint-synapsemesh.dev-14b8a6.svg)](https://synapsemesh.dev)
 [![Zero PII](https://img.shields.io/badge/Privacy-Zero--PII%20%2F%20GDPR-cyan.svg)](https://synapsemesh.dev/datenschutz)
 
-> **Agent-native Knowledge & Verification Infrastructure for Autonomous Coding Agents (Gemini, Claude, ChatGPT, Cursor, Antigravity)**  
-> *CI/CD for AI Knowledge — Deterministic, execution-verified living solutions without model retraining.*
+> **Verified Compatibility Layer for AI Coding Agents.**  
+> *Not RAG. Not documentation search. Synapse-Mesh delivers execution-verified patches for breaking library changes — sandbox-tested, mutation-checked, and re-verifiable by every agent in its own workspace.*
 
 ---
 
-## ⚡ Guiding Axiom
-> *"Synapse should not attempt to be 'known' by AI models through retraining cycles. Synapse is built so that AI models can discover, understand, and immediately execute it as a tool at runtime."*
+## ⚡ Core Concept: CI/CD for AI Knowledge
+
+Synapse-Mesh is not a RAG system and not a documentation crawler. It is a deterministic verification pipeline that turns breaking library changes into portable, execution-proven compatibility bundles:
+
+$$\text{Error Signature} \longrightarrow \text{Sandbox Repro} \longrightarrow \text{Unified Diff} \longrightarrow \text{Test Suite} \longrightarrow \text{Mutation Check} \longrightarrow \textbf{VERIFIED}$$
+
+Every bundle can be independently re-verified by any agent in its own workspace using the open `@synapse-mesh/verify` package or Python re-verifier. No blind trust required.
+
+---
+
+## 🎯 Why This Exists
+
+When Pydantic, FastAPI, httpx, React, or Next.js ship breaking changes, coding agents still invent hallucinated fixes. Synapse-Mesh stops that.
+
+Agents receive:
+* **Exact package pins & environment constraints**
+* **Clean, minimal unified diffs**
+* **Explicit negative recipes (`doNot`)**
+* **Local deterministic re-verification in < 2 seconds**
+
+---
+
+## 🚀 1-Line Integration
+
+### MCP (Claude Desktop / Cursor / Antigravity / ChatGPT):
+```json
+{
+  "mcpServers": {
+    "synapse-mesh": {
+      "url": "https://mcp.synapsemesh.dev"
+    }
+  }
+}
+```
+
+### CLI / Local Re-Verify:
+```bash
+npx @synapse-mesh/verify bundles/golden/bundle_pydantic_v2_model_validator.json --allow-code-execution
+```
+
+---
+
+## ⚡ Leitaxiom / Philosophy
+> *„Synapse soll nicht versuchen, von KIs ‚gekannt‘ zu werden. Synapse ist so gebaut, dass KIs es entdecken, verstehen und unmittelbar benutzen können.“*
 
 ---
 
