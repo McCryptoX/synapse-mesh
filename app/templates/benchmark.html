@@ -7,45 +7,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#090d16">
     <title>Evaluation & Verification Benchmark | Synapse-Mesh</title>
-    <meta name="description" content="Controlled evaluation of deterministic 4-stage contract verification vs ungrounded code generation across modern framework breaking changes.">
+    <meta name="description" content="Methodological evaluation of 4-stage execution contracts vs ungrounded code generation across breaking changes in Python, Node.js, and SQL environments.">
     <link rel="stylesheet" href="/style.min.css">
     <style>
       body, html { background-color: #090d16; color: #e2e8f0; font-family: ui-sans-serif, system-ui, sans-serif; }
-      .terminal-code { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-brand-500 selection:text-black">
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
     <!-- Navbar -->
-    <header class="sticky top-0 z-50 bg-slate-950/80 backdrop-blur border-b border-slate-800/80">
+    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2 sm:space-x-3 group" aria-label="Synapse-Mesh Homepage">
+            <a href="/" class="flex items-center space-x-2 group" aria-label="Synapse-Mesh Homepage">
                 <div class="w-3 h-3 rounded-full bg-brand-500 animate-pulse shrink-0" aria-hidden="true"></div>
-                <span class="font-bold text-base sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
-                <span class="text-[10px] sm:text-xs uppercase px-2 py-0.5 rounded bg-brand-900/50 text-brand-400 border border-brand-600/30 font-mono hidden md:inline-block">Evaluation</span>
+                <span class="font-bold text-lg tracking-wider text-white">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-brand-950 border border-brand-500/40 text-brand-300 ml-2">EVALUATION</span>
             </a>
-            <nav class="flex items-center space-x-4 sm:space-x-6 text-sm font-medium">
-                <a href="/" class="text-slate-300 hover:text-brand-300 transition">Search</a>
-                <a href="/verification" class="text-slate-300 hover:text-brand-300 transition">Architecture</a>
+            <nav class="flex items-center space-x-4 sm:space-x-6 text-xs font-mono">
+                <a href="/" class="text-slate-300 hover:text-brand-400 transition">Search</a>
+                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition">Architecture</a>
                 <a href="/benchmark" class="text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5">Evaluation</a>
-                <a href="https://github.com/synapse-mesh/synapse" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-brand-300 transition flex items-center space-x-1">
-                    <span>GitHub</span>
-                </a>
+                <a href="https://github.com/McCryptoX/synapse-mesh" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-brand-400 transition">GitHub</a>
             </nav>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-6xl mx-auto px-4 py-12 w-full space-y-16">
-        <!-- Hero Section -->
-        <section class="text-center space-y-4 max-w-3xl mx-auto">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-950/60 border border-brand-500/30 text-brand-300 text-xs font-mono font-medium">
+    <main class="max-w-6xl mx-auto px-4 py-12 flex-1 w-full space-y-12">
+        <!-- Hero Header -->
+        <section class="text-center space-y-4 max-w-4xl mx-auto">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
                 <span class="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
                 <span>CONTROLLED METHODOLOGICAL EVALUATION</span>
             </div>
-            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                Execution-Verified Contracts vs. <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Ungrounded Code Generation</span>
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+                Execution-Verified Contracts vs.<br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Ungrounded Code Generation</span>
             </h1>
-            <p class="text-slate-300 text-base sm:text-lg leading-relaxed">
+            <p class="text-slate-300 text-base max-w-3xl mx-auto leading-relaxed">
                 Evaluating automated code repair strategies against strict, hermetic 4-stage verification contracts across 12 modern breaking changes in Python, Node.js, and SQL environments.
             </p>
         </section>
@@ -53,7 +51,7 @@
         <!-- Methodological Transparency Disclaimer -->
         <section class="rounded-xl border border-slate-800 bg-slate-900/60 p-5 text-sm text-slate-300 space-y-2 max-w-4xl mx-auto">
             <div class="flex items-center space-x-2 text-white font-semibold">
-                <svg class="w-4 h-4 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="w-4 h-4 text-brand-400 shrink-0" width="16" height="16" style="width: 16px; height: 16px; min-width: 16px; max-width: 16px; display: inline-block; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="9"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -139,124 +137,126 @@
         <section class="space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-white tracking-tight">The 10 Curated Golden Standards</h2>
+                    <h2 class="text-2xl font-bold text-white">The 10 Curated Golden Standards</h2>
                     <p class="text-slate-300 text-sm">Each golden bundle encapsulates an exact version scope, reproducible pre-fail script, minimal unified diff, and mutation test suite.</p>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-200 font-mono">Protocol Spec 2026-07-28</span>
+                    <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-mono text-xs border border-slate-700">Protocol Spec 2026-07-28</span>
                 </div>
             </div>
 
-            <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/40">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-950/80 text-xs uppercase font-mono text-slate-400 border-b border-slate-800">
-                        <tr>
-                            <th scope="col" class="py-3 px-4">Standard / Package</th>
-                            <th scope="col" class="py-3 px-4">Target Runtime</th>
-                            <th scope="col" class="py-3 px-4">Breaking Error Signature</th>
-                            <th scope="col" class="py-3 px-4">Pre-Fail (1)</th>
-                            <th scope="col" class="py-3 px-4">Unified Diff</th>
-                            <th scope="col" class="py-3 px-4">Post-Pass (0)</th>
-                            <th scope="col" class="py-3 px-4">Mutants Rejected</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800/60 font-mono text-xs">
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">HTTPX 0.28.1</td>
-                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">TypeError: ASGITransport.__init__() got keyword 'app'</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">Next.js 15.5</td>
-                            <td class="py-3 px-4 text-cyan-300">Node 22</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">Error: Route "/blog/[slug]" params should be awaited</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">Pydantic 2.10</td>
-                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">PydanticUserError: root_validator is deprecated</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">FastAPI 0.115</td>
-                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">DeprecationWarning: on_event("startup") is deprecated</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">SQLAlchemy 2.0</td>
-                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">ArgumentError: Textual SQL expression must be declared text()</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">NumPy 2.0</td>
-                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">AttributeError: `np.NAN` was removed in NumPy 2.0</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">Express 5.0</td>
-                            <td class="py-3 px-4 text-cyan-300">Node 22</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">TypeError: Missing parameter name at 1: /*</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">TypeScript 5.6</td>
-                            <td class="py-3 px-4 text-cyan-300">Node 22</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">TS2532: Object is possibly 'undefined' on Map.get()</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">DuckDB 0.10</td>
-                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">duckdb.BinderException: No function matches SUBSTRING(...)</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/30 transition">
-                            <td class="py-3 px-4 font-bold text-white">Python 3.12 UTC</td>
-                            <td class="py-3 px-4 text-brand-300">Python 3.12</td>
-                            <td class="py-3 px-4 text-slate-300 truncate max-w-xs">DeprecationWarning: datetime.utcnow() is deprecated</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">APPLIED</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">PASS</td>
-                            <td class="py-3 px-4 text-emerald-400 font-bold">2 / 2</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs font-mono">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-950/80 text-slate-300">
+                                <th class="p-4 font-semibold">STANDARD / PACKAGE</th>
+                                <th class="p-4 font-semibold">TARGET RUNTIME</th>
+                                <th class="p-4 font-semibold">BREAKING ERROR SIGNATURE</th>
+                                <th class="p-4 font-semibold text-center">PRE-FAIL (1)</th>
+                                <th class="p-4 font-semibold text-center">UNIFIED DIFF</th>
+                                <th class="p-4 font-semibold text-center">POST-PASS (0)</th>
+                                <th class="p-4 font-semibold text-center">MUTANTS REJECTED</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">HTTPX 0.28.1</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="p-4 text-rose-300">TypeError: ASGITransport.__init__() got keyword 'app'</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">Next.js 15.5</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
+                                <td class="p-4 text-rose-300">Error: Route "/blog/[slug]" params should be awaited</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">Pydantic 2.10</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="p-4 text-rose-300">PydanticUserError: root_validator is deprecated</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">FastAPI 0.115</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="p-4 text-rose-300">DeprecationWarning: on_event("startup") is deprecated</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">SQLAlchemy 2.0</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="p-4 text-rose-300">ArgumentError: Textual SQL expression must be declared text()</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">NumPy 2.0</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="p-4 text-rose-300">AttributeError: `np.NAN` was removed in NumPy 2.0</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">Express 5.0</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
+                                <td class="p-4 text-rose-300">TypeError: Missing parameter name at 1: /*</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">TypeScript 5.6</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
+                                <td class="p-4 text-rose-300">TS2532: Object is possibly 'undefined' on Map.get()</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">DuckDB 0.10</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="p-4 text-rose-300">duckdb.BinderException: No function matches SUBSTRING(...)</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="p-4 font-bold text-white">Python 3.12 UTC</td>
+                                <td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
+                                <td class="p-4 text-rose-300">DeprecationWarning: datetime.utcnow() is deprecated</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-cyan-400 font-bold">APPLIED</td>
+                                <td class="p-4 text-center text-emerald-400 font-bold">PASS</td>
+                                <td class="p-4 text-center text-brand-300 font-bold">2 / 2</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
-        <!-- Reverify in Terminal CTA -->
+        <!-- Interactive CLI Verification Snippet -->
         <section class="rounded-2xl bg-gradient-to-r from-brand-950/60 via-slate-900 to-slate-900 border border-brand-500/30 p-8 text-center space-y-6">
             <div class="max-w-2xl mx-auto space-y-3">
                 <h3 class="text-2xl font-bold text-white">Re-verify Locally with 0 External Trust</h3>
@@ -277,17 +277,20 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-slate-300 text-xs">
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-slate-400 text-xs">
         <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center space-x-2">
                 <span>&copy; 2026 Synapse-Mesh (Projekt Exocortex)</span>
                 <span>&bull;</span>
                 <span>Zero-PII Architecture</span>
             </div>
-            <nav class="flex items-center space-x-6" aria-label="Legal & Standards">
+            <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" aria-label="Legal & Standards">
                 <a href="/impressum" class="hover:text-brand-300 transition underline">Impressum</a>
+                <span class="text-slate-600">&bull;</span>
                 <a href="/datenschutz" class="hover:text-brand-300 transition underline">Datenschutz</a>
+                <span class="text-slate-600">&bull;</span>
                 <a href="/llms.txt" class="hover:text-brand-300 transition underline font-mono">/llms.txt</a>
+                <span class="text-slate-600">&bull;</span>
                 <a href="/.well-known/agent.json" class="hover:text-brand-300 transition underline font-mono">A2A Agent Card</a>
             </nav>
         </div>
