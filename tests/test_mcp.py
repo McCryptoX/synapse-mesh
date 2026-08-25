@@ -511,7 +511,7 @@ async def test_mcp_actionability_field():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         import json
 
-        # 1. APPLY_DIRECTLY (httpx 0.28.1 + exact match)
+        # 1. APPLY_VERIFIED_PATCH (httpx 0.28.1 + exact match)
         r1 = await ac.post("/mcp", json={
             "jsonrpc": "2.0",
             "id": 401,
@@ -525,7 +525,7 @@ async def test_mcp_actionability_field():
             }
         })
         c1 = json.loads(r1.json()["result"]["content"][0]["text"])
-        assert c1["actionability"] == "APPLY_DIRECTLY"
+        assert c1["actionability"] == "APPLY_VERIFIED_PATCH"
         assert "actionabilityReason" in c1
 
         # 2. APPLY_WITH_CAUTION (httpx unspecified version)
