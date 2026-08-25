@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Request, Response, Query
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, FileResponse
 from pathlib import Path
@@ -258,7 +259,6 @@ async def root(request: Request, format: Optional[str] = Query(None)):
     finally:
         await db.close()
 
-    import json
     from jinja2 import Environment, FileSystemLoader
     jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=True)
     if INDEX_HTML_PATH.exists():
