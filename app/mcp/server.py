@@ -246,6 +246,8 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                     req_pkg_ver = req_packages_dict.get(pkg)
                     scored_bundles.append((match_conf, {
                         "status": "VERSION_MISMATCH",
+                        "actionability": "DO_NOT_APPLY",
+                        "actionabilityReason": f"Specified {pkg} version ({req_pkg_ver}) is incompatible with verified affected range ({aff_versions}).",
                         "signatureConfidence": match_conf,
                         "environmentStatus": "MISMATCH",
                         "environmentConfidence": 0.0,
@@ -260,8 +262,11 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                         "canonicalUrl": f"https://synapsemesh.dev/api/v1/bundles/{b.get('bundleId')}"
                     }))
                 else:
+                    is_direct = (env_status == "MATCH" and match_conf >= 0.95)
                     scored_bundles.append((match_conf, {
                         "status": "VERIFIED_MATCH",
+                        "actionability": "APPLY_DIRECTLY" if is_direct else "APPLY_WITH_CAUTION",
+                        "actionabilityReason": "100% Hermetically proven on matching compiler/runtime environment." if is_direct else ("Environment version was unspecified." if env_status == "UNKNOWN" else "Normalized signature match."),
                         "signatureConfidence": match_conf,
                         "environmentStatus": env_status,
                         "environmentConfidence": env_conf,
@@ -320,6 +325,8 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                 if not recipes:
                     content_text = json.dumps({
                         "status": "NO_VERIFIED_MATCH",
+                        "actionability": "DO_NOT_APPLY",
+                        "actionabilityReason": "No reproducibly verified recipe in Synapse-Mesh meets our high-confidence threshold for this exact signature.",
                         "matchConfidence": 0.0,
                         "errorSignature": search_req.errorSignature,
                         "suggestion": "No reproducibly verified recipe in Synapse-Mesh meets our high-confidence threshold for this exact signature. Submit a reproduction via submit_solution for automated isolated sandbox verification."

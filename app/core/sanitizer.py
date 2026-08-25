@@ -19,6 +19,14 @@ class ZeroPiiSanitizer:
         re.compile(r'(?:api_key|apikey|secret|password|auth_token)\s*[:=]\s*["\']?([^"\'\s]+)["\']?', re.IGNORECASE)
     ]
     
+    # Prompt Injection & Dangerous Payload Patterns
+    INJECTION_PATTERNS = [
+        re.compile(r'(?i)\b(?:ignore\s+(?:all\s+)?(?:previous|prior)\s+instructions|disregard\s+(?:all\s+)?(?:previous|prior)\s+instructions)\b'),
+        re.compile(r'(?i)\b(?:system\s*:\s*you\s+are|assistant\s*:\s*you\s+must|human\s*:\s*do\s+not)\b'),
+        re.compile(r'(?i)(?:curl|wget)\s+[^|\n]+\|\s*(?:ba)?sh'),
+        re.compile(r'(?i)<\s*script[\s\S]*?>[\s\S]*?<\s*/\s*script\s*>'),
+    ]
+
     # User paths
     USER_PATH_PATTERNS = [
         re.compile(r'/(?:Users|home)/[a-zA-Z0-9_.-]+(/[^"\'\s\n]*)?'),
@@ -30,19 +38,22 @@ class ZeroPiiSanitizer:
         if not text or not isinstance(text, str):
             return text
 
-        # 1. Redact API tokens & secrets
+        # 1. Redact Prompt Injection & Command Execution Payloads
+        for pattern in cls.INJECTION_PATTERNS:
+            text = pattern.sub('[REDACTED_INJECTION_PAYLOAD]', text)
+
+        # 2. Redact API tokens & secrets
         for pattern in cls.TOKEN_PATTERNS:
             text = pattern.sub('[REDACTED_SECRET]', text)
 
-        # 2. Redact Emails
+        # 3. Redact Emails
         text = cls.EMAIL_PATTERN.sub('[REDACTED_EMAIL]', text)
 
-        # 3. Redact IPs (avoiding version strings like 1.2.3 by checking context or replacement)
-        # Only replace standard IPv4 if not surrounded by package version keywords
+        # 4. Redact IPs (avoiding version strings like 1.2.3 by checking context or replacement)
         text = cls.IPV4_PATTERN.sub('[REDACTED_IP]', text)
         text = cls.IPV6_PATTERN.sub('[REDACTED_IPV6]', text)
 
-        # 4. Redact User local directory paths
+        # 5. Redact User local directory paths
         for path_pat in cls.USER_PATH_PATTERNS:
             text = path_pat.sub('[REDACTED_PATH]', text)
 

@@ -500,6 +500,82 @@ PydanticDeprecatedSince20: The `@root_validator` method is deprecated, use `@mod
         assert "relatedMatches" in c or c.get("multiMatchCount", 1) >= 1
 
 
+@pytest.mark.asyncio
+async def test_mcp_actionability_field():
+    """
+    Verifies that the server returns explicit actionability guidance:
+    - APPLY_DIRECTLY for 100% verified + matching environment
+    - APPLY_WITH_CAUTION for verified + unknown environment
+    - DO_NOT_APPLY for version mismatch or unknown errors
+    """
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        import json
+
+        # 1. APPLY_DIRECTLY (httpx 0.28.1 + exact match)
+        r1 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 401,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",
+                    "packages": {"httpx": "0.28.1"}
+                }
+            }
+        })
+        c1 = json.loads(r1.json()["result"]["content"][0]["text"])
+        assert c1["actionability"] == "APPLY_DIRECTLY"
+        assert "actionabilityReason" in c1
+
+        # 2. APPLY_WITH_CAUTION (httpx unspecified version)
+        r2 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 402,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'"
+                }
+            }
+        })
+        c2 = json.loads(r2.json()["result"]["content"][0]["text"])
+        assert c2["actionability"] == "APPLY_WITH_CAUTION"
+
+        # 3. DO_NOT_APPLY (VERSION_MISMATCH)
+        r3 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 403,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",
+                    "packages": {"httpx": "0.27.2"}
+                }
+            }
+        })
+        c3 = json.loads(r3.json()["result"]["content"][0]["text"])
+        assert c3["actionability"] == "DO_NOT_APPLY"
+
+        # 4. DO_NOT_APPLY (NO_VERIFIED_MATCH)
+        r4 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 404,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "SomeCompletelyUnknownError: blah"
+                }
+            }
+        })
+        c4 = json.loads(r4.json()["result"]["content"][0]["text"])
+        assert c4["actionability"] == "DO_NOT_APPLY"
+
+
+
 
 
 
