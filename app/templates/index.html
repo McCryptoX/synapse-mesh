@@ -210,9 +210,9 @@
                 </div>
                 <!-- Category Filter Pills -->
                 <div role="tablist" aria-label="Runtime category filter" class="flex flex-wrap items-center gap-2 text-xs font-mono">
-                    <button type="button" role="tab" aria-selected="true" aria-controls="resultsContainer" onclick="filterRuntime('all')" id="tab-all" class="px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition cursor-pointer">All (<span id="count-all">74</span>)</button>
-                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('python')" id="tab-python" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Python (<span id="count-python">45</span>)</button>
-                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Node.js (<span id="count-nodejs">26</span>)</button>
+                    <button type="button" role="tab" aria-selected="true" aria-controls="resultsContainer" onclick="filterRuntime('all')" id="tab-all" class="px-3 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition cursor-pointer">All (<span id="count-all">93</span>)</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('python')" id="tab-python" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Python (<span id="count-python">60</span>)</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Node.js (<span id="count-nodejs">30</span>)</button>
                     <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('docker')" id="tab-docker" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Docker (<span id="count-docker">3</span>)</button>
                 </div>
             </div>
@@ -787,8 +787,17 @@
                 }
             }
         ];
-        // Zero forced reflow: DOM is already pre-rendered statically in HTML.
-        // JS only renders when the user searches, filters, or expands.
+
+        // Automatic background synchronization on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                loadStats();
+                ensureDataLoaded();
+            });
+        } else {
+            loadStats();
+            ensureDataLoaded();
+        }
     </script>
 </body>
 </html>
