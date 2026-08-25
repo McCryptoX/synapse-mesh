@@ -130,4 +130,17 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
   - Adversariale Rausch- und Fantasieanfragen (z. B. `RuntimeError: session execute model router...`) liefern strikt `status: NO_VERIFIED_MATCH` mit `matchConfidence: 0.0`.
 - **Negative Evidence (`doNot`):** Dokumentiert deterministisch, welche naheliegenden Web-Workarounds und Halluzinationen in der Sandbox abgewiesen wurden.
 
-*Zuletzt aktualisiert: 25. August 2026, 19:16 Uhr*
+---
+
+## 10. Dreidimensionale Konfidenz, Stage 5 Claim-Level Verification & Mathematische SemVer-Engine
+- **3D-Konfidenz-Modell:** Jede MCP-Antwort liefert einen orthogonalen Vektor:
+  $$\big(\text{signatureConfidence}, \;\text{environmentStatus} / \text{environmentConfidence}, \;\text{verificationConfidence}\big)$$
+- **3-Zustands-Epistemologie für Umgebungen (`VersionMatcher`):**
+  1. `MATCH` (`environmentConfidence: 1.0`): Betroffene Dependency angegeben und mathematisch kompatibel.
+  2. `MISMATCH` (`environmentConfidence: 0.0`): Betroffene Dependency angegeben, aber mengentheoretisch disjunkt ($\text{Req} \cap \text{Aff} = \emptyset$).
+  3. `UNKNOWN` (`environmentConfidence: null`): Betroffene Dependency wurde in der Anfrage nicht spezifiziert.
+- **Mathematische Intervall-Schnittmengen:** Der `VersionMatcher` führt echte PEP-440-Mengenarithmetik durch ($[1.5, 2.0) \cap [2.0, \infty) = \emptyset \implies \text{MISMATCH}$; $[1.5, \infty) \cap [2.0, \infty) \neq \emptyset \implies \text{MATCH}$).
+- **Stage 5 Claim-Level Verification:** *„Verification belongs to the smallest independently testable claim.“* Jede Variante innerhalb eines Bundles besitzt eine eigene `preFailAssertion`, die auf echten Runtimes nachweisbar fehlschlägt. Falsche Claims (wie `np.bool` auf NumPy 2.0) werden in Stage 5 hart zurückgewiesen.
+- **Struktureller Signatur-Parser (`SignatureMatcher`):** Zerlegt Fehlersignaturen in AST-Komponenten (`target_obj`, `missing_attr`, `import_symbol`, `import_mod`), wodurch Near-Misses (`DataFrame.appendix`, `DataFrame.frobnicate`, `np.NANN`) strikt mit `NO_VERIFIED_MATCH` (`matchConfidence: 0.0`) abgewiesen werden.
+
+*Zuletzt aktualisiert: 25. August 2026, 19:58 Uhr*
