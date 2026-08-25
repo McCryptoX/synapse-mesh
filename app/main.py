@@ -23,18 +23,27 @@ async def autonomous_mining_worker():
     await asyncio.sleep(5)  # Initial grace period on startup
     while True:
         try:
-            logger.info("[Autonomous Miner] Triggering background upstream mining cycle...")
+            logger.info("[Autonomous Miner] Triggering background upstream mining & harvest cycle...")
             mined_bundles = await UpstreamMiningEngine.mine_and_verify_all(persist_to_disk=True)
             logger.info(f"[Autonomous Miner] Mining cycle finished. {len(mined_bundles)} candidate bundles processed & verified.")
+            
+            # Also run GitHub release harvester and verification pipeline
+            try:
+                from scripts.github_harvester import GitHubReleaseHarvester
+                harvester = GitHubReleaseHarvester()
+                await harvester.harvest_and_ingest()
+            except Exception as he:
+                logger.warning(f"[Autonomous Harvester] Harvester step note: {he}")
+
         except asyncio.CancelledError:
             logger.info("[Autonomous Miner] Background mining worker cancelled.")
             break
         except Exception as e:
             logger.error(f"[Autonomous Miner] Mining cycle error: {e}")
         
-        # Sleep for 6 hours before next autonomous discovery sweep
+        # Sleep for 4 hours before next autonomous discovery sweep
         try:
-            await asyncio.sleep(6 * 3600)
+            await asyncio.sleep(4 * 3600)
         except asyncio.CancelledError:
             break
 
