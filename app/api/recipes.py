@@ -91,10 +91,14 @@ async def get_recipe_stats(response: Response):
         await db.close()
 
 
+import re
+
 STOPWORDS = {
     "the", "was", "has", "been", "and", "for", "with", "from", "that", "this", 
     "use", "instead", "you", "tried", "access", "error", "warning", "exception",
-    "cannot", "could", "not", "module", "object", "type", "value"
+    "cannot", "could", "not", "module", "object", "type", "value", "out", "while",
+    "when", "into", "over", "time", "timed", "mode", "render", "rendering",
+    "passed", "instead", "only", "must", "should", "some", "like", "such", "than"
 }
 
 KNOWN_PACKAGES = {
@@ -122,10 +126,10 @@ PACKAGE_ALIASES = {
 
 @router.post("/api/v1/recipes/search", response_model=List[VerifiedRecipe])
 async def search_recipes(req: RecipeSearchRequest):
-    """High-precision search for verified solutions with exact token scoring and package relevance."""
+    """High-precision search for verified solutions with exact whole-word scoring and package relevance."""
     clean_error = ZeroPiiSanitizer.sanitize_text(req.errorSignature.strip()).lower()
     raw_tokens = [w.strip(".:(),'\"`") for w in clean_error.split()]
-    meaningful_tokens = [t for t in raw_tokens if len(t) > 2 and t not in STOPWORDS]
+    meaningful_tokens = [t for t in raw_tokens if len(t) > 3 and t not in STOPWORDS]
     
     # Detect target packages from query and symbol aliases
     query_packages = {t for t in raw_tokens if t in KNOWN_PACKAGES}
@@ -159,6 +163,9 @@ async def search_recipes(req: RecipeSearchRequest):
             desc = prob.get("description", "").lower()
             rec_id = row["id"].lower()
             
+            sig_words = set(re.findall(r'[a-zA-Z0-9_]+', sig))
+            desc_words = set(re.findall(r'[a-zA-Z0-9_]+', desc))
+            
             score = 0.0
             # 1. Exact Error Signature Match
             if clean_error in sig or sig in clean_error:
@@ -177,12 +184,12 @@ async def search_recipes(req: RecipeSearchRequest):
                     # Query clearly asked for package X, but this recipe is package Y -> penalize heavily
                     score -= 1000.0
 
-            # 3. Meaningful Keyword Overlap
+            # 3. Whole-Word Meaningful Overlap
             for token in meaningful_tokens:
-                if token in sig:
-                    score += 80.0
-                elif token in desc:
-                    score += 25.0
+                if token in sig_words:
+                    score += 90.0
+                elif token in desc_words:
+                    score += 30.0
 
             # 4. Verified Status Boost (ONLY if there was an actual query match!)
             if score > 0:
@@ -190,7 +197,7 @@ async def search_recipes(req: RecipeSearchRequest):
                     score += 150.0
                 score *= (row["confidence_score"] or 0.5)
 
-            if score >= 200.0:
+            if score >= 250.0:
                 recipe_obj = VerifiedRecipe(
                     id=row["id"],
                     problem=ProblemDefinition(**prob),
@@ -206,7 +213,7 @@ async def search_recipes(req: RecipeSearchRequest):
             return []
             
         top_score = scored_recipes[0][0]
-        filtered = [r for score, r in scored_recipes if score >= (top_score * 0.55)]
+        filtered = [r for score, r in scored_recipes if score >= (top_score * 0.6)]
         return filtered[:req.limit]
     finally:
         await db.close()

@@ -196,7 +196,7 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
             
             clean_query = error_sig.lower()
             raw_tokens = [w.strip(".:(),'\"`") for w in clean_query.split()]
-            meaningful_tokens = [t for t in raw_tokens if len(t) > 2 and t not in STOPWORDS]
+            meaningful_tokens = [t for t in raw_tokens if len(t) > 3 and t not in STOPWORDS]
             
             query_packages = {t for t in raw_tokens if t in KNOWN_PACKAGES}
             for t in raw_tokens:
@@ -219,6 +219,9 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                 if query_packages and pkg not in query_packages:
                     continue
 
+                sig_words = set(re.findall(r'[a-zA-Z0-9_]+', sig_text))
+                desc_words = set(re.findall(r'[a-zA-Z0-9_]+', desc))
+
                 score = 0.0
                 if clean_query in sig_text or sig_text in clean_query:
                     score += 1000.0
@@ -230,9 +233,9 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                         pass
 
                 for token in meaningful_tokens:
-                    if token in sig_text:
+                    if token in sig_words:
                         score += 90.0
-                    elif token in desc:
+                    elif token in desc_words:
                         score += 30.0
 
                 if pkg in query_packages:
@@ -243,6 +246,8 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                     primary_src = prov.get("primarySources", ["https://synapsemesh.dev/benchmark"])[0] if prov.get("primarySources") else prov.get("primarySource", "https://synapsemesh.dev/benchmark")
                     scored_bundles.append((score, {
                         "status": "VERIFIED_MATCH",
+                        "matchConfidence": 1.0,
+                        "verificationConfidence": 1.0,
                         "evidenceTier": "VERIFIED_REAL_RUNTIME",
                         "recipeId": b.get("bundleId"),
                         "runtime": b.get("scope", {}).get("runtime"),
@@ -282,6 +287,7 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                 if not recipes:
                     content_text = json.dumps({
                         "status": "NO_VERIFIED_MATCH",
+                        "matchConfidence": 0.0,
                         "errorSignature": search_req.errorSignature,
                         "suggestion": "No reproducibly verified recipe in Synapse-Mesh meets our high-confidence threshold for this exact signature. Submit a reproduction via submit_solution for automated isolated sandbox verification."
                     }, indent=2)
@@ -294,6 +300,8 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                         
                         payloads.append({
                             "status": "VERIFIED_MATCH" if is_verified else "DRAFT_CANDIDATE",
+                            "matchConfidence": 0.95,
+                            "verificationConfidence": r.evidence.confidenceScore,
                             "evidenceTier": tier,
                             "recipeId": r.id,
                             "runtime": r.problem.runtime,

@@ -70,3 +70,26 @@ async def test_mcp_server_discover():
     assert "supportedVersions" in data["result"]
     assert "2024-11-05" in data["result"]["supportedVersions"]
     assert data["result"]["serverInfo"]["name"] == "synapse-mesh"
+
+
+@pytest.mark.asyncio
+async def test_mcp_unknown_error_returns_no_verified_match():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 5,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "QuantumWidgetError: flux capacitor handshake timed out while rendering banana mode"
+                }
+            }
+        })
+    assert res.status_code == 200
+    data = res.json()
+    import json
+    content = json.loads(data["result"]["content"][0]["text"])
+    assert content["status"] == "NO_VERIFIED_MATCH"
+    assert content["matchConfidence"] == 0.0
+
