@@ -104,12 +104,18 @@
       "pidNamespace": true,
       "network": "none",
       "rootFs": "read-only",
-      "tmpfsLimitBytes": 33554432,
-      "memoryLimitBytes": 536870912,
-      "pidsLimit": 64,
       "noNewPrivs": true,
-      "capabilities": [],
-      "seccompProfile": "synapse-v1"
+      "seccompMode": 2,
+      "effectiveCapabilities": "0x0000000000000000",
+      "privateTmpfs": true
+    },
+    "configuredPolicy": {
+      "seccompProfile": "synapse-v1",
+      "seccompProfileDigest": "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
+      "memoryLimitBytes": 536870912,
+      "tmpfsLimitBytes": 33554432,
+      "pidsLimit": 64,
+      "cpuLimitSeconds": 10
     }
   }
 }
