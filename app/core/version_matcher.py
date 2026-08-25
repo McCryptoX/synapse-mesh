@@ -1,12 +1,13 @@
-from packaging.specifiers import SpecifierSet
+import re
+from packaging.specifiers import SpecifierSet, InvalidSpecifier
 from packaging.version import Version, InvalidVersion
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, Set
 
 class VersionMatcher:
     """
-    Evaluates semantic package and runtime version constraints with 3-state epistemology:
-    - MATCH: Target dependency specified and compatible (environmentConfidence = 1.0)
-    - MISMATCH: Target dependency specified but outside affected range (environmentConfidence = 0.0)
+    Evaluates semantic package and runtime version constraints with mathematical interval intersection:
+    - MATCH: Target dependency specified and non-empty intersection (environmentConfidence = 1.0)
+    - MISMATCH: Target dependency specified with empty intersection (environmentConfidence = 0.0)
     - UNKNOWN: Target dependency not specified in request (environmentConfidence = null)
     """
 
@@ -27,7 +28,7 @@ class VersionMatcher:
         norm_map = {k.lower(): v for k, v in req_packages_dict.items()}
         req_version_spec = norm_map.get(pkg_name.lower())
         
-        is_compat, _ = VersionMatcher.check_version_compatibility(req_version_spec, affected_version_spec)
+        is_compat = VersionMatcher.check_version_compatibility(req_version_spec, affected_version_spec)
         if is_compat:
             return ("MATCH", 1.0)
         else:
@@ -37,36 +38,68 @@ class VersionMatcher:
     def check_version_compatibility(
         requested_version_spec: Optional[str],
         affected_version_spec: Optional[str]
-    ) -> Tuple[bool, float]:
+    ) -> bool:
         """
-        Evaluates whether requested version specifier matches affected version range.
-        Returns (is_compatible, confidence).
+        Computes true mathematical interval intersection:
+        Returns True iff (requestedRange ∩ affectedRange ≠ ∅).
         """
         if not requested_version_spec or not affected_version_spec:
-            return (True, 1.0)
+            return True
             
         clean_req = requested_version_spec.strip()
-        # Case 1: Exact version string e.g. "1.5.3", "==1.5.3", "v1.5.3"
-        clean_ver = clean_req.lstrip("=v ").strip()
-        try:
-            v = Version(clean_ver)
-            spec = SpecifierSet(affected_version_spec)
-            if v in spec:
-                return (True, 1.0)
-            return (False, 0.0)
-        except InvalidVersion:
-            pass
-
-        # Case 2: Range specified e.g. ">=2.0.0", "<2.0.0", ">=1.5.0,<2.0.0"
-        try:
-            req_spec = SpecifierSet(clean_req)
-            aff_spec = SpecifierSet(affected_version_spec)
+        clean_aff = affected_version_spec.strip()
+        
+        # 1. Fast Path: Single exact version e.g. "1.5.3", "v1.5.3", "==1.5.3"
+        clean_ver = clean_req.lstrip("v ").strip()
+        if clean_ver.startswith("=="):
+            clean_ver = clean_ver[2:].strip()
             
-            # Check disjoint ranges
-            if ("<2.0.0" in clean_req or "<=1." in clean_req or "==1." in clean_req) and ">=2.0" in affected_version_spec:
-                return (False, 0.0)
-            if (">=2.0.0" in clean_req or ">=2." in clean_req) and ">=2.0" in affected_version_spec:
-                return (True, 1.0)
-            return (True, 0.9)
+        if re.match(r"^[0-9]+(?:\.[0-9]+)*$", clean_ver):
+            try:
+                v = Version(clean_ver)
+                aff_spec = SpecifierSet(clean_aff)
+                return v in aff_spec
+            except Exception:
+                pass
+
+        # 2. General Interval Intersection for Specifiers (e.g. '>=1.5,<2.0')
+        try:
+            normalized_clauses = []
+            for clause in clean_req.split(","):
+                c = clause.strip()
+                if not any(c.startswith(op) for op in ("<", ">", "=", "~", "!")):
+                    c = "==" + c.lstrip("v= ")
+                normalized_clauses.append(c)
+                
+            req_spec = SpecifierSet(",".join(normalized_clauses))
+            aff_spec = SpecifierSet(clean_aff)
         except Exception:
-            return (True, 0.8)
+            return True
+
+        # Extract all boundary candidate version points from both constraints
+        all_ver_strs = re.findall(r"[0-9]+(?:\.[0-9]+)*", clean_req + " " + clean_aff)
+        test_versions: Set[Version] = set()
+        for s in all_ver_strs:
+            parts = [int(p) for p in s.split(".")]
+            while len(parts) < 3:
+                parts.append(0)
+            maj, min_, pat = parts[0], parts[1], parts[2]
+            
+            # Boundary probe points
+            test_versions.add(Version(f"{maj}.{min_}.{pat}"))
+            test_versions.add(Version(f"{maj}.{min_}.{pat+1}"))
+            test_versions.add(Version(f"{maj}.{min_+1}.0"))
+            test_versions.add(Version(f"{maj+1}.0.0"))
+            if pat > 0:
+                test_versions.add(Version(f"{maj}.{min_}.{pat-1}"))
+            if min_ > 0:
+                test_versions.add(Version(f"{maj}.{min_-1}.99"))
+            if maj > 0:
+                test_versions.add(Version(f"{maj-1}.99.99"))
+
+        # If ANY probe version satisfies BOTH sets, intersection is non-empty
+        for v in test_versions:
+            if (v in req_spec) and (v in aff_spec):
+                return True
+                
+        return False

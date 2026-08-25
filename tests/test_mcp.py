@@ -285,6 +285,45 @@ async def test_mcp_unspecified_environment_is_unknown():
         assert c["environmentConfidence"] is None
 
 
+@pytest.mark.asyncio
+async def test_mcp_semver_compound_interval_matrix():
+    """
+    Tests full SemVer interval intersection matrix against affectedVersions '>=2.0.0'.
+    """
+    matrix = [
+        ("1.5.3", "VERSION_MISMATCH", "MISMATCH", 0.0),
+        ("<2.0", "VERSION_MISMATCH", "MISMATCH", 0.0),
+        (">=1.5,<2.0", "VERSION_MISMATCH", "MISMATCH", 0.0),
+        (">=2.0,<3.0", "VERIFIED_MATCH", "MATCH", 1.0),
+        (">=2.5", "VERIFIED_MATCH", "MATCH", 1.0),
+        (">=1.5", "VERIFIED_MATCH", "MATCH", 1.0),
+        ("==2.0.0", "VERIFIED_MATCH", "MATCH", 1.0),
+    ]
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        import json
+        for idx, (req_ver, exp_status, exp_env_status, exp_env_conf) in enumerate(matrix):
+            res = await ac.post("/mcp", json={
+                "jsonrpc": "2.0",
+                "id": 100 + idx,
+                "method": "tools/call",
+                "params": {
+                    "name": "find_solution",
+                    "arguments": {
+                        "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
+                        "packages": {"pandas": req_ver}
+                    }
+                }
+            })
+            assert res.status_code == 200
+            data = res.json()
+            c = json.loads(data["result"]["content"][0]["text"])
+            assert c["status"] == exp_status, f"Failed for {req_ver}: expected status {exp_status}, got {c['status']}"
+            assert c["environmentStatus"] == exp_env_status, f"Failed for {req_ver}: expected envStatus {exp_env_status}, got {c['environmentStatus']}"
+            assert c["environmentConfidence"] == exp_env_conf, f"Failed for {req_ver}: expected envConf {exp_env_conf}, got {c['environmentConfidence']}"
+
+
+
 
 
 
