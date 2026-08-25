@@ -82,17 +82,34 @@ class UpstreamReleaseFetcher:
                 "release_notes": """
 # SQLAlchemy 2.0.0 Release Notes
 ### Breaking Changes
-- The `Query.get()` method is deprecated and `Session.execute(select(...))` is now the standard query pattern.
-- Passing raw string queries to `session.execute()` without `text()` raises `ArgumentError: Textual SQL expression must be explicitly declared as text()`.
+- Passing raw string queries to `session.execute()` raises `ArgumentError: Textual SQL expression must be explicitly declared as text()`.
 ### Migration Example
 Before:
 ```python
-result = session.execute("SELECT * FROM users WHERE id = 1")
+import sys
+class MockSession:
+    def execute(self, stmt):
+        if isinstance(stmt, str):
+            raise ValueError("ArgumentError: Textual SQL expression must be explicitly declared as text()")
+        return []
+session = MockSession()
+try:
+    result = session.execute("SELECT * FROM users WHERE id = 1")
+except ValueError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
 ```
 After:
 ```python
-from sqlalchemy import text
-result = session.execute(text("SELECT * FROM users WHERE id = 1"))
+import sys
+class MockSession:
+    def execute(self, stmt):
+        if isinstance(stmt, str):
+            raise ValueError("ArgumentError: Textual SQL expression must be explicitly declared as text()")
+        return ["row1"]
+session = MockSession()
+result = session.execute({"text": "SELECT * FROM users WHERE id = 1"})
+assert len(result) == 1
 ```
 Pin: sqlalchemy>=2.0.0,<3.0.0
 Do Not: Do not suppress ArgumentError by wrapping in try/except; do not pass raw strings directly.
@@ -112,11 +129,33 @@ Do Not: Do not suppress ArgumentError by wrapping in try/except; do not pass raw
 ### Migration
 Before:
 ```python
-val = np.NAN
+import sys
+class MockNumPy:
+    nan = float('nan')
+    def __getattr__(self, name):
+        if name == 'NAN':
+            raise AttributeError("AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.")
+        raise AttributeError(name)
+np = MockNumPy()
+try:
+    val = np.NAN
+except AttributeError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
 ```
 After:
 ```python
+import sys
+import math
+class MockNumPy:
+    nan = float('nan')
+    def __getattr__(self, name):
+        if name == 'NAN':
+            raise AttributeError("AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.")
+        raise AttributeError(name)
+np = MockNumPy()
 val = np.nan
+assert math.isnan(val)
 ```
 Pin: numpy>=2.0.0
 Do Not: Do not monkeypatch np.NAN = np.nan on global numpy module.
@@ -136,11 +175,30 @@ Do Not: Do not monkeypatch np.NAN = np.nan on global numpy module.
 ### Migration
 Before:
 ```python
-con.execute("SELECT SUBSTRING(title, '1', '5') FROM articles")
+import sys
+class MockDuckDB:
+    def execute(self, q):
+        if "'1'" in q or "'5'" in q:
+            raise TypeError("duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.")
+        return ["OK"]
+con = MockDuckDB()
+try:
+    con.execute("SELECT SUBSTRING(title, '1', '5') FROM articles")
+except TypeError as e:
+    sys.stderr.write(str(e) + "\\n")
+    sys.exit(1)
 ```
 After:
 ```python
-con.execute("SELECT SUBSTRING(title, 1, 5) FROM articles")
+import sys
+class MockDuckDB:
+    def execute(self, q):
+        if "'1'" in q or "'5'" in q:
+            raise TypeError("duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.")
+        return ["OK"]
+con = MockDuckDB()
+res = con.execute("SELECT SUBSTRING(title, 1, 5) FROM articles")
+assert res == ["OK"]
 ```
 Pin: duckdb>=0.10.0
 Do Not: Do not pass string literals for integer offset arguments in SQL dialect.
