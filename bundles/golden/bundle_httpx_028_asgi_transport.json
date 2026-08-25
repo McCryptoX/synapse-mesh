@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_httpx_028_asgi_transport_001",
   "status": "VERIFIED",
-  "description": "HTTPX 0.28 removes the Client and AsyncClient app shortcut; explicit ASGITransport is required for in-process ASGI requests.",
+  "description": "HTTPX removes the Client and AsyncClient app shortcut; explicit ASGITransport is required for in-process ASGI requests.",
   "tags": [
     "python",
     "httpx",

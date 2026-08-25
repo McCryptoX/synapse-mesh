@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_duckdb_010_substring_casting_001",
   "status": "VERIFIED",
-  "description": "DuckDB 0.10+ enforces strict type binding in SQL function signatures. String literals in SUBSTRING integer offsets require numeric parameters.",
+  "description": "DuckDB enforces strict type binding in SQL function signatures, requiring explicit CAST for string slicing. SUBSTRING integer offsets require numeric parameters.",
   "tags": [
     "duckdb",
     "python",

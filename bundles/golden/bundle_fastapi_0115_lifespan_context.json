@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "bundleId": "bundle_fastapi_0115_lifespan_context_001",
   "status": "VERIFIED",
-  "description": "FastAPI 0.100+ deprecates '@app.on_event' startup and shutdown handlers in favor of async context manager lifespan handlers.",
+  "description": "FastAPI deprecates '@app.on_event' startup and shutdown handlers in favor of async context manager lifespan handlers.",
   "tags": [
     "python",
     "fastapi",
