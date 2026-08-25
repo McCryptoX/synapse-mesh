@@ -50,11 +50,11 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 ## 3. Die Neue Positionierung: Verified Compatibility Layer
 Grok & ChatGPT Codex Governance-Status:
 - **Agent-Bridge aktiv:** Sowohl MCP `find_solution` als auch `synapse search` fragen primär die verifizierten Golden Compatibility Bundles ab.
-- **Python-Goldens (HTTPX 0.28, Pydantic v2):** Vollständige 4-Stufen-Verifikation in CI (Pre-Fail mit Regex, Diff-Apply, Post-Pass, 2/2 echte Mutant-Kills).
-- **Next.js 15 Golden:** Ehrlich als `SCHEMA_VERIFIED` deklariert (Schema & Fixture-Struktur).
+- **Python-Goldens (HTTPX 0.28, Pydantic v2, FastAPI 0.115 Lifespan):** 3 vollständige 4-Stufen-Verifikationen in CI (echter Pre-Fail mit Regex unter `-W error`, Diff-Apply, Post-Pass mit Side-Effect-Asserts, 2/2 echte Mutant-Kills).
+- **Next.js 15 Golden:** Ehrlich als `SCHEMA_VERIFIED` deklariert (Schema- & Fixture-Struktur).
 - **Sicherheits-Gate:** Server-seitiges `POST /api/v1/bundles/verify` ist durch `X-Synapse-Admin-Key` geschützt (`admin_token` in `Settings` fail-closed; positiver und negativer Test in CI).
 - **Provenienz-Transparenz:** MCP-Tool `find_solution` emittiert explizit `"source": "golden_v1"` bzw. `"source": "legacy_recipe"`.
-- **Test-Status:** 47 passed in 13.44s im Linux VPS-Container (100% grün).
+- **Test-Status:** 48 passed in 15.12s im Linux VPS-Container (100% grün).
 Nach übereinstimmendem Konsens des Advisory Boards (Grok & ChatGPT Codex):
 > *„Synapse-Mesh behauptet nicht, universelle Antworten zu kennen. Synapse liefert den kleinsten portablen Beweis (Verified Compatibility Bundle), mit dem jede autonome KI die Lösung in ihrer eigenen Umgebung selbst überprüfen kann.“*
 
