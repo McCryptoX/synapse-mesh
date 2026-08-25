@@ -1,8 +1,12 @@
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Request, Response, HTTPException, Query
+from fastapi.responses import JSONResponse, StreamingResponse
+import asyncio
 import json
 import logging
-from typing import Dict, Any, List
+import uuid
+import re
+from typing import Dict, Any, List, Optional
+
 from app.models.recipe import (
     RecipeSearchRequest,
     RecipeSubmitRequest,
@@ -15,7 +19,10 @@ from app.database import get_db_connection
 from app.config import settings
 
 logger = logging.getLogger("synapse_mesh.mcp")
-router = APIRouter(prefix="/mcp", tags=["Model Context Protocol (MCP)"])
+router = APIRouter(tags=["Model Context Protocol (MCP)"])
+
+# Active SSE sessions: sessionId -> asyncio.Queue
+sse_sessions: Dict[str, asyncio.Queue] = {}
 
 MCP_TOOLS = [
     {
@@ -30,7 +37,7 @@ MCP_TOOLS = [
                 },
                 "runtime": {
                     "type": "string",
-                    "description": "Optional runtime or language (e.g. 'python', 'nodejs', 'rust')"
+                    "description": "Optional runtime or language (e.g. 'python', 'nodejs', 'rust', 'docker')"
                 },
                 "packages": {
                     "type": "object",
@@ -65,12 +72,12 @@ def summarize_user_agent(ua: str) -> str:
     if not ua:
         return "Unknown-Agent"
     ua_lower = ua.lower()
+    if "chatgpt" in ua_lower or "openai" in ua_lower:
+        return "ChatGPT-Action"
     if "claude" in ua_lower:
         return "Claude-Client"
     if "cursor" in ua_lower:
         return "Cursor-IDE"
-    if "chatgpt" in ua_lower or "openai" in ua_lower:
-        return "ChatGPT-Action"
     if "python" in ua_lower or "httpx" in ua_lower or "requests" in ua_lower:
         return "Python-Agent"
     if "curl" in ua_lower:
@@ -94,61 +101,47 @@ async def log_agent_access(source_type: str, action: str, query: str, request: R
         logger.warning(f"Failed to log agent access: {e}")
 
 
-@router.get("")
-async def mcp_get_info(request: Request):
-    """Information endpoint for MCP Streamable HTTP (Spec 2026-07-28)."""
-    await log_agent_access("discovery", "mcp_info", "", request)
-    return {
-        "status": "ready",
-        "protocol": f"MCP/{settings.mcp_protocol_version}",
-        "server": settings.app_name,
-        "endpoint": settings.canonical_mcp_url,
-        "toolsAvailable": [t["name"] for t in MCP_TOOLS]
-    }
-
-
-@router.post("")
-async def mcp_json_rpc(request: Request):
-    """MCP JSON-RPC 2.0 Streamable HTTP Endpoint (Spec 2026-07-28)."""
-    try:
-        body = await request.json()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON-RPC payload")
-
+async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[str, Any]:
+    """Processes an incoming MCP JSON-RPC 2.0 request payload."""
     msg_id = body.get("id")
-    # Support both body method and MCP 2026-07-28 Mcp-Method header
     method = body.get("method") or request.headers.get("mcp-method")
     params = body.get("params", {})
 
     if not method:
-        return JSONResponse(status_code=400, content={"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32600, "message": "Missing method"}})
+        return {"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32600, "message": "Missing method"}}
 
-    # Method Dispatch
+    # 1. Initialize
     if method in ("initialize", "server/discover"):
         await log_agent_access("mcp_call", method.replace("/", "_"), "", request)
+        client_proto = params.get("protocolVersion") or "2024-11-05"
         return {
             "jsonrpc": "2.0",
             "id": msg_id,
             "result": {
-                "protocolVersion": settings.mcp_protocol_version,
+                "protocolVersion": client_proto,
                 "capabilities": {
                     "tools": {"listChanged": False},
-                    "resources": {"subscribe": False, "listChanged": False}
+                    "resources": {"subscribe": False, "listChanged": False},
+                    "prompts": {"listChanged": False},
+                    "logging": {}
                 },
                 "serverInfo": {
-                    "name": "Synapse-Mesh-Exocortex",
+                    "name": "synapse-mesh",
                     "version": settings.app_version
                 },
-                "tools": MCP_TOOLS
+                "instructions": "Synapse-Mesh deterministic living solutions and compatibility verification engine."
             }
         }
 
+    # 2. Initialized Notification
     elif method == "notifications/initialized":
-        return JSONResponse(content={"jsonrpc": "2.0", "result": {}})
+        return {"jsonrpc": "2.0", "result": {}}
 
+    # 3. Ping
     elif method == "ping":
         return {"jsonrpc": "2.0", "id": msg_id, "result": {}}
 
+    # 4. Tools List
     elif method == "tools/list":
         await log_agent_access("mcp_call", "tools_list", "", request)
         return {
@@ -159,6 +152,7 @@ async def mcp_json_rpc(request: Request):
             }
         }
 
+    # 5. Tools Call
     elif method == "tools/call":
         tool_name = params.get("name") or request.headers.get("mcp-name")
         arguments = params.get("arguments", {})
@@ -170,7 +164,6 @@ async def mcp_json_rpc(request: Request):
 
             # 1. Prioritize Golden Compatibility Bundles v1.0
             from app.api.bundles import load_all_golden_bundles
-            import re
             matched_bundles = []
             for b in load_all_golden_bundles():
                 if runtime_filter and b.get("scope", {}).get("runtime", "").lower() != runtime_filter.lower():
@@ -209,7 +202,7 @@ async def mcp_json_rpc(request: Request):
             if matched_bundles:
                 content_text = json.dumps(matched_bundles[0] if len(matched_bundles) == 1 else matched_bundles, indent=2)
             else:
-                # 2. Fallback to Legacy Recipes Store
+                # 2. Fallback to Living Recipes Store
                 search_req = RecipeSearchRequest(
                     errorSignature=error_sig,
                     runtime=runtime_filter,
@@ -227,7 +220,7 @@ async def mcp_json_rpc(request: Request):
                     payloads = []
                     for r in recipes:
                         payloads.append({
-                            "source": "legacy_recipe",
+                            "source": "verified_recipe",
                             "recipeId": r.id,
                             "runtime": r.problem.runtime,
                             "errorSignature": r.problem.errorSignature,
@@ -235,9 +228,6 @@ async def mcp_json_rpc(request: Request):
                             "summary": r.solution.summary,
                             "diff": r.solution.codeDiff or r.solution.patchDiff,
                             "doNot": r.solution.doNot,
-                            "reverify": {
-                                "testSuite": r.reproduction.testSuite
-                            },
                             "evidence": {
                                 "status": r.evidence.verificationStatus,
                                 "preExit": r.evidence.preExit,
@@ -253,9 +243,8 @@ async def mcp_json_rpc(request: Request):
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "result": {
-                    "content": [
-                        {"type": "text", "text": content_text}
-                    ]
+                    "content": [{"type": "text", "text": content_text}],
+                    "isError": False
                 }
             }
 
@@ -290,16 +279,15 @@ async def mcp_json_rpc(request: Request):
                             "type": "text",
                             "text": f"Successfully stored verified recipe '{created.id}' (Status: {created.evidence.verificationStatus}). Link: https://synapsemesh.dev/recipes/{created.id}"
                         }
-                    ]
+                    ],
+                    "isError": False
                 }
             }
 
         else:
-            return JSONResponse(
-                status_code=404,
-                content={"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32601, "message": f"Tool '{tool_name}' not found"}}
-            )
+            return {"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32601, "message": f"Tool '{tool_name}' not found"}}
 
+    # 6. Resources List
     elif method == "resources/list":
         recipes = await list_recipes(limit=20)
         resources = [
@@ -318,7 +306,119 @@ async def mcp_json_rpc(request: Request):
         }
 
     else:
-        return JSONResponse(
-            status_code=404,
-            content={"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32601, "message": f"Method '{method}' not found"}}
+        return {"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32601, "message": f"Method '{method}' not found"}}
+
+
+# ==============================================================================
+# ROUTE HANDLERS (Supporting /mcp, /sse, /messages, and / on mcp.synapsemesh.dev)
+# ==============================================================================
+
+async def handle_mcp_get(request: Request):
+    """Handles GET requests (detecting SSE vs JSON discovery)."""
+    accept = request.headers.get("accept", "").lower()
+    
+    # If client requests SSE stream (ChatGPT / Claude SSE Transport)
+    if "text/event-stream" in accept:
+        session_id = str(uuid.uuid4())
+        queue: asyncio.Queue = asyncio.Queue()
+        sse_sessions[session_id] = queue
+        
+        async def event_generator():
+            try:
+                # 1. Emit endpoint event pointing to messages endpoint
+                endpoint_url = f"https://mcp.synapsemesh.dev/mcp/messages?sessionId={session_id}"
+                yield f"event: endpoint\ndata: {endpoint_url}\n\n"
+                
+                # 2. Stream message events from queue or send periodic keep-alives
+                while True:
+                    try:
+                        msg = await asyncio.wait_for(queue.get(), timeout=15.0)
+                        yield f"event: message\ndata: {json.dumps(msg)}\n\n"
+                    except asyncio.TimeoutError:
+                        yield ": keepalive\n\n"
+            finally:
+                sse_sessions.pop(session_id, None)
+
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
         )
+
+    # Standard JSON discovery response
+    await log_agent_access("discovery", "mcp_info", "", request)
+    return {
+        "status": "ready",
+        "protocol": "MCP/2024-11-05",
+        "server": settings.app_name,
+        "endpoint": "https://mcp.synapsemesh.dev/mcp",
+        "sseEndpoint": "https://mcp.synapsemesh.dev/mcp/sse",
+        "toolsAvailable": [t["name"] for t in MCP_TOOLS]
+    }
+
+
+async def handle_mcp_post(request: Request):
+    """Handles JSON-RPC 2.0 direct streamable HTTP requests."""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON-RPC payload")
+
+    res = await dispatch_mcp_request(body, request)
+    return JSONResponse(content=res)
+
+
+async def handle_mcp_messages(request: Request, sessionId: Optional[str] = Query(None)):
+    """Handles POST messages for active SSE sessions."""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON-RPC payload")
+
+    res = await dispatch_mcp_request(body, request)
+    
+    # Push to SSE stream if session exists
+    if sessionId and sessionId in sse_sessions:
+        await sse_sessions[sessionId].put(res)
+        return Response(status_code=202)
+    
+    # Fallback to direct HTTP response
+    return JSONResponse(content=res)
+
+
+# Bind endpoints to router with all aliases
+@router.get("/")
+@router.head("/")
+@router.options("/")
+@router.get("/mcp")
+@router.head("/mcp")
+@router.options("/mcp")
+@router.get("/sse")
+@router.head("/sse")
+@router.options("/sse")
+@router.get("/mcp/sse")
+@router.head("/mcp/sse")
+@router.options("/mcp/sse")
+async def mcp_get_route(request: Request):
+    return await handle_mcp_get(request)
+
+
+@router.post("/")
+@router.options("/")
+@router.post("/mcp")
+@router.options("/mcp")
+@router.post("/mcp/")
+async def mcp_post_route(request: Request):
+    return await handle_mcp_post(request)
+
+
+@router.post("/mcp/messages")
+@router.options("/mcp/messages")
+@router.post("/messages")
+@router.options("/messages")
+async def mcp_messages_route(request: Request, sessionId: Optional[str] = Query(None)):
+    return await handle_mcp_messages(request, sessionId)

@@ -10,11 +10,12 @@ async def test_mcp_initialize():
             "jsonrpc": "2.0",
             "id": 1,
             "method": "initialize",
-            "params": {}
+            "params": {"protocolVersion": "2024-11-05"}
         })
     assert res.status_code == 200
     data = res.json()
-    assert data["result"]["serverInfo"]["name"] == "Synapse-Mesh-Exocortex"
+    assert data["result"]["serverInfo"]["name"] == "synapse-mesh"
+    assert data["result"]["protocolVersion"] == "2024-11-05"
 
 
 @pytest.mark.asyncio
@@ -54,6 +55,7 @@ async def test_mcp_tool_call_find_solution():
     assert "content" in data["result"]
     assert len(data["result"]["content"]) > 0
 
+
 @pytest.mark.asyncio
 async def test_mcp_server_discover():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
@@ -65,5 +67,4 @@ async def test_mcp_server_discover():
         })
     assert res.status_code == 200
     data = res.json()
-    assert "tools" in data["result"]
-    assert data["result"]["serverInfo"]["name"] == "Synapse-Mesh-Exocortex"
+    assert data["result"]["serverInfo"]["name"] == "synapse-mesh"
