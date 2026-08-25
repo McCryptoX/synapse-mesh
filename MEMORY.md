@@ -132,3 +132,9 @@ Implementiert in `benchmark/agent_orchestrator.py`:
   - Upstream-Proxy-Header werden auf Loopback (`127.0.0.1`) anonymisiert.
   - Python Backend (Uvicorn) läuft mit `--no-access-log` (kein Logging von Client-Verbindungsmetadaten).
   - Datenschutzerklärung (`/datenschutz`) und Impressum (`/impressum`) vollständig nach DSGVO / § 5 DDG mit technischen und organisatorischen Maßnahmen (TOMs) synchronisiert.
+
+### 9. Private Operations & Pipeline Observatory (`/ops`)
+- **Echtzeit-Transparenz:** Unter `https://synapsemesh.dev/ops` steht eine private Übersichtsseite (`robots: noindex, nofollow`) bereit, die in Echtzeit alle registrierten Rezepte, Candidate Drafts, 4-Stage-Sandbox-Exit-Codes, Confidence Scores und Diff-Vorschauen anzeigt.
+- **Interaktiver Sweep-Trigger:** Manueller Button `⚡ Run Verification Sweep Now` stößt die 4-Stufen-Sandbox-Prüfung über alle Candidate-Batches direkt im Browser an und liefert sofortiges Feedback.
+- **Autonome 4-Stunden-Pipeline:** Der Worker in `app/main.py` pollt kontinuierlich alle 4 Stunden PyPI, npm, crates.io und GitHub Releases, generiert Drafts und führt sie durch die Sandbox.
+
