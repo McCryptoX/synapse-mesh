@@ -193,10 +193,10 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
             # 1. Prioritize Golden Compatibility Bundles v1.0 (VERIFIED_REAL_RUNTIME)
             from app.api.bundles import load_all_golden_bundles
             from app.api.recipes import KNOWN_PACKAGES, PACKAGE_ALIASES, STOPWORDS
+            from app.core.signature_matcher import SignatureMatcher
             
             clean_query = error_sig.lower()
             raw_tokens = [w.strip(".:(),'\"`") for w in clean_query.split()]
-            meaningful_tokens = [t for t in raw_tokens if len(t) > 3 and t not in STOPWORDS]
             
             query_packages = {t for t in raw_tokens if t in KNOWN_PACKAGES}
             for t in raw_tokens:
@@ -211,48 +211,23 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                     continue
                 fp = b.get("fingerprint", {})
                 regex_pat = fp.get("regex", "")
-                sig_text = fp.get("errorSignature", "").lower()
-                desc = b.get("description", "").lower()
+                sig_text = fp.get("errorSignature", "")
                 pkg = b.get("scope", {}).get("package", "").lower()
 
-                # Package filter rule: if query has package, bundle MUST match package!
+                # Package filter rule: if query has explicit package, bundle MUST match package!
                 if query_packages and pkg not in query_packages:
                     continue
 
-                sig_words = set(re.findall(r'[a-zA-Z0-9_]+', sig_text))
-                
-                score = 0.0
-                matched_rule = None
-                
-                if clean_query in sig_text or sig_text in clean_query:
-                    score = 1000.0
-                    matched_rule = "EXACT"
-                elif regex_pat:
-                    try:
-                        if re.search(regex_pat, error_sig, re.IGNORECASE):
-                            score = 900.0
-                            matched_rule = "REGEX"
-                    except Exception:
-                        pass
-
-                if not matched_rule:
-                    sig_overlap = [t for t in meaningful_tokens if t in sig_words]
-                    # Hard Gate: Must have at least 2 distinctive error signature tokens AND package match
-                    if len(sig_overlap) >= 2 and pkg in query_packages:
-                        score = 400.0 + len(sig_overlap) * 100.0
-                        matched_rule = "TOKEN_OVERLAP"
-
-                # If no hard gate was passed, reject this bundle
-                if not matched_rule or score < 400.0:
+                # Structural Semantic Matcher Gate
+                is_matched, match_conf = SignatureMatcher.compute_match(error_sig, sig_text, regex_pat)
+                if not is_matched or match_conf < 0.70:
                     continue
-
-                calculated_match_conf = 1.0 if matched_rule in ("EXACT", "REGEX") else min(0.95, round(score / 1000.0, 2))
 
                 prov = b.get("provenance", {})
                 primary_src = prov.get("primarySources", ["https://synapsemesh.dev/benchmark"])[0] if prov.get("primarySources") else prov.get("primarySource", "https://synapsemesh.dev/benchmark")
-                scored_bundles.append((score, {
+                scored_bundles.append((match_conf, {
                     "status": "VERIFIED_MATCH",
-                    "matchConfidence": calculated_match_conf,
+                    "matchConfidence": match_conf,
                     "verificationConfidence": 1.0,
                     "evidenceTier": "VERIFIED_REAL_RUNTIME",
                     "recipeId": b.get("bundleId"),

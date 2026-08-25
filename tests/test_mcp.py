@@ -120,3 +120,52 @@ async def test_mcp_adversarial_queries_rejected():
             assert content["matchConfidence"] == 0.0
 
 
+@pytest.mark.asyncio
+async def test_mcp_structural_attribute_discriminator():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # Negative 1: appendix
+        res1 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 7,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {"errorSignature": "AttributeError: 'DataFrame' object has no attribute 'appendix'"}
+            }
+        })
+        import json
+        c1 = json.loads(res1.json()["result"]["content"][0]["text"])
+        assert c1["status"] == "NO_VERIFIED_MATCH"
+        assert c1["matchConfidence"] == 0.0
+
+        # Negative 2: frobnicate
+        res2 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 8,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {"errorSignature": "AttributeError: 'DataFrame' object has no attribute 'frobnicate'"}
+            }
+        })
+        c2 = json.loads(res2.json()["result"]["content"][0]["text"])
+        assert c2["status"] == "NO_VERIFIED_MATCH"
+        assert c2["matchConfidence"] == 0.0
+
+        # Positive: append
+        res3 = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {"errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'"}
+            }
+        })
+        c3 = json.loads(res3.json()["result"]["content"][0]["text"])
+        assert c3["status"] == "VERIFIED_MATCH"
+        assert c3["matchConfidence"] >= 0.98
+        assert c3["recipeId"] == "bundle_pandas_20_dataframe_append_001"
+
+
+

@@ -145,6 +145,8 @@ async def search_recipes(req: RecipeSearchRequest):
         cursor = await db.execute(query, params)
         rows = await cursor.fetchall()
         
+        from app.core.signature_matcher import SignatureMatcher
+        
         scored_recipes = []
         for row in rows:
             prob = json.loads(row["problem_json"])
@@ -152,63 +154,38 @@ async def search_recipes(req: RecipeSearchRequest):
             repro = json.loads(row["reproduction_json"])
             evi = json.loads(row["evidence_json"])
             
-            sig = (row["error_signature"] or "").lower()
+            sig = row["error_signature"] or ""
             desc = prob.get("description", "").lower()
             rec_id = row["id"].lower()
             
-            sig_words = set(re.findall(r'[a-zA-Z0-9_]+', sig))
-            desc_words = set(re.findall(r'[a-zA-Z0-9_]+', desc))
-            
-            score = 0.0
-            matched_rule = None
-            
-            # 1. Exact Error Signature Match
-            if clean_error in sig or sig in clean_error:
-                score += 1000.0
-                matched_rule = "EXACT"
-
-            # 2. Package-Specific Relevance
-            recipe_packages = {pkg.lower() for pkg in KNOWN_PACKAGES if pkg in rec_id or pkg in sig or pkg in desc}
+            # Package-Specific Relevance
+            recipe_packages = {pkg.lower() for pkg in KNOWN_PACKAGES if pkg in rec_id or pkg in sig.lower() or pkg in desc}
             for sym, mapped_pkg in PACKAGE_ALIASES.items():
-                if sym in sig or sym in desc:
+                if sym in sig.lower() or sym in desc:
                     recipe_packages.add(mapped_pkg)
                     
-            if query_packages:
-                if query_packages.intersection(recipe_packages):
-                    score += 300.0
-                elif recipe_packages and not query_packages.intersection(recipe_packages):
-                    # Hard penalty: Query specified package X, recipe is package Y -> strictly reject!
-                    score -= 10000.0
-
-            # 3. Whole-Word Meaningful Overlap on Signature
-            sig_overlap = [t for t in meaningful_tokens if t in sig_words]
-            if len(sig_overlap) >= 2:
-                score += len(sig_overlap) * 120.0
-                if not matched_rule:
-                    matched_rule = "MULTI_TOKEN_SIG"
-            elif len(sig_overlap) == 1 and query_packages and query_packages.intersection(recipe_packages):
-                score += 80.0
-                if not matched_rule:
-                    matched_rule = "PACKAGE_TOKEN"
-
-            # Hard Gate: Must have matched an exact rule or high-entropy signature tokens
-            if not matched_rule or score < 400.0:
+            if query_packages and recipe_packages and not query_packages.intersection(recipe_packages):
+                # Query clearly asked for package X, but this recipe is package Y -> strictly reject
                 continue
 
-            # 4. Verified Status Boost (ONLY if there was an actual query match!)
+            # Structural Semantic Matcher Gate
+            is_matched, match_conf = SignatureMatcher.compute_match(req.errorSignature, sig)
+            if not is_matched or match_conf < 0.70:
+                continue
+
+            score = match_conf * 1000.0
             if row["verification_status"] == "VERIFIED":
                 score += 100.0
             score *= (row["confidence_score"] or 0.5)
 
-            if score >= 350.0:
-                recipe_obj = VerifiedRecipe(
-                    id=row["id"],
-                    problem=ProblemDefinition(**prob),
-                    solution=SolutionDefinition(**sol),
-                    reproduction=ReproductionDefinition(**repro),
-                    evidence=EvidenceDefinition(**evi)
-                )
-                scored_recipes.append((score, recipe_obj))
+            recipe_obj = VerifiedRecipe(
+                id=row["id"],
+                problem=ProblemDefinition(**prob),
+                solution=SolutionDefinition(**sol),
+                reproduction=ReproductionDefinition(**repro),
+                evidence=EvidenceDefinition(**evi)
+            )
+            scored_recipes.append((score, recipe_obj))
 
         # Sort by relevance score descending
         scored_recipes.sort(key=lambda x: x[0], reverse=True)
