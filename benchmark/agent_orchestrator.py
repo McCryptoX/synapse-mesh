@@ -1,3 +1,7 @@
+import platform
+import subprocess
+import hashlib
+import shutil
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -31,6 +35,50 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger("benchmark.orchestrator")
+
+def get_runtime_environment_metadata() -> Dict[str, Any]:
+    """Captures exact system toolchain versions and platform metadata for reproducibility."""
+    meta = {
+        "platform": platform.platform(),
+        "pythonVersion": platform.python_version(),
+        "nodeVersion": None,
+        "rustcVersion": None,
+        "cargoVersion": None,
+        "tscVersion": None,
+        "duckdbVersion": None
+    }
+    
+    # Node
+    if shutil.which("node"):
+        try:
+            meta["nodeVersion"] = subprocess.check_output(["node", "--version"], text=True).strip()
+        except Exception: pass
+        
+    # Rust
+    if shutil.which("rustc"):
+        try:
+            meta["rustcVersion"] = subprocess.check_output(["rustc", "--version"], text=True).strip()
+        except Exception: pass
+        
+    if shutil.which("cargo"):
+        try:
+            meta["cargoVersion"] = subprocess.check_output(["cargo", "--version"], text=True).strip()
+        except Exception: pass
+        
+    # TSC
+    if shutil.which("tsc"):
+        try:
+            meta["tscVersion"] = subprocess.check_output(["tsc", "-v"], text=True).strip()
+        except Exception: pass
+        
+    # DuckDB
+    try:
+        import duckdb
+        meta["duckdbVersion"] = duckdb.__version__
+    except Exception: pass
+    
+    return meta
+
 
 
 @dataclass
@@ -192,12 +240,18 @@ class AgentTreatmentOrchestrator:
                 "avgToolLatencyMs": avg_tool_latency
             }
 
-        # Save run log
+        # Save run log with complete environment metadata and SHA-256 case hashes
+        env_meta = get_runtime_environment_metadata()
+        manifest_hash = hashlib.sha256(self.evaluator.dataset_file.read_bytes()).hexdigest()
+        
         run_file = self.results_dir / f"run_{int(time.time())}.json"
         with open(run_file, "w", encoding="utf-8") as f:
             json.dump({
+                "benchmarkSuite": "Suite_v2_Hardened",
+                "manifestSha256": manifest_hash,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "dryRun": dry_run,
+                "runtimeEnvironment": env_meta,
                 "statistics": stats,
                 "runs": [asdict(r) for r in all_results]
             }, f, indent=2)

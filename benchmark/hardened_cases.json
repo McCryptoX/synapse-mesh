@@ -2,7 +2,7 @@
   {
     "id": "P1_NUMPY_2_0_ABI_REMOVALS",
     "family": "Python",
-    "name": "NumPy 2.0 Removal of Deprecated Aliases (np.NAN, np.bool8, np.core)",
+    "name": "NumPy 2.0 Removal of Deprecated Python API Aliases (np.NAN, np.bool8, np.core)",
     "yearIntroduced": "2024",
     "breakingPackage": "numpy>=2.0.0",
     "errorSignature": "AttributeError: module 'numpy' has no attribute 'NAN'",
@@ -19,7 +19,8 @@
     ],
     "groundTruthTestSuite": "import numpy as np\nimport importlib.metadata\nfrom packaging.version import parse as parse_version\nfrom math_module import sanitize_array, get_nan_constant\n\n# Anti-downgrade check: NumPy version MUST be >= 2.0.0\nnp_ver = parse_version(importlib.metadata.version('numpy'))\nassert np_ver >= parse_version('2.0.0'), f'NumPy must be >= 2.0.0, found {np_ver}'\n\n# Execution verification\nres = sanitize_array([1.0, np.nan, 3.0])\nassert res.tolist() == [1.0, 0.0, 3.0]\nassert np.isnan(get_nan_constant())\nprint('ALL TESTS PASSED')",
     "officialSource": "https://numpy.org/devdocs/numpy_2_0_migration_guide.html",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "P2_HTTPX_0_28_STARLETTE",
@@ -41,7 +42,8 @@
     ],
     "groundTruthTestSuite": "import asyncio\nimport importlib.metadata\nfrom packaging.version import parse as parse_version\nfrom client_module import client, app\n\nasync def test_real_asgi():\n    httpx_ver = parse_version(importlib.metadata.version('httpx'))\n    assert httpx_ver >= parse_version('0.28.0'), f'httpx must be >= 0.28.0, got {httpx_ver}'\n    \n    starlette_ver = parse_version(importlib.metadata.version('starlette'))\n    assert starlette_ver >= parse_version('0.37.2'), f'starlette must be >= 0.37.2, got {starlette_ver}'\n\n    async with client as c:\n        res = await c.get('/')\n        assert res.status_code == 200\n        assert res.text == 'ok'\n    print('ALL TESTS PASSED')\n\nasyncio.run(test_real_asgi())",
     "officialSource": "https://www.encode.io/httpx/upgrading/#upgrading-to-0280",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "P3_PYTHON_312_DATETIME_UTC_AWARE",
@@ -63,7 +65,8 @@
     ],
     "groundTruthTestSuite": "import warnings\nfrom datetime import datetime, timezone\nfrom time_utils import get_utc_timestamp\n\nwarnings.simplefilter('error', DeprecationWarning)\nts = get_utc_timestamp()\nassert isinstance(ts, datetime), 'Must return a datetime instance'\nassert ts.tzinfo is not None, 'Timestamp must be timezone-aware (tzinfo is not None)'\nassert ts.tzinfo == timezone.utc, 'Timestamp must be UTC'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://docs.python.org/3/whatsnew/3.12.html#deprecated",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "N1_NODE_22_IMPORT_ATTRIBUTES",
@@ -87,12 +90,13 @@
     ],
     "groundTruthTestSuite": "import { pkgName } from './index.mjs';\nimport { readFileSync } from 'node:fs';\nimport assert from 'node:assert/strict';\n\nassert.equal(pkgName, 'synapse-mesh');\nconst src = readFileSync('./index.mjs', 'utf8');\nassert.match(src, /with\\s*\\{\\s*type:\\s*['\"]json['\"]\\s*\\}/);\nassert.doesNotMatch(src, /\\bassert\\s*\\{/);\nassert.doesNotMatch(src, /readFileSync/);\nassert.doesNotMatch(src, /\\brequire\\s*\\(/);\nconst [major] = process.versions.node.split('.').map(Number);\nassert.ok(major >= 22, 'Node >= 22 required');\nconsole.log('ALL TESTS PASSED');",
     "officialSource": "https://nodejs.org/en/blog/release/v22.0.0#v8-124",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "N2_TYPESCRIPT_56_STRICT_MAP_LOOKUP",
     "family": "Node.js",
-    "name": "TypeScript 5.6 Strict Type Safety on Optional Lookups",
+    "name": "TypeScript Strict Null Safety on Optional Map Lookups (tsc --strict)",
     "yearIntroduced": "2024",
     "breakingPackage": "typescript>=5.6.0",
     "errorSignature": "error TS2322: Type 'number | undefined' is not assignable to type 'number'",
@@ -109,12 +113,13 @@
     ],
     "groundTruthTestSuite": "import subprocess, sys, re\n# 1. Real tsc compilation check\nres = subprocess.run(['tsc', '--strict', '--noUncheckedIndexedAccess', '--noEmit', 'cache.ts'], capture_output=True, text=True)\nassert res.returncode == 0, f'TypeScript compilation failed: {res.stdout + res.stderr}'\n\n# 2. Semantic checks: must not use non-null assertion postfix, type cast, or loose falsy ||\nwith open('cache.ts', 'r') as f: src = f.read()\nassert '!' not in src.replace('!==', '').replace('!=', ''), 'Must not use unsafe non-null assertion postfix operator !'\nassert 'as number' not in src, 'Must not use unsafe type casting (as number)'\nassert '||' not in src, 'Must not use loose falsy check || that breaks on score 0'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://devblogs.microsoft.com/typescript/announcing-typescript-5-6/",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "N3_EXPRESS_5_1_WILDCARD",
     "family": "Node.js",
-    "name": "Express 5.1 / path-to-regexp v8 Brace Wildcard Migration",
+    "name": "Express 5.0.1 / path-to-regexp v8 Brace Wildcard Routing",
     "yearIntroduced": "2024",
     "breakingPackage": "express>=5.0.0",
     "errorSignature": "TypeError: Missing parameter name at index 2: /*; visit https://git.new/pathToRegexpError for info",
@@ -131,7 +136,8 @@
     ],
     "groundTruthTestSuite": "const request = require('supertest');\nconst assert = require('node:assert/strict');\nconst app = require('./app.js');\nconst expVer = parseInt(require('express/package.json').version.split('.')[0], 10);\nassert.ok(expVer >= 5, 'Express >= 5 required');\n\nasync function runTests() {\n    const resRoot = await request(app).get('/');\n    assert.equal(resRoot.status, 200);\n    \n    const resNested = await request(app).get('/a/b');\n    assert.equal(resNested.status, 200);\n    assert.ok(Array.isArray(resNested.body.splat));\n    assert.deepEqual(resNested.body.splat, ['a', 'b']);\n    \n    const resHealth = await request(app).get('/health');\n    assert.equal(resHealth.status, 200);\n    assert.equal(resHealth.text, 'healthy');\n    console.log('ALL TESTS PASSED');\n}\nrunTests().catch(err => { console.error(err); process.exit(1); });",
     "officialSource": "https://expressjs.com/en/guide/migrating-5.html#routing",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "R1_CARGO_1_80_CHECK_CFG",
@@ -155,7 +161,8 @@
     ],
     "groundTruthTestSuite": "import subprocess, sys\n# Verify build.rs source invariant (unconditional check-cfg declaration)\nwith open('build.rs', 'r') as f: build_src = f.read()\nassert 'cargo::rustc-check-cfg=cfg(has_accel)' in build_src, 'Must contain unconditional cargo::rustc-check-cfg'\nif 'if ' in build_src:\n    assert build_src.find('cargo::rustc-check-cfg') < build_src.find('if '), 'cargo::rustc-check-cfg must be declared unconditionally before if branches'\nassert 'values(' not in build_src, 'Values check must not restrict boolean cfg'\n\n# Run real compiler with declared check-cfg\nres = subprocess.run(['rustc', '--check-cfg', 'cfg(has_accel)', '-D', 'warnings', 'main.rs'], capture_output=True, text=True)\nassert res.returncode == 0, f'Rust compilation failed: {res.stderr}'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://blog.rust-lang.org/2024/05/06/check-cfg.html",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "R2_CARGO_LOCKFILE_V4_FORMAT",
@@ -180,7 +187,8 @@
     ],
     "groundTruthTestSuite": "import subprocess\nres = subprocess.run(['cargo', 'check', '--locked'], capture_output=True, text=True)\nassert res.returncode == 0, f'Cargo check --locked failed: {res.stderr}'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://blog.rust-lang.org/2024/11/28/Rust-1.84.0.html#cargo-lockfile-v4",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "R3_RUST_EDITION_2024_GEN_KEYWORD",
@@ -202,7 +210,8 @@
     ],
     "groundTruthTestSuite": "import subprocess\nres = subprocess.run(['rustc', '--edition', '2024', 'src/main.rs', '-o', 'main_bin'], capture_output=True, text=True)\nassert res.returncode == 0, f'Rust compilation failed: {res.stderr}'\nrun_res = subprocess.run(['./main_bin'], capture_output=True, text=True)\nassert run_res.stdout.strip() == '42', f'Expected 42, got {run_res.stdout}'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://doc.rust-lang.org/edition-guide/rust-2024/gen-keyword.html",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "S1_DUCKDB_0_10_IMPLICIT_CASTING",
@@ -224,7 +233,8 @@
     ],
     "groundTruthTestSuite": "import duckdb, inspect\nfrom query_module import extract_part\n\ncon = duckdb.connect()\nval = extract_part(con, 98765)\nassert val == '876', f'Expected 876, got {val}'\n\nsrc = inspect.getsource(extract_part)\nassert 'CAST(' in src or '::VARCHAR' in src, 'Must use explicit SQL CAST'\nassert 'old_implicit_casting' not in src, 'Must not use deprecated old_implicit_casting configuration'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://duckdb.org/2024/02/13/announcing-duckdb-0100.html#breaking-changes",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "compiler_runtime"
   },
   {
     "id": "S2_MYSQL_8_4_AUTH_PLUGIN",
@@ -248,7 +258,8 @@
     ],
     "groundTruthTestSuite": "with open('migration.sql') as f: sql = f.read()\nclean_sql = '\\n'.join(l for l in sql.splitlines() if not l.strip().startswith('--'))\nassert 'caching_sha2_password' in clean_sql, 'Must migrate explicitly to caching_sha2_password'\nassert \"'app_user'@'%'\" in clean_sql, 'Must alter the wildcard host user identity'\nassert 'mysql_native_password' not in clean_sql, 'Must not re-enable legacy native password plugin'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://dev.mysql.com/doc/relnotes/mysql/8.4/en/news-8-4-0.html#mysqld-8-4-0-security",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "static_semantic_oracle"
   },
   {
     "id": "S3_SQLITE_345_JSONB_FUNCTIONS",
@@ -270,7 +281,8 @@
     ],
     "groundTruthTestSuite": "import sqlite3\nfrom query import get_document_name\n\ncon = sqlite3.connect(':memory:')\ncon.execute('CREATE TABLE docs (data BLOB);')\ncon.execute(\"INSERT INTO docs VALUES (jsonb('{\\\"name\\\": \\\"synapse-mesh\\\"}'));\")\n\nname = get_document_name(con)\nassert name == 'synapse-mesh', f'Expected synapse-mesh, got {name}'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://www.sqlite.org/json1.html#jsonb",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "static_semantic_oracle"
   },
   {
     "id": "D1_DOCKER_COMPOSE_V2_SPEC",
@@ -294,7 +306,8 @@
     ],
     "groundTruthTestSuite": "import yaml\nwith open('compose.yaml', 'r') as f:\n    data = yaml.safe_load(f)\nassert 'version' not in data, 'Compose V2 spec must not contain top-level version'\nassert 'services' in data, 'Must define services'\nassert 'api' in data['services'], 'Must define api service'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://docs.docker.com/compose/compose-file/04-version-and-name/",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "static_semantic_oracle"
   },
   {
     "id": "D2_DOCKER_BUILDKIT_CACHE_MOUNTS",
@@ -318,7 +331,8 @@
     ],
     "groundTruthTestSuite": "with open('Dockerfile', 'r') as f: df = f.read()\nassert '--mount=type=cache,target=/root/.cache/pip' in df, 'Must use BuildKit pip cache mount'\nassert 'pip install -r requirements.txt' in df, 'Must install requirements'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://docs.docker.com/build/cache/optimize/#use-cache-mounts",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "static_semantic_oracle"
   },
   {
     "id": "D3_UBUNTU_24_04_PEP668",
@@ -342,6 +356,7 @@
     ],
     "groundTruthTestSuite": "with open('Dockerfile') as f: content = f.read()\nassert '--break-system-packages' not in content, 'Must not use --break-system-packages dangerous bypass'\nassert 'EXTERNALLY-MANAGED' not in content, 'Must not remove EXTERNALLY-MANAGED file'\nassert 'python3 -m venv' in content or 'ENV VIRTUAL_ENV' in content, 'Must create an isolated virtual environment'\nassert 'ENV PATH=' in content or '$VIRTUAL_ENV/bin' in content, 'Must update PATH to use virtualenv binaries'\nprint('ALL TESTS PASSED')",
     "officialSource": "https://peps.python.org/pep-0668/",
-    "antiDowngradeEnforced": true
+    "antiDowngradeEnforced": true,
+    "executionMode": "static_semantic_oracle"
   }
 ]

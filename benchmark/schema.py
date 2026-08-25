@@ -24,6 +24,7 @@ class BenchmarkTestCase(BaseModel):
     mutationPatches: List[str] = Field(default_factory=list, description="Top web/hallucinated bad fixes that MUST fail")
     officialSource: str = Field(..., description="Official changelog or migration guide URL")
     antiDowngradeEnforced: bool = Field(default=True, description="Strictly rejects package downgrades")
+    executionMode: str = Field(default="compiler_runtime", description="compiler_runtime | static_semantic_oracle")
 
 
 class DiagnosticEvaluationResult(BaseModel):

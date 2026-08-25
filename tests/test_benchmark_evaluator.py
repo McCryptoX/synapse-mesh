@@ -10,13 +10,14 @@ async def test_hardened_benchmark_cases():
     assert len(cases) == 15, f"Must evaluate all 15 hardened cases across 5 ecosystems, found {len(cases)}"
     
     node_available = shutil.which("node") is not None
-    cargo_available = shutil.which("cargo") is not None or shutil.which("rustc") is not None
+    rustc_available = shutil.which("rustc") is not None or shutil.which("cargo") is not None
 
     for c in cases:
         if c.family in ("Node.js", "JavaScript", "TypeScript") and not node_available:
-            continue
-        if c.family == "Rust" and not cargo_available:
-            continue
+            pytest.skip("Node.js runtime executable not found on host environment")
+        if c.family == "Rust" and not rustc_available:
+            pytest.skip("Rust compiler toolchain not found on host environment")
+            
         res = await evaluator.evaluate_case(c)
         assert res.preFailPassed is True, f"Case {c.id} must fail during pre-patch repro"
         assert res.signatureMatched is True, f"Case {c.id} must match error signature regex: {res.notes}"
