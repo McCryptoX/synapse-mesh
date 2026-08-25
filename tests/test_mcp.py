@@ -258,6 +258,34 @@ async def test_mcp_numpy_bool_rejected_claim_level():
         assert c["matchConfidence"] == 0.0
 
 
+@pytest.mark.asyncio
+async def test_mcp_unspecified_environment_is_unknown():
+    """
+    Verifies that when query has DataFrame.append but packages only specifies numpy >= 2.0.0,
+    environmentStatus is 'UNKNOWN' and environmentConfidence is null.
+    """
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        import json
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 14,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "AttributeError: 'DataFrame' object has no attribute 'append'",
+                    "packages": {"numpy": ">=2.0.0"}
+                }
+            }
+        })
+        c = json.loads(res.json()["result"]["content"][0]["text"])
+        assert c["status"] == "VERIFIED_MATCH"
+        assert c["signatureConfidence"] >= 0.98
+        assert c["environmentStatus"] == "UNKNOWN"
+        assert c["environmentConfidence"] is None
+
+
+
 
 
 

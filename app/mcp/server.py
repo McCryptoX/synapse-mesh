@@ -228,17 +228,18 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                 if not is_matched or match_conf < 0.70:
                     continue
 
-                # Version Constraint Matcher Gate
-                req_pkg_ver = req_packages_dict.get(pkg)
-                is_env_compat, env_conf = VersionMatcher.check_version_compatibility(req_pkg_ver, aff_versions)
+                # 3-State Epistemological Version Gate (MATCH / MISMATCH / UNKNOWN)
+                env_status, env_conf = VersionMatcher.evaluate_environment(pkg, req_packages_dict, aff_versions)
 
                 prov = b.get("provenance", {})
                 primary_src = prov.get("primarySources", ["https://synapsemesh.dev/benchmark"])[0] if prov.get("primarySources") else prov.get("primarySource", "https://synapsemesh.dev/benchmark")
 
-                if not is_env_compat:
+                if env_status == "MISMATCH":
+                    req_pkg_ver = req_packages_dict.get(pkg)
                     scored_bundles.append((match_conf, {
                         "status": "VERSION_MISMATCH",
                         "signatureConfidence": match_conf,
+                        "environmentStatus": "MISMATCH",
                         "environmentConfidence": 0.0,
                         "verificationConfidence": 1.0,
                         "matchConfidence": match_conf,
@@ -254,6 +255,7 @@ async def dispatch_mcp_request(body: Dict[str, Any], request: Request) -> Dict[s
                     scored_bundles.append((match_conf, {
                         "status": "VERIFIED_MATCH",
                         "signatureConfidence": match_conf,
+                        "environmentStatus": env_status,
                         "environmentConfidence": env_conf,
                         "verificationConfidence": 1.0,
                         "matchConfidence": match_conf,
