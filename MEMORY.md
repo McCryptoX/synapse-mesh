@@ -48,6 +48,12 @@ Kuratiert durch ChatGPT (Board of Advisors) und auditiert durch Grok (Red Team).
 ---
 
 ## 3. Die Neue Positionierung: Verified Compatibility Layer
+Grok & ChatGPT Codex Governance-Status:
+- **Golden Loader v1.0:** Freigegeben für Python-Goldens (Pydantic & HTTPX voll 4-stufig verifiziert mit echten Pre-Fail, Diff-Apply, Post-Pass und 2/2 Mutant-Kills).
+- **Next.js 15 Golden Bundle:** Als Spezifikation und strukturelle Fixture im Schema v1.0 hinterlegt.
+- **Timeouts:** Dynamisches `timeoutMs` wird jetzt durchgängig in allen Verifikationsstufen (Stage 1, 3 und 4) angewendet.
+- **Mutant-Diffs:** Striktes Gate – Mutanten-Diffs, die nicht sauber applizieren, führen zum Abbruch (keine falschen Kills).
+- **Test-Status:** 42 passed in 13.54s im Linux VPS-Container.
 Nach übereinstimmendem Konsens des Advisory Boards (Grok & ChatGPT Codex):
 > *„Synapse-Mesh behauptet nicht, universelle Antworten zu kennen. Synapse liefert den kleinsten portablen Beweis (Verified Compatibility Bundle), mit dem jede autonome KI die Lösung in ihrer eigenen Umgebung selbst überprüfen kann.“*
 
