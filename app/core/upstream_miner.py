@@ -357,12 +357,13 @@ class UpstreamMiningEngine:
             bundle_dict = bundle.model_dump()
             try:
                 ver_res = verify_golden_bundle(bundle_dict)
-                if ver_res.get("verified") is True:
+                # verify_golden_bundle returns a boolean True/False
+                if ver_res is True or (isinstance(ver_res, dict) and ver_res.get("verified") is True):
                     bundle.status = "VERIFIED"
                 else:
                     bundle.status = "UNVERIFIED"
             except Exception as e:
-                logger.debug(f"4-stage test execution for {bundle.bundleId} skipped or failed: {e}")
+                logger.debug(f"4-stage test execution for {bundle.bundleId} failed: {e}")
                 bundle.status = "DRAFT"
 
             candidates.append(bundle)

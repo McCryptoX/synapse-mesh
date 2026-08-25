@@ -255,7 +255,8 @@ def cmd_mine(package: Optional[str], persist: bool, api_base: str):
         print(f"  - [{b.scope.runtime.upper()}] {b.bundleId}")
         print(f"    Error:   {b.fingerprint.errorSignature}")
         print(f"    Target:  {b.patch.targetFile} ({len(b.patch.pinnedDependencies)} pin(s))")
-        print(f"    Status:  {b.status} (4-Stage Tested)")
+        stage_info = "4-Stage Verified" if b.status == "VERIFIED" else "Unverified Draft"
+        print(f"    Status:  {b.status} ({stage_info})")
     print("================================================================================")
 
 def cli_entrypoint():
