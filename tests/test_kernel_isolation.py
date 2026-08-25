@@ -44,16 +44,20 @@ assert np.isnan(val)
 print("TEST_PASSED")
 exit(0)
 """
-    mutant = """
+    mutant1 = """
 import numpy as np
-val = np.NAN  # Buggy mutant
+val = np.NAN  # Buggy mutant 1
+"""
+    mutant2 = """
+import numpy as np
+val = np.NaN  # Buggy mutant 2
 """
     evidence = await KernelSandboxRunner.verify_recipe_kernel_v1(
         runtime="python",
         error_signature="AttributeError: module 'numpy' has no attribute 'NAN'",
         repro_script=repro,
         test_suite=test_suite,
-        mutations=[mutant],
+        mutations=[mutant1, mutant2],
         primary_source="https://numpy.org/devdocs/release/2.0.0-notes.html"
     )
 

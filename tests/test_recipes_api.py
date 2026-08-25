@@ -30,7 +30,7 @@ async def test_submit_and_search_recipe():
         assert res.status_code == 201
         created = res.json()
         assert created["id"] == "rec_test_001"
-        assert created["evidence"]["verificationStatus"] == "VERIFIED"
+        assert created["evidence"]["verificationStatus"] == "PROVISIONAL"
 
         # Search
         search_res = await ac.post("/api/v1/recipes/search", json={

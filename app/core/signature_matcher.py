@@ -139,6 +139,10 @@ class SignatureMatcher:
         if q["raw"] == t["raw"] or q["raw"] in t["raw"] or t["raw"] in q["raw"]:
             return (True, 1.0)
 
+        # Exception Class Gate: If both declare an exception class and they differ -> STRICT REJECT
+        if q["exc_class"] and t["exc_class"] and q["exc_class"] != t["exc_class"]:
+            return (False, 0.0)
+
         # B. Regex Fingerprint Match
         if target_regex:
             try:

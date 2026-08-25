@@ -296,15 +296,22 @@ class SandboxRunner:
                 if not res_mut["passed"]:
                     mutations_killed += 1
 
-        all_mutations_killed = (mutations_killed == total_mutations) if total_mutations > 0 else True
-
-        # Determine true status
-        if post_passed and pre_passed and all_mutations_killed:
+        # Determine strict epistemic status and confidence
+        if post_passed and pre_passed and total_mutations >= 2 and mutations_killed == total_mutations:
+            # Full 4-stage empirical verification with multi-mutation killing
             status = "VERIFIED"
             confidence = 0.99
+        elif post_passed and pre_passed and total_mutations > 0 and mutations_killed == total_mutations:
+            # Empirical verification with single mutation
+            status = "VERIFIED"
+            confidence = 0.85
+        elif post_passed and pre_passed:
+            # 2-stage execution without mutation testing (Provisional)
+            status = "PROVISIONAL"
+            confidence = 0.65
         elif post_passed:
             status = "DRAFT"
-            confidence = 0.50
+            confidence = 0.40
         else:
             status = "FAILED"
             confidence = 0.10
