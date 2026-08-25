@@ -6,6 +6,7 @@ const https = require('node:https');
 const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { Worker } = require('node:worker_threads');
 
 const VERIFIER_NAME = '@synapse-mesh/verify';
 const VERIFIER_VERSION = '0.1.0';
@@ -14,6 +15,7 @@ const DEFAULT_MAX_OUTPUT_BYTES = 1_000_000;
 const DEFAULT_MAX_BUNDLE_BYTES = 2_000_000;
 const MAX_REDIRECTS = 3;
 const RESERVED_DIRECTORY = '.synapse-verifier';
+const REGEX_TIMEOUT_MS = 500;
 
 class BundleValidationError extends Error {
   constructor(message, errors = []) {
@@ -52,6 +54,58 @@ function stableStringify(value) {
     return `{${entries.join(',')}}`;
   }
   return JSON.stringify(value);
+}
+
+function normalizedHostPlatform() {
+  const operatingSystem = process.platform === 'win32' ? 'windows' : process.platform;
+  const architecture = {
+    x64: 'x86_64',
+    ia32: 'x86',
+    arm: 'arm',
+    arm64: 'arm64',
+    ppc64: 'ppc64',
+    s390x: 's390x'
+  }[process.arch] || process.arch;
+  return `${operatingSystem}-${architecture}`;
+}
+
+function testRegexSafely(pattern, flags, input, timeoutMs = REGEX_TIMEOUT_MS) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(result);
+    };
+    const worker = new Worker(
+      [
+        "'use strict';",
+        "const { parentPort, workerData } = require('node:worker_threads');",
+        'try {',
+        '  const expression = new RegExp(workerData.pattern, workerData.flags);',
+        '  parentPort.postMessage({ matched: expression.test(workerData.input), timedOut: false, error: null });',
+        '} catch (error) {',
+        '  parentPort.postMessage({ matched: false, timedOut: false, error: error.message });',
+        '}'
+      ].join('\n'),
+      {
+        eval: true,
+        workerData: { pattern, flags, input },
+        resourceLimits: { maxOldGenerationSizeMb: 32, stackSizeMb: 4 }
+      }
+    );
+    const timer = setTimeout(() => {
+      worker.terminate()
+        .then(() => finish({ matched: false, timedOut: true, error: 'regular expression evaluation timed out' }))
+        .catch((error) => finish({ matched: false, timedOut: true, error: error.message }));
+    }, timeoutMs);
+    worker.once('message', finish);
+    worker.once('error', (error) => finish({ matched: false, timedOut: false, error: error.message }));
+    worker.once('exit', (code) => {
+      if (!settled && code !== 0) finish({ matched: false, timedOut: false, error: `regex worker exited with code ${code}` });
+    });
+  });
 }
 
 function jsonPointerGet(rootSchema, reference) {
@@ -550,7 +604,7 @@ function applyPatchInWorkspace(root, targetFile, unifiedDiff) {
 function buildChildEnvironment(extraEnvironment = {}) {
   const allowedNames = [
     'PATH', 'Path', 'PATHEXT', 'SystemRoot', 'WINDIR',
-    'TMPDIR', 'TMP', 'TEMP', 'LANG', 'LC_ALL', 'NODE_PATH', 'PYTHONPATH'
+    'TMPDIR', 'TMP', 'TEMP', 'LANG', 'LC_ALL'
   ];
   const environment = {
     SYNAPSE_VERIFY: '1',

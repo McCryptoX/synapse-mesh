@@ -172,6 +172,11 @@ def verify_golden_bundle(bundle: dict) -> bool:
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 dest.write_text(content, encoding="utf-8")
 
+        timeout_sec = float(verif.get("timeoutMs", 30000)) / 1000.0
+        env = dict(os.environ)
+        if "SYNAPSE_DEPENDENCY_ROOT" not in env:
+            env["SYNAPSE_DEPENDENCY_ROOT"] = str(workspace)
+
         # -------------------------------------------------------------
         # Stage 1: Pre-Fail Validation (Unpatched Workspace)
         # -------------------------------------------------------------
@@ -179,7 +184,7 @@ def verify_golden_bundle(bundle: dict) -> bool:
         repro_runner = workspace / f"repro_runner{ext}"
         repro_runner.write_text(repro_script, encoding="utf-8")
 
-        res_pre = subprocess.run(runner_cmd + [str(repro_runner)], cwd=workspace, capture_output=True, text=True, timeout=15)
+        res_pre = subprocess.run(runner_cmd + [str(repro_runner)], cwd=workspace, capture_output=True, text=True, timeout=timeout_sec, env=env)
         combined_pre = res_pre.stdout + "\n" + res_pre.stderr
 
         if res_pre.returncode == 0:
@@ -215,7 +220,7 @@ def verify_golden_bundle(bundle: dict) -> bool:
         test_runner = workspace / f"test_runner{ext}"
         test_runner.write_text(test_suite, encoding="utf-8")
         
-        res_post = subprocess.run(runner_cmd + [str(test_runner)], cwd=workspace, capture_output=True, text=True, timeout=15)
+        res_post = subprocess.run(runner_cmd + [str(test_runner)], cwd=workspace, capture_output=True, text=True, timeout=timeout_sec, env=env)
 
         if res_post.returncode != expected_post_exit:
             print(f"[✗] STAGE 3 POST-PASS FAILED: Patched workspace failed with Exit Code {res_post.returncode}:", file=sys.stderr)
