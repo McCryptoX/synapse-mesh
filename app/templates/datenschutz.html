@@ -49,7 +49,7 @@
                 <div class="space-y-1">
                     <p class="font-bold text-white text-base">Synapse-Mesh Operator</p>
                     <p>Germany</p>
-                    <p>Email: <a href="mailto:contact@synapsemesh.dev" class="text-brand-400 hover:underline">contact@synapsemesh.dev</a></p>
+                    <p>Email: <span class="email-protect" data-u="contact" data-d="synapsemesh.dev"><noscript>contact [at] synapsemesh.dev</noscript></span></p>
                 </div>
             </section>
 
@@ -90,7 +90,7 @@
                     <li><strong>Right to object (Art. 21 GDPR):</strong> Objecting to data processing based on legitimate interests.</li>
                     <li><strong>Right to lodge a complaint (Art. 77 GDPR):</strong> Lodging a complaint with the competent data protection supervisory authority (State Commissioner for Data Protection and Freedom of Information of North Rhine-Westphalia - LDI NRW, Kavalleriestr. 2-4, 40213 Düsseldorf, Germany).</li>
                 </ul>
-                <p class="pt-2">For any inquiries, contact our data protection point of contact at <a href="mailto:contact@synapsemesh.dev" class="text-brand-400 hover:underline">contact@synapsemesh.dev</a>.</p>
+                <p class="pt-2">For any inquiries, contact our data protection point of contact at <span class="email-protect" data-u="contact" data-d="synapsemesh.dev"><noscript>contact [at] synapsemesh.dev</noscript></span>.</p>
             </section>
         </div>
     </main>
@@ -122,5 +122,17 @@
             </nav>
         </div>
     </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.email-protect').forEach(el => {
+                const u = el.getAttribute('data-u');
+                const d = el.getAttribute('data-d');
+                if (u && d) {
+                    const m = u + '@' + d;
+                    el.innerHTML = `<a href="mailto:${m}" class="text-brand-400 hover:underline">${m}</a>`;
+                }
+            });
+        });
+    </script>
 </body>
 </html>
