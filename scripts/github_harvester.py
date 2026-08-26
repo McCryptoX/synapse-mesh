@@ -51,22 +51,39 @@ class GitHubReleaseHarvester:
             self.headers["Authorization"] = f"token {token}"
 
     async def fetch_releases(self, owner: str, repo: str, limit: int = 5) -> List[Dict[str, Any]]:
-        """Fetches the latest official releases from GitHub REST API with redirect following."""
+        """Fetches the latest official releases with automatic Atom feed fallback (zero API rate-limits)."""
         url = f"https://api.github.com/repos/{owner}/{repo}/releases?per_page={limit}"
         try:
             async with httpx.AsyncClient(timeout=10.0, headers=self.headers, follow_redirects=True) as client:
                 resp = await client.get(url)
                 if resp.status_code == 200:
                     return resp.json()
-                elif resp.status_code == 403:
-                    logger.warning(f"Rate limited on GitHub API for {owner}/{repo} (HTTP 403).")
-                    return []
-                else:
-                    logger.warning(f"Failed to fetch releases for {owner}/{repo}: HTTP {resp.status_code}")
-                    return []
+        except Exception:
+            pass
+
+        # Rate-limit-free GitHub Atom RSS Feed fallback
+        try:
+            import xml.etree.ElementTree as ET
+            atom_url = f"https://github.com/{owner}/{repo}/releases.atom"
+            async with httpx.AsyncClient(timeout=10.0, headers={"User-Agent": "Synapse-Mesh-Harvester/1.0"}, follow_redirects=True) as client:
+                resp = await client.get(atom_url)
+                if resp.status_code == 200:
+                    root = ET.fromstring(resp.text)
+                    ns = {"atom": "http://www.w3.org/2005/Atom"}
+                    items = []
+                    for entry in root.findall("atom:entry", ns)[:limit]:
+                        title = entry.findtext("atom:title", "", ns)
+                        content = entry.findtext("atom:content", "", ns)
+                        items.append({
+                            "tag_name": title,
+                            "name": title,
+                            "body": content
+                        })
+                    return items
         except Exception as e:
-            logger.error(f"Error fetching releases for {owner}/{repo}: {e}")
-            return []
+            logger.debug(f"Atom feed fallback for {owner}/{repo} error: {e}")
+
+        return []
 
     def extract_breaking_sections(self, body: str) -> List[str]:
         """Extracts text sections dealing with breaking changes, deprecations, or major migrations."""
