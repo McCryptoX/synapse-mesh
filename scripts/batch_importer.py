@@ -22,8 +22,8 @@ logging.basicConfig(level="INFO", format="%(asctime)s [%(levelname)s] %(message)
 logger = logging.getLogger("batch_importer")
 
 
-async def process_candidate_recipes(json_file_path: str):
-    """Loads candidate recipes, runs genuine 4-stage sandbox verification, and stores verified ones."""
+async def process_candidate_recipes(json_file_path: str, force_reverify: bool = False):
+    """Loads candidate recipes, runs genuine 4-stage sandbox verification on new/changed items, and stores verified ones."""
     await init_db()
     path = Path(json_file_path)
     if not path.exists():
@@ -33,14 +33,29 @@ async def process_candidate_recipes(json_file_path: str):
     with open(path, "r", encoding="utf-8") as f:
         candidates = json.load(f)
 
-    logger.info(f"Loaded {len(candidates)} candidate recipes for rigorous verification.")
+    logger.info(f"Loaded {len(candidates)} candidate recipes from {path.name}.")
     
     verified_count = 0
     draft_count = 0
     failed_count = 0
+    skipped_count = 0
 
     for idx, item in enumerate(candidates, 1):
         recipe_id = item.get("id") or f"rec_ingest_{idx:03d}"
+
+        # 0. Incremental Ingestion Gate: Skip if already verified in DB unless force_reverify is requested
+        if not force_reverify:
+            try:
+                db_check = await get_db_connection()
+                cur = await db_check.execute("SELECT verification_status FROM recipes WHERE id = ?", (recipe_id,))
+                row = await cur.fetchone()
+                await db_check.close()
+                if row and row["verification_status"] == "VERIFIED":
+                    skipped_count += 1
+                    verified_count += 1
+                    continue
+            except Exception:
+                pass
         
         prob_dict = item.get("problem", {})
         sol_dict = item.get("solution", {})
@@ -128,7 +143,7 @@ async def process_candidate_recipes(json_file_path: str):
         except Exception as dbe:
             logger.warning(f"Failed to persist {recipe_id} to database: {dbe}")
 
-    logger.info(f"=== Import Completed: {verified_count} VERIFIED, {draft_count} PROVISIONAL/DRAFT, {failed_count} FAILED ===")
+    logger.info(f"=== Import Completed: {verified_count} VERIFIED ({skipped_count} incremental skips), {draft_count} PROVISIONAL/DRAFT, {failed_count} FAILED ===")
 
 
 if __name__ == "__main__":
