@@ -680,8 +680,9 @@ class BreakingChangeExtractor:
         return None
 
     @classmethod
-    def extract_before_after(cls, text: str) -> Optional[Dict[str, str]]:
-        """Extracts Before/After code blocks from markdown."""
+    def extract_before_after(cls, text: str, package: str = "", runtime: str = "python") -> Optional[Dict[str, str]]:
+        """Extracts Before/After code blocks from explicit markdown or synthesizes from natural language migration text."""
+        # 1. Explicit Before / After Markdown blocks
         before_match = re.search(r'Before:?\s*```(?:python|javascript|typescript|json|rust)?\s*([\s\S]*?)```', text, re.IGNORECASE)
         after_match = re.search(r'After:?\s*```(?:python|javascript|typescript|json|rust)?\s*([\s\S]*?)```', text, re.IGNORECASE)
 
@@ -689,6 +690,47 @@ class BreakingChangeExtractor:
             before_code = before_match.group(1).strip()
             after_code = after_match.group(1).strip()
             return {"before": before_code, "after": after_code}
+
+        # 2. Heuristic Pattern: "use `<new>` instead of `<old>`" / "replace `<old>` with `<new>`"
+        use_instead_match = re.search(r'(?:use|replace with)\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?\s+(?:instead of|for|rather than)\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?', text, re.IGNORECASE)
+        if not use_instead_match:
+            use_instead_match = re.search(r'[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?\s+(?:is deprecated|was removed|is no longer supported)[^.\n]*?(?:use|replace with)\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?', text, re.IGNORECASE)
+            if use_instead_match:
+                old_sym = use_instead_match.group(1).strip("`\"'() ")
+                new_sym = use_instead_match.group(2).strip("`\"'() ")
+            else:
+                old_sym, new_sym = None, None
+        else:
+            new_sym = use_instead_match.group(1).strip("`\"'() ")
+            old_sym = use_instead_match.group(2).strip("`\"'() ")
+
+        if old_sym and new_sym and old_sym != new_sym:
+            pkg = package or "pkg"
+            if runtime == "python":
+                before_code = f"import {pkg}\nres = getattr({pkg}, '{old_sym}', None) or {pkg}.{old_sym}()\nprint('OLD_EXECUTED', res)\n"
+                after_code = f"import {pkg}\nres = getattr({pkg}, '{new_sym}', None) or {pkg}.{new_sym}()\nprint('NEW_EXECUTED', res)\n"
+                return {"before": before_code, "after": after_code}
+            elif runtime in ("nodejs", "javascript", "typescript"):
+                before_code = f"const {pkg} = require('{pkg}');\nconst res = {pkg}.{old_sym} || {pkg}.{old_sym}();\nconsole.log('OLD_EXECUTED', res);\n"
+                after_code = f"const {pkg} = require('{pkg}');\nconst res = {pkg}.{new_sym} || {pkg}.{new_sym}();\nconsole.log('NEW_EXECUTED', res);\n"
+                return {"before": before_code, "after": after_code}
+
+        # 3. Heuristic Pattern: "renamed `<old>` to `<new>`"
+        rename_match = re.search(r'renamed\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?\s+to\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?', text, re.IGNORECASE)
+        if rename_match:
+            old_sym = rename_match.group(1).strip("`\"'() ")
+            new_sym = rename_match.group(2).strip("`\"'() ")
+            if old_sym != new_sym:
+                pkg = package or "pkg"
+                if runtime == "python":
+                    before_code = f"import {pkg}\nres = getattr({pkg}, '{old_sym}', None) or {pkg}.{old_sym}()\nprint('OLD_EXECUTED', res)\n"
+                    after_code = f"import {pkg}\nres = getattr({pkg}, '{new_sym}', None) or {pkg}.{new_sym}()\nprint('NEW_EXECUTED', res)\n"
+                    return {"before": before_code, "after": after_code}
+                elif runtime in ("nodejs", "javascript", "typescript"):
+                    before_code = f"const {pkg} = require('{pkg}');\nconst res = {pkg}.{old_sym} || {pkg}.{old_sym}();\nconsole.log('OLD_EXECUTED', res);\n"
+                    after_code = f"const {pkg} = require('{pkg}');\nconst res = {pkg}.{new_sym} || {pkg}.{new_sym}();\nconsole.log('NEW_EXECUTED', res);\n"
+                    return {"before": before_code, "after": after_code}
+
         return None
 
     @classmethod
@@ -758,7 +800,7 @@ class BundleSynthesizer:
         if not err_sig:
             err_sig = f"BreakingChange: {pkg} version {ver} API incompatibility"
 
-        before_after = BreakingChangeExtractor.extract_before_after(notes)
+        before_after = BreakingChangeExtractor.extract_before_after(notes, package=pkg, runtime=rt)
         if not before_after:
             return None
 
@@ -861,9 +903,18 @@ class UpstreamMiningEngine:
         seed_data = UpstreamReleaseFetcher.get_seed_changelogs()
         
         for target in KNOWN_UPSTREAM_TARGETS:
-            if target["ecosystem"] == "pypi":
+            if target.get("ecosystem") == "pypi":
                 live_res = UpstreamReleaseFetcher.fetch_pypi_changelog(target["package"])
                 seed_data.extend(live_res)
+            if target.get("repo"):
+                atom_res = UpstreamReleaseFetcher.fetch_github_releases_atom(target["repo"], limit=3)
+                for ar in atom_res:
+                    ar["runtime"] = target.get("runtime", "python")
+                    seed_data.append(ar)
+
+        # Also fetch live stream from PyPI RSS updates
+        rss_updates = UpstreamReleaseFetcher.fetch_pypi_rss_updates(limit=10)
+        seed_data.extend(rss_updates)
 
         # 2. Extract & Synthesize
         from scripts.synapse_reverify import verify_golden_bundle
