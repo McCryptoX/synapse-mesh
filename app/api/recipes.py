@@ -37,8 +37,15 @@ async def get_recipe_stats(response: Response):
         cursor = await db.execute("SELECT COUNT(*) as verified FROM recipes WHERE verification_status = 'VERIFIED'")
         total_verified = (await cursor.fetchone())["verified"]
 
+        cursor = await db.execute("SELECT COUNT(*) as draft FROM recipes WHERE verification_status IN ('DRAFT', 'PROVISIONAL')")
+        db_drafts = (await cursor.fetchone())["draft"]
+
         cursor = await db.execute("SELECT runtime, COUNT(*) as count FROM recipes WHERE verification_status = 'VERIFIED' GROUP BY runtime")
         by_runtime = {row["runtime"].lower(): row["count"] for row in await cursor.fetchall()}
+
+        import glob
+        disk_drafts = len(glob.glob("bundles/drafts/*.json"))
+        total_drafts = db_drafts + disk_drafts
 
         # Access & Agent Activity Metrics
         cursor = await db.execute("SELECT COUNT(*) as calls FROM access_logs WHERE source_type = 'mcp_call'")
@@ -60,9 +67,10 @@ async def get_recipe_stats(response: Response):
         ]
 
         return {
-            "totalRecipes": total_all,
+            "totalRecipes": total_all + disk_drafts,
             "verifiedRecipes": total_verified,
-            "verifiedRatio": round(total_verified / total_all, 2) if total_all > 0 else 1.0,
+            "draftRecipes": total_drafts,
+            "verifiedRatio": round(total_verified / (total_all + disk_drafts), 2) if (total_all + disk_drafts) > 0 else 1.0,
             "runtimes": by_runtime,
             "agentUsage": {
                 "totalMcpCalls": total_mcp_calls,

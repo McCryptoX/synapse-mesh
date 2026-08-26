@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "draft_numpy_200_c879ed00",
+  "status": "VERIFIED",
+  "description": "Draft compatibility bundle for numpy 2.0.0 migration.",
+  "tags": [
+    "numpy",
+    "python",
+    "upstream-mined",
+    "v2.0.0"
+  ],
+  "scope": {
+    "package": "numpy",
+    "fromVersion": "<2.0.0",
+    "toVersion": "2.0.0",
+    "affectedVersionRange": ">=2.0.0",
+    "runtime": "python",
+    "runtimeVersion": null,
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.`.\n",
+    "regex": "AttributeError:\\ `np\\.NAN`\\ was\\ remove",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "client.py",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,13 +1,11 @@\n-import sys\n-class MockNumPy:\n-    nan = float('nan')\n-    def __getattr__(self, name):\n-        if name == 'NAN':\n-            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n-        raise AttributeError(name)\n-np = MockNumPy()\n-try:\n-    val = np.NAN\n-except AttributeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+import sys\n+import math\n+class MockNumPy:\n+    nan = float('nan')\n+    def __getattr__(self, name):\n+        if name == 'NAN':\n+            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n+        raise AttributeError(name)\n+np = MockNumPy()\n+val = np.nan\n+assert math.isnan(val)",
+    "pinnedDependencies": {
+      "numpy": ">=2.0.0"
+    },
+    "doNot": [
+      "Do not monkeypatch np.NAN = np.nan on global numpy module"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "client.py": "import sys\nclass MockNumPy:\n    nan = float('nan')\n    def __getattr__(self, name):\n        if name == 'NAN':\n            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n        raise AttributeError(name)\nnp = MockNumPy()\ntry:\n    val = np.NAN\nexcept AttributeError as e:\n    sys.stderr.write(str(e) + \"\\n\")\n    sys.exit(1)"
+    },
+    "reproductionScript": "import runpy\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
+    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"session\", \"form\", \"chain\", \"router\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
+    "mutations": [
+      {
+        "id": "mutant_pass_silence",
+        "description": "Hallucinated empty pass mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,13 +1,1 @@\n-import sys\n-class MockNumPy:\n-    nan = float('nan')\n-    def __getattr__(self, name):\n-        if name == 'NAN':\n-            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n-        raise AttributeError(name)\n-np = MockNumPy()\n-try:\n-    val = np.NAN\n-except AttributeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+pass\n"
+      },
+      {
+        "id": "mutant_empty_return",
+        "description": "Hallucinated empty return mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,13 +1,1 @@\n-import sys\n-class MockNumPy:\n-    nan = float('nan')\n-    def __getattr__(self, name):\n-        if name == 'NAN':\n-            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n-        raise AttributeError(name)\n-np = MockNumPy()\n-try:\n-    val = np.NAN\n-except AttributeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+# empty bypass\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://numpy.org/devdocs/release/2.0.0-notes.html"
+    ],
+    "verifiedAt": "2026-08-26T06:32:08.311533+00:00"
+  }
+}

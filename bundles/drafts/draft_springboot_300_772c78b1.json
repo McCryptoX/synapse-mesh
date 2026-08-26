@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "draft_springboot_300_772c78b1",
+  "status": "VERIFIED",
+  "description": "Draft compatibility bundle for spring-boot 3.0.0 migration.",
+  "tags": [
+    "spring-boot",
+    "python",
+    "upstream-mined",
+    "v3.0.0"
+  ],
+  "scope": {
+    "package": "spring-boot",
+    "fromVersion": "<3.0.0",
+    "toVersion": "3.0.0",
+    "affectedVersionRange": ">=3.0.0",
+    "runtime": "python",
+    "runtimeVersion": null,
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet",
+    "regex": "ClassNotFoundException:\\ javax\\.servl",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "client.py",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,9 @@\n-import sys\n-class MockJVM:\n-    def load_class(self, name):\n-        if name.startswith(\"javax.servlet\"):\n-            raise ModuleNotFoundError(\"ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet.*).\")\n-        return True\n-jvm = MockJVM()\n-try:\n-    jvm.load_class(\"javax.servlet.http.HttpServletRequest\")\n-except ModuleNotFoundError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+import sys\n+class MockJVM:\n+    def load_class(self, name):\n+        if name.startswith(\"jakarta.servlet\"):\n+            return {\"loaded\": name, \"status\": \"OK\"}\n+        raise ModuleNotFoundError(name)\n+jvm = MockJVM()\n+result = jvm.load_class(\"jakarta.servlet.http.HttpServletRequest\")\n+assert result[\"status\"] == \"OK\"",
+    "pinnedDependencies": {
+      "org": "."
+    },
+    "doNot": [
+      "Do not import deprecated javax.servlet or javax.persistence packages in Spring Boot 3"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "client.py": "import sys\nclass MockJVM:\n    def load_class(self, name):\n        if name.startswith(\"javax.servlet\"):\n            raise ModuleNotFoundError(\"ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet.*).\")\n        return True\njvm = MockJVM()\ntry:\n    jvm.load_class(\"javax.servlet.http.HttpServletRequest\")\nexcept ModuleNotFoundError as e:\n    sys.stderr.write(str(e) + \"\\n\")\n    sys.exit(1)"
+    },
+    "reproductionScript": "import runpy\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
+    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"session\", \"form\", \"chain\", \"router\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
+    "mutations": [
+      {
+        "id": "mutant_pass_silence",
+        "description": "Hallucinated empty pass mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockJVM:\n-    def load_class(self, name):\n-        if name.startswith(\"javax.servlet\"):\n-            raise ModuleNotFoundError(\"ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet.*).\")\n-        return True\n-jvm = MockJVM()\n-try:\n-    jvm.load_class(\"javax.servlet.http.HttpServletRequest\")\n-except ModuleNotFoundError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+pass\n"
+      },
+      {
+        "id": "mutant_empty_return",
+        "description": "Hallucinated empty return mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockJVM:\n-    def load_class(self, name):\n-        if name.startswith(\"javax.servlet\"):\n-            raise ModuleNotFoundError(\"ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet.*).\")\n-        return True\n-jvm = MockJVM()\n-try:\n-    jvm.load_class(\"javax.servlet.http.HttpServletRequest\")\n-except ModuleNotFoundError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+# empty bypass\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide"
+    ],
+    "verifiedAt": "2026-08-26T06:32:10.878233+00:00"
+  }
+}

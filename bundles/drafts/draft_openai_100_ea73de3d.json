@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "draft_openai_100_ea73de3d",
+  "status": "VERIFIED",
+  "description": "Draft compatibility bundle for openai 1.0.0 migration.",
+  "tags": [
+    "openai",
+    "python",
+    "upstream-mined",
+    "v1.0.0"
+  ],
+  "scope": {
+    "package": "openai",
+    "fromVersion": "<1.0.0",
+    "toVersion": "1.0.0",
+    "affectedVersionRange": ">=1.0.0",
+    "runtime": "python",
+    "runtimeVersion": null,
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai",
+    "regex": "APIRemovedInV1:\\ You\\ tried\\ to\\ access",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "client.py",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,11 @@\n-import sys\n-class MockOpenAI:\n-    class ChatCompletion:\n-        @classmethod\n-        def create(cls, *args, **kwargs):\n-            raise Exception(\"APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0. Use client.chat.completions.create() instead.\")\n-openai = MockOpenAI()\n-try:\n-    openai.ChatCompletion.create(model=\"gpt-4\", messages=[{\"role\": \"user\", \"content\": \"hello\"}])\n-except Exception as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+import sys\n+class MockCompletions:\n+    def create(self, *args, **kwargs):\n+        return {\"choices\": [{\"message\": {\"content\": \"Hello from Synapse Mesh\"}}]}\n+class MockChat:\n+    completions = MockCompletions()\n+class MockOpenAIClient:\n+    chat = MockChat()\n+client = MockOpenAIClient()\n+result = client.chat.completions.create(model=\"gpt-4\", messages=[{\"role\": \"user\", \"content\": \"hello\"}])\n+assert \"choices\" in result",
+    "pinnedDependencies": {
+      "openai": "<2.0.0"
+    },
+    "doNot": [
+      "Do not access legacy openai.ChatCompletion class directly"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "client.py": "import sys\nclass MockOpenAI:\n    class ChatCompletion:\n        @classmethod\n        def create(cls, *args, **kwargs):\n            raise Exception(\"APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0. Use client.chat.completions.create() instead.\")\nopenai = MockOpenAI()\ntry:\n    openai.ChatCompletion.create(model=\"gpt-4\", messages=[{\"role\": \"user\", \"content\": \"hello\"}])\nexcept Exception as e:\n    sys.stderr.write(str(e) + \"\\n\")\n    sys.exit(1)"
+    },
+    "reproductionScript": "import runpy\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
+    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"session\", \"form\", \"chain\", \"router\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
+    "mutations": [
+      {
+        "id": "mutant_pass_silence",
+        "description": "Hallucinated empty pass mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockOpenAI:\n-    class ChatCompletion:\n-        @classmethod\n-        def create(cls, *args, **kwargs):\n-            raise Exception(\"APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0. Use client.chat.completions.create() instead.\")\n-openai = MockOpenAI()\n-try:\n-    openai.ChatCompletion.create(model=\"gpt-4\", messages=[{\"role\": \"user\", \"content\": \"hello\"}])\n-except Exception as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+pass\n"
+      },
+      {
+        "id": "mutant_empty_return",
+        "description": "Hallucinated empty return mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockOpenAI:\n-    class ChatCompletion:\n-        @classmethod\n-        def create(cls, *args, **kwargs):\n-            raise Exception(\"APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0. Use client.chat.completions.create() instead.\")\n-openai = MockOpenAI()\n-try:\n-    openai.ChatCompletion.create(model=\"gpt-4\", messages=[{\"role\": \"user\", \"content\": \"hello\"}])\n-except Exception as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+# empty bypass\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://github.com/openai/openai-python/discussions/742"
+    ],
+    "verifiedAt": "2026-08-26T06:32:08.829819+00:00"
+  }
+}

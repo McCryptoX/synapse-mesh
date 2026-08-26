@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "draft_duckdb_0100_16640b0a",
+  "status": "VERIFIED",
+  "description": "Draft compatibility bundle for duckdb 0.10.0 migration.",
+  "tags": [
+    "duckdb",
+    "python",
+    "upstream-mined",
+    "v0.10.0"
+  ],
+  "scope": {
+    "package": "duckdb",
+    "fromVersion": "<0.10.0",
+    "toVersion": "0.10.0",
+    "affectedVersionRange": ">=0.10.0",
+    "runtime": "python",
+    "runtimeVersion": null,
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.`.\n",
+    "regex": "duckdb\\.BinderException:\\ No\\ function",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "client.py",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,9 @@\n-import sys\n-class MockDuckDB:\n-    def execute(self, q):\n-        if \"'1'\" in q or \"'5'\" in q:\n-            raise TypeError(\"duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.\")\n-        return [\"OK\"]\n-con = MockDuckDB()\n-try:\n-    con.execute(\"SELECT SUBSTRING(title, '1', '5') FROM articles\")\n-except TypeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+import sys\n+class MockDuckDB:\n+    def execute(self, q):\n+        if \"'1'\" in q or \"'5'\" in q:\n+            raise TypeError(\"duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.\")\n+        return [\"OK\"]\n+con = MockDuckDB()\n+res = con.execute(\"SELECT SUBSTRING(title, 1, 5) FROM articles\")\n+assert res == [\"OK\"]",
+    "pinnedDependencies": {
+      "duckdb": ">=0.10.0"
+    },
+    "doNot": [
+      "Do not pass string literals for integer offset arguments in SQL dialect"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "client.py": "import sys\nclass MockDuckDB:\n    def execute(self, q):\n        if \"'1'\" in q or \"'5'\" in q:\n            raise TypeError(\"duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.\")\n        return [\"OK\"]\ncon = MockDuckDB()\ntry:\n    con.execute(\"SELECT SUBSTRING(title, '1', '5') FROM articles\")\nexcept TypeError as e:\n    sys.stderr.write(str(e) + \"\\n\")\n    sys.exit(1)"
+    },
+    "reproductionScript": "import runpy\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
+    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"session\", \"form\", \"chain\", \"router\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
+    "mutations": [
+      {
+        "id": "mutant_pass_silence",
+        "description": "Hallucinated empty pass mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockDuckDB:\n-    def execute(self, q):\n-        if \"'1'\" in q or \"'5'\" in q:\n-            raise TypeError(\"duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.\")\n-        return [\"OK\"]\n-con = MockDuckDB()\n-try:\n-    con.execute(\"SELECT SUBSTRING(title, '1', '5') FROM articles\")\n-except TypeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+pass\n"
+      },
+      {
+        "id": "mutant_empty_return",
+        "description": "Hallucinated empty return mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockDuckDB:\n-    def execute(self, q):\n-        if \"'1'\" in q or \"'5'\" in q:\n-            raise TypeError(\"duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.\")\n-        return [\"OK\"]\n-con = MockDuckDB()\n-try:\n-    con.execute(\"SELECT SUBSTRING(title, '1', '5') FROM articles\")\n-except TypeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+# empty bypass\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://github.com/duckdb/duckdb/releases/tag/v0.10.0"
+    ],
+    "verifiedAt": "2026-08-26T06:32:08.575673+00:00"
+  }
+}

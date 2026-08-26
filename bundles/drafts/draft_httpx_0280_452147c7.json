@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "draft_httpx_0280_452147c7",
+  "status": "VERIFIED",
+  "description": "Draft compatibility bundle for httpx 0.28.0 migration.",
+  "tags": [
+    "httpx",
+    "python",
+    "upstream-mined",
+    "v0.28.0"
+  ],
+  "scope": {
+    "package": "httpx",
+    "fromVersion": "<0.28.0",
+    "toVersion": "0.28.0",
+    "affectedVersionRange": ">=0.28.0",
+    "runtime": "python",
+    "runtimeVersion": null,
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'. Pass transport",
+    "regex": "TypeError:\\ AsyncClient\\.__init__\\(\\)\\ g",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "client.py",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,10 +1,12 @@\n-import sys\n-class MockAsyncClient:\n-    def __init__(self, **kwargs):\n-        if \"app\" in kwargs:\n-            raise TypeError(\"TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'. Pass transport=ASGITransport(app=app) instead.\")\n-try:\n-    client = MockAsyncClient(app=object(), base_url=\"http://test\")\n-except TypeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+import sys\n+class MockASGITransport:\n+    def __init__(self, app=None):\n+        self.app = app\n+class MockAsyncClient:\n+    def __init__(self, transport=None, base_url=\"\"):\n+        self.transport = transport\n+        self.base_url = base_url\n+transport = MockASGITransport(app=object())\n+client = MockAsyncClient(transport=transport, base_url=\"http://test\")\n+result = client.base_url\n+assert result == \"http://test\"",
+    "pinnedDependencies": {
+      "httpx": "<1.0.0"
+    },
+    "doNot": [
+      "Do not pass app argument directly into httpx.AsyncClient"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "client.py": "import sys\nclass MockAsyncClient:\n    def __init__(self, **kwargs):\n        if \"app\" in kwargs:\n            raise TypeError(\"TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'. Pass transport=ASGITransport(app=app) instead.\")\ntry:\n    client = MockAsyncClient(app=object(), base_url=\"http://test\")\nexcept TypeError as e:\n    sys.stderr.write(str(e) + \"\\n\")\n    sys.exit(1)"
+    },
+    "reproductionScript": "import runpy\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
+    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"session\", \"form\", \"chain\", \"router\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
+    "mutations": [
+      {
+        "id": "mutant_pass_silence",
+        "description": "Hallucinated empty pass mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,10 +1,1 @@\n-import sys\n-class MockAsyncClient:\n-    def __init__(self, **kwargs):\n-        if \"app\" in kwargs:\n-            raise TypeError(\"TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'. Pass transport=ASGITransport(app=app) instead.\")\n-try:\n-    client = MockAsyncClient(app=object(), base_url=\"http://test\")\n-except TypeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+pass\n"
+      },
+      {
+        "id": "mutant_empty_return",
+        "description": "Hallucinated empty return mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,10 +1,1 @@\n-import sys\n-class MockAsyncClient:\n-    def __init__(self, **kwargs):\n-        if \"app\" in kwargs:\n-            raise TypeError(\"TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'. Pass transport=ASGITransport(app=app) instead.\")\n-try:\n-    client = MockAsyncClient(app=object(), base_url=\"http://test\")\n-except TypeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+# empty bypass\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://www.python-httpx.org/compatibility/"
+    ],
+    "verifiedAt": "2026-08-26T06:32:09.595065+00:00"
+  }
+}

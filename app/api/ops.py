@@ -83,12 +83,12 @@ async def get_ops_dashboard(
             template = jinja_env.get_template("ops_login.html")
             return HTMLResponse(template.render(error=None), status_code=200)
 
-        # 1. Total and status counts
+        # 1. Total and status counts from DB
         cursor = await db.execute("""
             SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN verification_status = 'VERIFIED' THEN 1 ELSE 0 END) as verified,
-                SUM(CASE WHEN verification_status = 'DRAFT' THEN 1 ELSE 0 END) as draft,
+                SUM(CASE WHEN verification_status IN ('DRAFT', 'PROVISIONAL') THEN 1 ELSE 0 END) as draft,
                 SUM(CASE WHEN verification_status = 'FAILED' THEN 1 ELSE 0 END) as failed
             FROM recipes
         """)
@@ -141,6 +141,44 @@ async def get_ops_dashboard(
         verified = counts["verified"] or 0
         draft = counts["draft"] or 0
         failed = counts["failed"] or 0
+
+        # 2. Ingest candidate drafts from bundles/drafts/*.json
+        import glob
+        draft_files = sorted(glob.glob("bundles/drafts/*.json"))
+        for df in draft_files:
+            try:
+                with open(df, "r", encoding="utf-8") as f:
+                    dbundle = json.load(f)
+                b_id = dbundle.get("bundleId")
+                if not any(it["id"] == b_id for it in items):
+                    b_scope = dbundle.get("scope", {})
+                    b_fp = dbundle.get("fingerprint", {})
+                    b_patch = dbundle.get("patch", {})
+                    b_rt = (b_scope.get("runtime") or "python").lower()
+                    items.append({
+                        "id": b_id,
+                        "runtime": b_rt,
+                        "errorSignature": b_fp.get("errorSignature", ""),
+                        "description": dbundle.get("description", ""),
+                        "summary": f"Candidate draft for {b_scope.get('package', 'upstream')} {b_scope.get('affectedVersionRange', '')}",
+                        "codeDiff": b_patch.get("unifiedDiff", ""),
+                        "doNot": b_patch.get("doNot", []),
+                        "status": dbundle.get("status", "DRAFT"),
+                        "confidenceScore": 0.50,
+                        "preExit": None,
+                        "postExit": None,
+                        "mutationsKilled": "0/0",
+                        "updatedAt": "Upstream Draft"
+                    })
+                    if dbundle.get("status") == "VERIFIED":
+                        verified += 1
+                    else:
+                        draft += 1
+                    total += 1
+                    by_runtime[b_rt] = by_runtime.get(b_rt, 0) + 1
+            except Exception as dfe:
+                logger.warning(f"Error parsing draft bundle {df}: {dfe}")
+
         ratio = round((verified / total * 100), 1) if total > 0 else 0
         template = jinja_env.get_template("ops.html")
         html_content = template.render(

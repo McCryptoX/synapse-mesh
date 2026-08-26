@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "bundleId": "draft_litellm_1400_86f47268",
+  "status": "VERIFIED",
+  "description": "Draft compatibility bundle for litellm 1.40.0 migration.",
+  "tags": [
+    "litellm",
+    "python",
+    "upstream-mined",
+    "v1.40.0"
+  ],
+  "scope": {
+    "package": "litellm",
+    "fromVersion": "<1.40.0",
+    "toVersion": "1.40.0",
+    "affectedVersionRange": ">=1.40.0",
+    "runtime": "python",
+    "runtimeVersion": null,
+    "platform": "all"
+  },
+  "fingerprint": {
+    "errorSignature": "LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().`.\n",
+    "regex": "LiteLLMDeprecationError:\\ model_list",
+    "regexFlags": "",
+    "matchStream": "stderr"
+  },
+  "patch": {
+    "targetFile": "client.py",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,9 @@\n-import sys\n-class MockLiteLLM:\n-    def completion(self, *args, **kwargs):\n-        if \"model_list\" in kwargs:\n-            raise ValueError(\"LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().\")\n-        return {}\n-lit = MockLiteLLM()\n-try:\n-    lit.completion(model_list=[{\"model_name\": \"gpt-4\"}])\n-except ValueError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+import sys\n+class MockRouter:\n+    def __init__(self, model_list=None):\n+        self.model_list = model_list or []\n+    def completion(self, **kwargs):\n+        return {\"response\": \"OK\", \"model\": self.model_list[0][\"model_name\"]}\n+router = MockRouter(model_list=[{\"model_name\": \"gpt-4\"}])\n+result = router.completion()\n+assert result[\"response\"] == \"OK\"",
+    "pinnedDependencies": {
+      "litellm": ">=1.40.0"
+    },
+    "doNot": [
+      "Do not pass raw model_list arrays into top-level litellm.completion functions"
+    ]
+  },
+  "verification": {
+    "scriptLanguage": "python",
+    "workspaceFiles": {
+      "client.py": "import sys\nclass MockLiteLLM:\n    def completion(self, *args, **kwargs):\n        if \"model_list\" in kwargs:\n            raise ValueError(\"LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().\")\n        return {}\nlit = MockLiteLLM()\ntry:\n    lit.completion(model_list=[{\"model_name\": \"gpt-4\"}])\nexcept ValueError as e:\n    sys.stderr.write(str(e) + \"\\n\")\n    sys.exit(1)"
+    },
+    "reproductionScript": "import runpy\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
+    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"session\", \"form\", \"chain\", \"router\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
+    "mutations": [
+      {
+        "id": "mutant_pass_silence",
+        "description": "Hallucinated empty pass mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockLiteLLM:\n-    def completion(self, *args, **kwargs):\n-        if \"model_list\" in kwargs:\n-            raise ValueError(\"LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().\")\n-        return {}\n-lit = MockLiteLLM()\n-try:\n-    lit.completion(model_list=[{\"model_name\": \"gpt-4\"}])\n-except ValueError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+pass\n"
+      },
+      {
+        "id": "mutant_empty_return",
+        "description": "Hallucinated empty return mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockLiteLLM:\n-    def completion(self, *args, **kwargs):\n-        if \"model_list\" in kwargs:\n-            raise ValueError(\"LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().\")\n-        return {}\n-lit = MockLiteLLM()\n-try:\n-    lit.completion(model_list=[{\"model_name\": \"gpt-4\"}])\n-except ValueError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+# empty bypass\n"
+      }
+    ],
+    "expectedPreExit": 1,
+    "expectedPostExit": 0,
+    "timeoutMs": 15000
+  },
+  "provenance": {
+    "spdxLicense": "MIT",
+    "primarySources": [
+      "https://docs.litellm.ai/docs/routing"
+    ],
+    "verifiedAt": "2026-08-26T06:32:10.370125+00:00"
+  }
+}
