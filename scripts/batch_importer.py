@@ -35,78 +35,78 @@ async def process_candidate_recipes(json_file_path: str):
 
     logger.info(f"Loaded {len(candidates)} candidate recipes for rigorous verification.")
     
-    db = await get_db_connection()
     verified_count = 0
     draft_count = 0
     failed_count = 0
 
-    try:
-        for idx, item in enumerate(candidates, 1):
-            recipe_id = item.get("id") or f"rec_ingest_{idx:03d}"
-            
-            prob_dict = item.get("problem", {})
-            sol_dict = item.get("solution", {})
-            repro_dict = item.get("reproduction", {})
-            evi_dict = item.get("evidence", {})
+    for idx, item in enumerate(candidates, 1):
+        recipe_id = item.get("id") or f"rec_ingest_{idx:03d}"
+        
+        prob_dict = item.get("problem", {})
+        sol_dict = item.get("solution", {})
+        repro_dict = item.get("reproduction", {})
+        evi_dict = item.get("evidence", {})
 
-            runtime = item.get("runtime") or prob_dict.get("runtime", "python")
-            error_sig = item.get("errorSignature") or prob_dict.get("errorSignature", "")
-            desc = item.get("description") or prob_dict.get("description", "")
-            summary = item.get("summary") or sol_dict.get("explanation", "")
-            diff = item.get("codeDiff") or sol_dict.get("patchDiff", "")
-            pinned_deps = sol_dict.get("pinnedDependencies") or prob_dict.get("packages", {})
-            do_not = sol_dict.get("doNot", [])
-            mutations = item.get("mutations", [])
-            
-            repro_script = item.get("reproScript") or repro_dict.get("script", "")
-            test_suite = item.get("testSuite") or repro_dict.get("testSuite", "")
-            primary_source = item.get("primarySource") or evi_dict.get("primarySource", "")
+        runtime = item.get("runtime") or prob_dict.get("runtime", "python")
+        error_sig = item.get("errorSignature") or prob_dict.get("errorSignature", "")
+        desc = item.get("description") or prob_dict.get("description", "")
+        summary = item.get("summary") or sol_dict.get("explanation", "")
+        diff = item.get("codeDiff") or sol_dict.get("patchDiff", "")
+        pinned_deps = sol_dict.get("pinnedDependencies") or prob_dict.get("packages", {})
+        do_not = sol_dict.get("doNot", [])
+        mutations = item.get("mutations", [])
+        
+        repro_script = item.get("reproScript") or repro_dict.get("script", "")
+        test_suite = item.get("testSuite") or repro_dict.get("testSuite", "")
+        primary_source = item.get("primarySource") or evi_dict.get("primarySource", "")
 
-            # 1. Sanitize Data
-            sanitized_desc = ZeroPiiSanitizer.sanitize_text(desc)
-            sanitized_summary = ZeroPiiSanitizer.sanitize_text(summary)
-            sanitized_error = ZeroPiiSanitizer.sanitize_text(error_sig)
+        # 1. Sanitize Data
+        sanitized_desc = ZeroPiiSanitizer.sanitize_text(desc)
+        sanitized_summary = ZeroPiiSanitizer.sanitize_text(summary)
+        sanitized_error = ZeroPiiSanitizer.sanitize_text(error_sig)
 
-            # 2. Genuine 4-Stage Sandbox Verification
-            evidence = await SandboxRunner.verify_recipe_full(
-                runtime=runtime,
-                error_signature=sanitized_error,
-                repro_script=repro_script,
-                test_suite=test_suite,
-                mutations=mutations,
-                primary_source=primary_source
-            )
+        # 2. Genuine 4-Stage Sandbox Verification
+        evidence = await SandboxRunner.verify_recipe_full(
+            runtime=runtime,
+            error_signature=sanitized_error,
+            repro_script=repro_script,
+            test_suite=test_suite,
+            mutations=mutations,
+            primary_source=primary_source
+        )
 
-            if evidence.verificationStatus == "VERIFIED":
-                verified_count += 1
-                logger.info(f"[✓ VERIFIED] {recipe_id} ({runtime}) -> Pre:{evidence.preExit} Post:{evidence.postExit} Mut:{evidence.mutationsKilled}")
-            elif evidence.verificationStatus == "DRAFT":
-                draft_count += 1
-                logger.info(f"[~ DRAFT] {recipe_id} ({runtime}) -> Post-pass OK, awaiting repro/mutations.")
-            else:
-                failed_count += 1
-                logger.warning(f"[✗ FAILED] {recipe_id} ({runtime}) -> Sandbox Exit {evidence.sandboxExitCode}")
+        if evidence.verificationStatus == "VERIFIED":
+            verified_count += 1
+            logger.info(f"[✓ VERIFIED] {recipe_id} ({runtime}) -> Pre:{evidence.preExit} Post:{evidence.postExit} Mut:{evidence.mutationsKilled}")
+        elif evidence.verificationStatus in ("PROVISIONAL", "DRAFT"):
+            draft_count += 1
+            logger.info(f"[~ {evidence.verificationStatus}] {recipe_id} ({runtime}) -> Status {evidence.verificationStatus}, awaiting mutations.")
+        else:
+            failed_count += 1
+            logger.warning(f"[✗ FAILED] {recipe_id} ({runtime}) -> Sandbox Exit {evidence.sandboxExitCode}")
 
-            # 3. Store in Database
-            prob = ProblemDefinition(
-                errorSignature=sanitized_error,
-                runtime=runtime.lower(),
-                description=sanitized_desc,
-                packages=prob_dict.get("packages", {})
-            )
-            sol = SolutionDefinition(
-                summary=sanitized_summary,
-                codeDiff=diff,
-                patchDiff=diff,
-                instructions=sol_dict.get("instructions", []),
-                pinnedDependencies=pinned_deps,
-                doNot=do_not
-            )
-            repro = ReproductionDefinition(
-                script=repro_script,
-                testSuite=test_suite
-            )
+        # 3. Store in Database with short-lived connection
+        prob = ProblemDefinition(
+            errorSignature=sanitized_error,
+            runtime=runtime.lower(),
+            description=sanitized_desc,
+            packages=prob_dict.get("packages", {})
+        )
+        sol = SolutionDefinition(
+            summary=sanitized_summary,
+            codeDiff=diff,
+            patchDiff=diff,
+            instructions=sol_dict.get("instructions", []),
+            pinnedDependencies=pinned_deps,
+            doNot=do_not
+        )
+        repro = ReproductionDefinition(
+            script=repro_script,
+            testSuite=test_suite
+        )
 
+        try:
+            db = await get_db_connection()
             await db.execute("""
                 INSERT OR REPLACE INTO recipes (
                     id, runtime, error_signature, problem_json, solution_json, 
@@ -123,11 +123,12 @@ async def process_candidate_recipes(json_file_path: str):
                 evidence.confidenceScore,
                 evidence.verificationStatus
             ))
+            await db.commit()
+            await db.close()
+        except Exception as dbe:
+            logger.warning(f"Failed to persist {recipe_id} to database: {dbe}")
 
-        await db.commit()
-        logger.info(f"=== Import Completed: {verified_count} VERIFIED, {draft_count} DRAFT, {failed_count} FAILED ===")
-    finally:
-        await db.close()
+    logger.info(f"=== Import Completed: {verified_count} VERIFIED, {draft_count} PROVISIONAL/DRAFT, {failed_count} FAILED ===")
 
 
 if __name__ == "__main__":

@@ -21,6 +21,16 @@ logger = logging.getLogger("synapse_mesh")
 async def autonomous_mining_worker():
     """Autonomous background loop that continuously extracts, verifies, and publishes compatibility bundles."""
     await asyncio.sleep(5)  # Initial grace period on startup
+    
+    # Acquire non-blocking lock so only a single uvicorn worker executes the background cycle
+    try:
+        import fcntl
+        lock_file = open("/tmp/synapse_worker_miner.lock", "w")
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except Exception:
+        logger.info("[Autonomous Miner] Another worker already holds the background mining lock. Standing by.")
+        return
+
     while True:
         try:
             logger.info("[Autonomous Miner] Triggering background upstream mining & harvest cycle...")
@@ -41,9 +51,9 @@ async def autonomous_mining_worker():
         except Exception as e:
             logger.error(f"[Autonomous Miner] Mining cycle error: {e}")
         
-        # Sleep for 4 hours before next autonomous discovery sweep
+        # Sweep every hour
         try:
-            await asyncio.sleep(4 * 3600)
+            await asyncio.sleep(3600)
         except asyncio.CancelledError:
             break
 
