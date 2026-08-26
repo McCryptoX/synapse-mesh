@@ -163,17 +163,14 @@ async def get_ops_dashboard(
                         "summary": f"Candidate draft for {b_scope.get('package', 'upstream')} {b_scope.get('affectedVersionRange', '')}",
                         "codeDiff": b_patch.get("unifiedDiff", ""),
                         "doNot": b_patch.get("doNot", []),
-                        "status": dbundle.get("status", "DRAFT"),
+                        "status": "DRAFT",
                         "confidenceScore": 0.50,
                         "preExit": None,
                         "postExit": None,
                         "mutationsKilled": "0/0",
                         "updatedAt": "Upstream Draft"
                     })
-                    if dbundle.get("status") == "VERIFIED":
-                        verified += 1
-                    else:
-                        draft += 1
+                    draft += 1
                     total += 1
                     by_runtime[b_rt] = by_runtime.get(b_rt, 0) + 1
             except Exception as dfe:
@@ -333,9 +330,8 @@ async def trigger_manual_verification_sweep(request: Request, key: Optional[str]
         logs.append("[*] Executing Autonomous Upstream Mining across PyPI/npm/Release Notes...")
         try:
             from app.core.upstream_miner import UpstreamMiningEngine
-            mined_bundles = await UpstreamMiningEngine.mine_and_verify_all(persist_to_disk=False)
-            verified_mined = sum(1 for b in mined_bundles if b.status == "VERIFIED")
-            logs.append(f"[✓ UPSTREAM MINER] Harvested & verified {len(mined_bundles)} candidate bundles ({verified_mined} 4-Stage Verified).")
+            mined_bundles = await UpstreamMiningEngine.mine_and_verify_all(persist_to_disk=True)
+            logs.append(f"[✓ UPSTREAM MINER] Harvested & synthesized {len(mined_bundles)} candidate draft bundles.")
         except Exception as me:
             logs.append(f"[! MINER NOTICE] Upstream mining note: {str(me)}")
 
@@ -343,21 +339,26 @@ async def trigger_manual_verification_sweep(request: Request, key: Optional[str]
             SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN verification_status = 'VERIFIED' THEN 1 ELSE 0 END) as verified,
-                SUM(CASE WHEN verification_status = 'DRAFT' THEN 1 ELSE 0 END) as draft,
+                SUM(CASE WHEN verification_status IN ('DRAFT', 'PROVISIONAL') THEN 1 ELSE 0 END) as draft,
                 SUM(CASE WHEN verification_status = 'FAILED' THEN 1 ELSE 0 END) as failed
             FROM recipes
         """)
         counts = await cursor.fetchone()
-        logs.append(f"[✓ SWEEP FINISHED] Database Status: {counts['total']} Total ({counts['verified']} Verified, {counts['draft']} Drafts, {counts['failed']} Failed).")
+        
+        draft_files_count = len(glob.glob("bundles/drafts/*.json"))
+        total_all = (counts["total"] or 0) + draft_files_count
+        total_draft = (counts["draft"] or 0) + draft_files_count
+
+        logs.append(f"[✓ SWEEP FINISHED] Status: {total_all} Total ({counts['verified']} Verified, {total_draft} Drafts, {counts['failed']} Failed).")
 
         return {
             "status": "SUCCESS",
             "message": f"Verification sweep completed across {len(golden_files)} golden bundles and {len(candidate_files)} candidate batches.",
             "logs": logs,
-            "total": counts["total"],
-            "verified": counts["verified"],
-            "draft": counts["draft"],
-            "failed": counts["failed"]
+            "total": total_all,
+            "verified": counts["verified"] or 0,
+            "draft": total_draft,
+            "failed": counts["failed"] or 0
         }
     finally:
         await db.close()
