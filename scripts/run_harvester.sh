@@ -25,20 +25,18 @@ trap "rm -f $LOCK_FILE" EXIT
 
 echo "=== [$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Starting Synapse-Mesh Autonomous Harvester ===" >> "$LOG_FILE" 2>&1
 
-# Run within container or host python environment
-if [ -f ".venv/bin/python" ]; then
-    PYTHON_BIN=".venv/bin/python"
-elif command -v python3 >/dev/null 2>&1; then
-    PYTHON_BIN="python3"
+# Run harvester inside the docker container where all dependencies (pydantic, httpx, etc.) are installed
+if docker ps --format '{{.Names}}' | grep -q "synapse_api"; then
+    EXEC_CMD="docker exec synapse_api python3"
+elif [ -f ".venv/bin/python" ]; then
+    EXEC_CMD=".venv/bin/python"
 else
-    PYTHON_BIN="python"
+    EXEC_CMD="python3"
 fi
-
-export PYTHONPATH="$PROJECT_DIR"
 
 # 1. Run Upstream Mining Engine
 echo "-> Executing Upstream Mining Engine..." >> "$LOG_FILE" 2>&1
-$PYTHON_BIN -c "
+$EXEC_CMD -c "
 import asyncio, logging
 from app.core.upstream_miner import UpstreamMiningEngine
 logging.basicConfig(level='INFO')
@@ -47,6 +45,6 @@ asyncio.run(UpstreamMiningEngine.mine_and_verify_all(persist_to_disk=True))
 
 # 2. Run GitHub Release Harvester & Batch Verification
 echo "-> Executing GitHub Release Harvester & Batch Ingestion..." >> "$LOG_FILE" 2>&1
-$PYTHON_BIN scripts/github_harvester.py >> "$LOG_FILE" 2>&1 || true
+$EXEC_CMD scripts/github_harvester.py >> "$LOG_FILE" 2>&1 || true
 
 echo "=== [$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Harvester Run Complete ===" >> "$LOG_FILE" 2>&1
