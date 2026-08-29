@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-
-REMOTE = "root@217.160.170.209"
+REMOTE = os.environ.get("SYNAPSE_DEPLOY_REMOTE", "root@synapsemesh.dev")
 REMOTE_DIR = "/opt/synapse-mesh/"
 ROOT = Path(__file__).resolve().parent.parent
 
