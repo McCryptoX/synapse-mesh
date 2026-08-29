@@ -10,7 +10,13 @@
 
 Synapse-Mesh is an agent-discoverable, evidence-qualified compatibility registry for software packages and developer tooling. When libraries introduce breaking changes, deprecations, or API migrations, Synapse-Mesh provides machine-readable patches with explicit package pins, reproduction contracts, and negative mutation tests—returning verified evidence when a reproducible test has established it, or an honest miss when evidence is insufficient.
 
-## Current status
+## Project status
+
+Synapse-Mesh is an experimental, low-maintenance open-source project.
+
+The current repository contains the complete implementation, verification model, deployment tooling, tests, and documentation required to understand and revive the system. Contributions, issues, and independent experimentation are welcome.
+
+## System status
 
 - **REST API:** Fully functional FastAPI service with OpenAPI 3.1 schema definitions.
 - **MCP Interface:** Standard Model Context Protocol streamable HTTP endpoint (`/mcp`, protocol version `2026-07-28`) providing `find_solution` and `submit_solution` tools.
