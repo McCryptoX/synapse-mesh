@@ -228,73 +228,78 @@ def test_mcp_find_solution_discovers_machine_verified_draft(tmp_path: Path, pyda
     from app.core import autonomous_pipeline, run_artifacts, registry_snapshot
     from app.api import bundles
 
-    # Materialize in bundles/drafts and evidence/runs
-    draft_file = Path("bundles/drafts") / f"{pydantic_settings_draft['bundleId']}.json"
+    drafts_dir = tmp_path / "drafts"
+    drafts_dir.mkdir(parents=True, exist_ok=True)
+    runs_dir = tmp_path / "runs"
+    runs_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(bundles, "DRAFTS_DIR", drafts_dir)
+    monkeypatch.setattr(run_artifacts, "RUN_ARTIFACTS_DIR", runs_dir)
+    monkeypatch.setattr(autonomous_pipeline, "DRAFTS_DIR", drafts_dir)
+    monkeypatch.setattr(autonomous_pipeline, "EVIDENCE_RUNS_DIR", runs_dir)
+
+    draft_file = drafts_dir / f"{pydantic_settings_draft['bundleId']}.json"
     draft_file.write_text(json.dumps(pydantic_settings_draft, indent=2), encoding="utf-8")
 
-    try:
-        # Run autonomous pipeline
-        res = AutonomousPipelineOrchestrator.process_draft_bundle(draft_file)
-        assert res["success"] is True
+    # Run autonomous pipeline writing to isolated tmp runs_dir
+    res = AutonomousPipelineOrchestrator.process_draft_bundle(
+        draft_file,
+        output_artifacts_dir=runs_dir,
+    )
+    assert res["success"] is True
 
-        client = TestClient(app)
+    client = TestClient(app)
 
-        # 1. Exact observed version -> VERIFIED_MATCH with explicit machine provenance
-        exact_ver = res["toolchainVersions"]["pydantic"]
-        resp_exact = client.post("/mcp", json={
-            "jsonrpc": "2.0",
-            "id": "test_1",
-            "method": "tools/call",
-            "params": {
-                "name": "find_solution",
-                "arguments": {
-                    "errorSignature": "PydanticImportError: `BaseSettings` has been moved to the `pydantic-settings` package.",
-                    "runtime": "python",
-                    "packages": {"pydantic": exact_ver}
-                }
+    # 1. Exact observed version -> VERIFIED_MATCH with explicit machine provenance
+    exact_ver = res["toolchainVersions"]["pydantic"]
+    resp_exact = client.post("/mcp", json={
+        "jsonrpc": "2.0",
+        "id": "test_1",
+        "method": "tools/call",
+        "params": {
+            "name": "find_solution",
+            "arguments": {
+                "errorSignature": "PydanticImportError: `BaseSettings` has been moved to the `pydantic-settings` package.",
+                "runtime": "python",
+                "packages": {"pydantic": exact_ver}
             }
-        })
-        assert resp_exact.status_code == 200
-        data_exact = resp_exact.json()["result"]["content"][0]["text"]
-        payload_exact = json.loads(data_exact)
+        }
+    })
+    assert resp_exact.status_code == 200
+    data_exact = resp_exact.json()["result"]["content"][0]["text"]
+    payload_exact = json.loads(data_exact)
 
-        assert payload_exact["status"] == "VERIFIED_MATCH"
-        assert payload_exact["actionability"] == "REPRODUCE_BEFORE_APPLY"
-        assert payload_exact["provenance"]["curation"] == "MACHINE_VERIFIED"
-        assert payload_exact["provenance"]["source"] == "autonomous-pipeline"
-        assert payload_exact["_trustBoundary"]["curation"] == "MACHINE_VERIFIED"
-        assert payload_exact["_trustBoundary"]["source"] == "RUN_BOUND_AUTONOMOUS_EVIDENCE"
-        assert "from pydantic_settings import BaseSettings" in payload_exact["codeDiff"]
+    assert payload_exact["status"] == "VERIFIED_MATCH"
+    assert payload_exact["actionability"] == "REPRODUCE_BEFORE_APPLY"
+    assert payload_exact["provenance"]["curation"] == "MACHINE_VERIFIED"
+    assert payload_exact["provenance"]["source"] == "autonomous-pipeline"
+    assert payload_exact["_trustBoundary"]["curation"] == "MACHINE_VERIFIED"
+    assert payload_exact["_trustBoundary"]["source"] == "RUN_BOUND_AUTONOMOUS_EVIDENCE"
+    assert "from pydantic_settings import BaseSettings" in payload_exact["codeDiff"]
 
-        # 2. Version mismatch / other version -> UNVERIFIED_MATCH (RUN_BOUND_EVIDENCE_OTHER_VERSION)
-        resp_other = client.post("/mcp", json={
-            "jsonrpc": "2.0",
-            "id": "test_2",
-            "method": "tools/call",
-            "params": {
-                "name": "find_solution",
-                "arguments": {
-                    "errorSignature": "PydanticImportError: `BaseSettings` has been moved to the `pydantic-settings` package.",
-                    "runtime": "python",
-                    "packages": {"pydantic": "2.0.0"}
-                }
+    # 2. Version mismatch / other version -> UNVERIFIED_MATCH (RUN_BOUND_EVIDENCE_OTHER_VERSION)
+    resp_other = client.post("/mcp", json={
+        "jsonrpc": "2.0",
+        "id": "test_2",
+        "method": "tools/call",
+        "params": {
+            "name": "find_solution",
+            "arguments": {
+                "errorSignature": "PydanticImportError: `BaseSettings` has been moved to the `pydantic-settings` package.",
+                "runtime": "python",
+                "packages": {"pydantic": "2.0.0"}
             }
-        })
-        assert resp_other.status_code == 200
-        data_other = resp_other.json()["result"]["content"][0]["text"]
-        payload_other = json.loads(data_other)
+        }
+    })
+    assert resp_other.status_code == 200
+    data_other = resp_other.json()["result"]["content"][0]["text"]
+    payload_other = json.loads(data_other)
 
-        assert payload_other["status"] == "UNVERIFIED_MATCH"
-        assert payload_other["evidenceTier"] == "RUN_BOUND_EVIDENCE_OTHER_VERSION"
+    assert payload_other["status"] == "UNVERIFIED_MATCH"
+    assert payload_other["evidenceTier"] == "RUN_BOUND_EVIDENCE_OTHER_VERSION"
 
-        # 3. Golden bundles remain human-curated and unpolluted
-        golden_bundles = load_all_golden_bundles()
-        for gb in golden_bundles:
-            assert gb.get("recordClass") == "CURATED"
-            assert gb["bundleId"] != pydantic_settings_draft["bundleId"]
-
-    finally:
-        # Cleanup test draft & artifact
-        draft_file.unlink(missing_ok=True)
-        artifact_file = Path(f"evidence/runs/{pydantic_settings_draft['bundleId']}.json")
-        artifact_file.unlink(missing_ok=True)
+    # 3. Golden bundles remain human-curated and unpolluted
+    golden_bundles = load_all_golden_bundles()
+    for gb in golden_bundles:
+        assert gb.get("recordClass") == "CURATED"
+        assert gb["bundleId"] != pydantic_settings_draft["bundleId"]
