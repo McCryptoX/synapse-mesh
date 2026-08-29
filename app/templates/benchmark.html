@@ -2,320 +2,82 @@
 <html lang="en" class="dark">
 <head>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="shortcut icon" href="/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#090d16">
-    <title>Evaluation & Verification Benchmark | Synapse-Mesh</title>
-    <meta name="description" content="Controlled methodological evaluation of 4-stage execution contracts vs ungrounded code generation across breaking changes in Python, Node.js, and SQL environments.">
+    <title>Verification Evaluation | Synapse-Mesh</title>
+    <meta name="description" content="Scope, freeze hash, limitations, and reproducibility rules for the Synapse-Mesh verification evaluation.">
     <link rel="stylesheet" href="/style.min.css">
-    <style>
-      body, html { background-color: #090d16; color: #e2e8f0; font-family: ui-sans-serif, system-ui, sans-serif; }
-    </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
-    <!-- Header / Nav -->
-    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2 group shrink-0" aria-label="Synapse-Mesh Homepage">
-                <div class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></div>
-                <span class="font-bold text-sm sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
-                <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden lg:inline-block">Verified Compatibility</span>
-            </a>
-            <nav aria-label="Main Navigation" class="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm font-mono">
-                <a href="/" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Search</a>
-                <a href="/benchmark" class="text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5 whitespace-nowrap">Benchmark</a>
-                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap hidden md:inline">Architecture</a>
-                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition hidden sm:inline">Docs</a>
-                <a href="/#connect" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition text-xs whitespace-nowrap shadow">MCP Connect</a>
-            </nav>
-        </div>
-    </header>
+    {% include "partials/public_header.html" %}
 
-    <!-- Main Container (Identical proportions to index.html) -->
-    <main class="max-w-6xl mx-auto px-4 py-8 sm:py-12 flex-1 w-full space-y-12 sm:space-y-16">
-        
-        <!-- Hero Section -->
-        <section class="text-center space-y-6 pt-4">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
-                <span class="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
-                <span>CONTROLLED METHODOLOGICAL EVALUATION</span>
-            </div>
-            
-            <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-                Execution-Verified Contracts vs.<br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Ungrounded Code Generation</span>
+    <main class="max-w-6xl mx-auto px-4 py-8 sm:py-12 flex-1 w-full space-y-10">
+        <section class="text-center space-y-5 pt-4 max-w-4xl mx-auto">
+            <div class="inline-flex px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">FROZEN VERIFICATION CORPUS</div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                Evaluation Scope,<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Evidence & Limitations</span>
             </h1>
-
-            <p class="text-slate-200 max-w-3xl mx-auto text-lg leading-relaxed">
-                Evaluating automated code repair strategies against strict, hermetic 4-stage verification contracts across 12 modern breaking changes in Python, Node.js, and SQL environments.
+            <p class="text-slate-200 max-w-3xl mx-auto text-base sm:text-lg leading-relaxed">
+                This page reports the project’s reproducible verification fixture gate. It does not present an unsupported model-versus-model performance comparison.
             </p>
         </section>
 
-        <!-- Methodological Transparency Note -->
-        <section class="max-w-4xl mx-auto p-5 sm:p-6 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-2">
-            <div class="flex items-center space-x-2 text-white font-semibold text-sm">
-                <svg class="w-4 h-4 text-brand-400 shrink-0" width="16" height="16" style="width: 16px; height: 16px; min-width: 16px; max-width: 16px; display: inline-block; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <span>Methodological Transparency & Evaluation Scope</span>
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-brand-500/40 bg-slate-900/60 space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Suite v2-runtime-9</h2>
+                    <p class="text-xs font-mono text-slate-300 mt-1">Frozen primary runtime core</p>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-amber-950 text-amber-300 border border-amber-700 font-mono font-bold">RESULT WITHHELD</span>
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-                This evaluation tests automated repair success under deterministic 4-stage contract criteria (pre-failure reproduction, clean diff application, post-patch test suite pass with exit 0, and mutation rejection). The comparison illustrates the structural difference between unverified statistical generation and execution-tested, contract-bound recipes. Individual model capabilities may vary with different prompting techniques, toolsets, and model updates.
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 break-words">
+                Manifest SHA-256:<br><span class="text-brand-400">a076cff87dcf201aaeb6bf7931f1d05ea77f0da64a4a6a95a166067071ef018a</span>
+            </div>
+            <p class="text-sm text-slate-300 leading-relaxed">
+                The frozen corpus contains nine preregistered primary-runtime fixtures. The latest production-runtime revalidation did not satisfy every required case, so no numeric pass result is currently published. This is not the number of live recipes, not the number of curated golden files, and not a prediction of success on unseen projects. Supplemental semantic-oracle cases remain outside this corpus.
             </p>
         </section>
 
-        <!-- Comparison Cards Section (Harmonized with index.html 4-Stage Guarantee layout) -->
-        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <span>📊 Comparative Multi-Treatment Benchmark</span>
-                    </h2>
-                    <p class="text-slate-300 text-xs font-mono mt-0.5">Automated repair success rates across 12 breaking library changes</p>
-                </div>
-                <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-brand-950 text-brand-400 border border-brand-700/60">
-                    12 CONTROLLED FIXTURES
-                </span>
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-700 bg-slate-900/60 space-y-4">
+            <h2 class="text-xl font-bold text-amber-400">No published A/B model result</h2>
+            <p class="text-sm text-slate-200 leading-relaxed">
+                The repository does not currently provide a complete reproducible run that fairly compares a model alone, the same model with current documentation, and the same model with Synapse-Mesh under identical prompts, versions, budgets, tool access, retries, and hidden judging. Earlier pilot percentages are therefore not published as product evidence here.
+            </p>
+            <p class="text-sm text-slate-300 leading-relaxed">
+                A future comparative result must identify the model snapshots, exact prompts, frozen case IDs, tool transcripts, token and time budgets, retry policy, judge implementation, raw outputs, and run artifact hash. Until then, “no comparative result” is the honest outcome.
+            </p>
+        </section>
+
+        <section class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-3">
+                <h2 class="text-lg font-bold text-white">A fixture passes only if</h2>
+                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-300">
+                    <li>The unpatched case fails and matches the declared signature.</li>
+                    <li>The unified diff applies to the same workspace.</li>
+                    <li>The patched case passes in the required real runtime or compiler.</li>
+                    <li>At least two declared incorrect patches fail.</li>
+                </ul>
             </div>
-
-            <div class="space-y-4">
-                <!-- Treatment A -->
-                <div class="p-5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-800 text-slate-300">TREATMENT A</span>
-                            <span class="font-bold text-white text-base">Statistical Generation</span>
-                            <span class="text-xs text-slate-400 hidden sm:inline">(Ungrounded Weights)</span>
-                        </div>
-                        <span class="text-lg font-mono font-bold text-slate-300">16.7% <span class="text-xs text-slate-400 font-normal">(2 / 12)</span></span>
-                    </div>
-                    <p class="text-slate-300 text-xs leading-relaxed">Code synthesis relying solely on internal model weights without execution feedback or verified external specifications.</p>
-                    <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
-                        <div class="bg-slate-500 h-2 rounded-full" style="width: 16.7%"></div>
-                    </div>
-                    <div class="text-[11px] font-mono text-slate-400">
-                        <strong class="text-slate-300">Primary failure mode:</strong> Outputs pre-deprecation APIs prevalent in historical training corpora.
-                    </div>
-                </div>
-
-                <!-- Treatment B -->
-                <div class="p-5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-800 text-slate-300">TREATMENT B</span>
-                            <span class="font-bold text-white text-base">Documentation Search</span>
-                            <span class="text-xs text-slate-400 hidden sm:inline">(Unverified RAG)</span>
-                        </div>
-                        <span class="text-lg font-mono font-bold text-slate-300">25.0% <span class="text-xs text-slate-400 font-normal">(3 / 12)</span></span>
-                    </div>
-                    <p class="text-slate-300 text-xs leading-relaxed">Code synthesis augmented with search results from public documentation and forums, without runtime test execution.</p>
-                    <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
-                        <div class="bg-slate-400 h-2 rounded-full" style="width: 25%"></div>
-                    </div>
-                    <div class="text-[11px] font-mono text-slate-400">
-                        <strong class="text-slate-300">Primary failure mode:</strong> Version mismatches and non-failing mutation bypasses (e.g. uninspected try/except).
-                    </div>
-                </div>
-
-                <!-- Treatment C (Synapse-Mesh) -->
-                <div class="p-5 rounded-xl bg-slate-950 border-2 border-brand-500/50 space-y-3 shadow-lg shadow-brand-500/5">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2 py-0.5 rounded text-xs font-mono font-semibold bg-brand-950 border border-brand-500/40 text-brand-300">TREATMENT C</span>
-                            <span class="font-bold text-white text-base">Synapse-Mesh Bundles</span>
-                            <span class="text-xs text-brand-400 hidden sm:inline font-mono">✓ 4-STAGE CONTRACT</span>
-                        </div>
-                        <span class="text-xl font-mono font-extrabold text-brand-300">100.0% <span class="text-xs text-brand-400 font-normal">(12 / 12)</span></span>
-                    </div>
-                    <p class="text-slate-200 text-xs leading-relaxed">Retrieval of exact compatibility bundles verified via 4-stage hermetic sandbox execution before serving.</p>
-                    <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-brand-500/30">
-                        <div class="bg-gradient-to-r from-brand-500 to-cyan-400 h-2.5 rounded-full" style="width: 100%"></div>
-                    </div>
-                    <div class="text-[11px] font-mono text-brand-300 font-medium">
-                        <strong>Deterministic guarantee:</strong> Satisfies pre-fail, AST patch, post-pass (exit 0), and multi-mutant rejection gates.
-                    </div>
-                </div>
+            <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-3">
+                <h2 class="text-lg font-bold text-white">A pass does not establish</h2>
+                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-300">
+                    <li>Correctness on another package or runtime version.</li>
+                    <li>Security, performance, or production suitability.</li>
+                    <li>General model quality or first-try solve rate.</li>
+                    <li>Safe execution of arbitrary public submissions.</li>
+                </ul>
             </div>
         </section>
 
-        <!-- Benchmark Matrix Table Section -->
-        <section class="space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
-                        <span>📋 The 10 Curated Golden Standards</span>
-                    </h2>
-                    <p class="text-slate-200 text-sm mt-0.5">Each golden bundle encapsulates an exact version scope, reproducible pre-fail script, minimal unified diff, and mutation test suite.</p>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-300 font-mono text-xs border border-slate-700">Protocol Spec 2026-07-28</span>
-                </div>
-            </div>
-
-            <div class="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-2xl">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs font-mono">
-                        <thead>
-                            <tr class="border-b border-slate-800 bg-slate-950/90 text-slate-300">
-                                <th class="p-4 font-semibold uppercase tracking-wider">Standard / Package</th>
-                                <th class="p-4 font-semibold uppercase tracking-wider">Target Runtime</th>
-                                <th class="p-4 font-semibold uppercase tracking-wider">Breaking Error Signature</th>
-                                <th class="p-4 font-semibold text-center uppercase tracking-wider">Pre-Fail (1)</th>
-                                <th class="p-4 font-semibold text-center uppercase tracking-wider">Unified Diff</th>
-                                <th class="p-4 font-semibold text-center uppercase tracking-wider">Post-Pass (0)</th>
-                                <th class="p-4 font-semibold text-center uppercase tracking-wider">Mutants</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800/60 text-slate-300">
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">HTTPX 0.28.1</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">TypeError: ASGITransport.__init__() got keyword 'app'</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">Next.js 15.5</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
-                                <td class="p-4 text-rose-300">Error: Route "/blog/[slug]" params should be awaited</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">Pydantic 2.10</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">PydanticUserError: root_validator is deprecated</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">FastAPI 0.115</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">DeprecationWarning: on_event("startup") is deprecated</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">SQLAlchemy 2.0</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">ArgumentError: Textual SQL expression must be declared text()</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">NumPy 2.0</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">AttributeError: `np.NAN` was removed in NumPy 2.0</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">Express 5.0</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
-                                <td class="p-4 text-rose-300">TypeError: Missing parameter name at 1: /*</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">TypeScript 5.6</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-indigo-300">Node 22</span></td>
-                                <td class="p-4 text-rose-300">TS2532: Object is possibly 'undefined' on Map.get()</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">DuckDB 0.10</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">duckdb.BinderException: No function matches SUBSTRING(...)</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                            <tr class="hover:bg-slate-800/30 transition">
-                                <td class="p-4 font-bold text-white whitespace-nowrap">Python 3.12 UTC</td>
-                                <td class="p-4 whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-slate-800 text-brand-300">Python 3.12</span></td>
-                                <td class="p-4 text-rose-300">DeprecationWarning: datetime.utcnow() is deprecated</td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800 font-bold">APPLIED</span></td>
-                                <td class="p-4 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">PASS</span></td>
-                                <td class="p-4 text-center text-brand-300 font-bold whitespace-nowrap">2 / 2</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Interactive CLI Verification Snippet (Styled identically to index.html install box) -->
-        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border text-center">
-            <div class="space-y-2">
-                <h3 class="text-xl font-bold text-white">Re-verify Locally with 0 External Trust</h3>
-                <p class="text-slate-200 text-sm">
-                    Execute the 4-stage verification engine directly in your own shell using either our Node.js or Python CLI tools:
-                </p>
-            </div>
-
-            <div class="space-y-3 font-mono text-xs text-left max-w-2xl mx-auto">
-                <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 shadow-inner">
-                    <span class="text-slate-500 select-none mr-2">$</span>
-                    <code class="text-emerald-400 flex-1 truncate mr-2">npx @synapse-mesh/verify bundles/golden/bundle_nextjs_15_async_params.json</code>
-                    <button type="button" aria-label="Copy npx verify command" onclick="navigator.clipboard.writeText('npx @synapse-mesh/verify bundles/golden/bundle_nextjs_15_async_params.json'); this.textContent='✓ Copied';" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono text-xs cursor-pointer shrink-0">Copy</button>
-                </div>
-                <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 shadow-inner">
-                    <span class="text-slate-500 select-none mr-2">$</span>
-                    <code class="text-emerald-400 flex-1 truncate mr-2">synapse reverify bundle_httpx_028_asgi_transport</code>
-                    <button type="button" aria-label="Copy synapse reverify command" onclick="navigator.clipboard.writeText('synapse reverify bundle_httpx_028_asgi_transport'); this.textContent='✓ Copied';" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-mono text-xs cursor-pointer shrink-0">Copy</button>
-                </div>
-            </div>
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-3">
+            <h2 class="text-xl font-bold text-white">Reproduce before relying</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">Verify the manifest hash, inspect the workspace and tests, and run the case with every required dependency installed. Missing toolchains are an unverified result, not a pass. Bundle patches remain MIT-licensed AS IS.</p>
+            <pre class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-emerald-400 overflow-x-auto"><code>shasum -a 256 benchmark/hardened_cases.json
+pytest -q tests/test_benchmark_evaluator.py</code></pre>
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-xs text-slate-400 font-mono">
-        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-slate-400">
-                <span class="text-white font-semibold">SYNAPSE-MESH &copy; 2026</span>
-                <span>&bull;</span>
-                <span>Zero-PII Architecture</span>
-                <span>&bull;</span>
-                <span class="text-emerald-400">MCP Spec 2026-07-28</span>
-            </div>
-            <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" aria-label="Footer Navigation">
-                <a href="/" class="text-slate-300 hover:text-brand-400 transition underline">Home</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition underline">Benchmark</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition underline">Architecture</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition underline">Docs</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/legal" class="text-slate-300 hover:text-brand-400 transition underline">Legal Notice</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/privacy" class="text-slate-300 hover:text-brand-400 transition underline">Privacy Policy</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/llms.txt" class="text-slate-300 hover:text-brand-400 transition underline">/llms.txt</a>
-            </nav>
-        </div>
-    </footer>
+    {% include "partials/public_footer.html" %}
 </body>
 </html>

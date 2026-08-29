@@ -1,6 +1,42 @@
+import json
+from copy import deepcopy
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 from app.main import app
+
+
+def _httpx_bundle_with_lifecycle(state: str):
+    from app.api.bundles import load_all_golden_bundles
+
+    bundle = deepcopy(
+        next(
+            candidate
+            for candidate in load_all_golden_bundles()
+            if candidate.get("bundleId")
+            == "bundle_httpx_028_asgi_transport_001"
+        )
+    )
+    publication = bundle["evidencePublication"]
+    lifecycle = publication["lifecycle"]
+    lifecycle.update(
+        {
+            "status": state,
+            "qualified": state == "VERIFIED",
+            "reason": f"Test lifecycle state: {state}.",
+            "record": None,
+        }
+    )
+    if state == "SUPERSEDED":
+        lifecycle["record"] = {
+            "supersededByBundleId": "bundle_httpx_029_successor_001"
+        }
+    publication["qualified"] = state == "VERIFIED"
+    bundle["status"] = "VERIFIED" if state == "VERIFIED" else "UNVERIFIED"
+    bundle.setdefault("isolationProfile", {})["verificationProfile"] = (
+        "must-not-leak-from-historic-evidence"
+    )
+    return bundle
 
 
 @pytest.mark.asyncio
@@ -33,6 +69,9 @@ async def test_mcp_tools_list():
     tool_names = [t["name"] for t in tools]
     assert "find_solution" in tool_names
     assert "submit_solution" in tool_names
+    find_tool = next(tool for tool in tools if tool["name"] == "find_solution")
+    assert "UNVERIFIED_MATCH" in find_tool["description"]
+    assert "valid run-bound artifact" in find_tool["description"]
 
 
 @pytest.mark.asyncio
@@ -68,8 +107,68 @@ async def test_mcp_server_discover():
     assert res.status_code == 200
     data = res.json()
     assert "supportedVersions" in data["result"]
-    assert "2024-11-05" in data["result"]["supportedVersions"]
-    assert data["result"]["serverInfo"]["name"] == "synapse-mesh"
+    assert data["result"]["supportedVersions"] == ["2026-07-28"]
+    assert data["result"]["resultType"] == "complete"
+    assert data["result"]["_meta"]["io.modelcontextprotocol/serverInfo"]["name"] == "synapse-mesh"
+
+
+@pytest.mark.asyncio
+async def test_modern_mcp_request_requires_matching_headers_and_per_request_metadata():
+    modern_headers = {
+        "MCP-Protocol-Version": "2026-07-28",
+        "Mcp-Method": "tools/list",
+    }
+    modern_body = {
+        "jsonrpc": "2.0",
+        "id": 41,
+        "method": "tools/list",
+        "params": {
+            "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientCapabilities": {},
+            }
+        },
+    }
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        accepted = await ac.post("/mcp", headers=modern_headers, json=modern_body)
+        missing_meta = await ac.post(
+            "/mcp",
+            headers=modern_headers,
+            json={"jsonrpc": "2.0", "id": 42, "method": "tools/list", "params": {}},
+        )
+        wrong_version = await ac.post(
+            "/mcp",
+            headers={**modern_headers, "MCP-Protocol-Version": "2099-01-01"},
+            json=modern_body,
+        )
+
+    accepted_payload = accepted.json()
+    assert accepted_payload["result"]["resultType"] == "complete"
+    assert accepted_payload["result"]["_meta"]["io.modelcontextprotocol/serverInfo"]["name"] == "synapse-mesh"
+    assert missing_meta.json()["error"]["code"] == -32602
+    assert wrong_version.json()["error"]["code"] == -32600
+
+
+@pytest.mark.asyncio
+async def test_mcp_rejects_wrong_jsonrpc_version_and_non_object_params():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        wrong_version = await ac.post(
+            "/mcp",
+            json={"jsonrpc": "1.0", "id": 43, "method": "ping", "params": {}},
+        )
+        bad_params = await ac.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "id": 44, "method": "ping", "params": []},
+        )
+
+    assert wrong_version.json()["error"] == {
+        "code": -32600,
+        "message": "Invalid JSON-RPC version",
+    }
+    assert bad_params.json()["error"] == {
+        "code": -32602,
+        "message": "JSON-RPC params must be an object",
+    }
 
 
 @pytest.mark.asyncio
@@ -91,7 +190,7 @@ async def test_mcp_unknown_error_returns_no_verified_match():
     import json
     content = json.loads(data["result"]["content"][0]["text"])
     assert content["status"] == "NO_VERIFIED_MATCH"
-    assert content["matchConfidence"] == 0.0
+    assert content["signatureSimilarity"] == 0.0
 
 
 @pytest.mark.asyncio
@@ -117,7 +216,7 @@ async def test_mcp_adversarial_queries_rejected():
             import json
             content = json.loads(data["result"]["content"][0]["text"])
             assert content["status"] == "NO_VERIFIED_MATCH"
-            assert content["matchConfidence"] == 0.0
+            assert content["signatureSimilarity"] == 0.0
 
 
 @pytest.mark.asyncio
@@ -136,7 +235,7 @@ async def test_mcp_structural_attribute_discriminator():
         import json
         c1 = json.loads(res1.json()["result"]["content"][0]["text"])
         assert c1["status"] == "NO_VERIFIED_MATCH"
-        assert c1["matchConfidence"] == 0.0
+        assert c1["signatureSimilarity"] == 0.0
 
         # Negative 2: frobnicate
         res2 = await ac.post("/mcp", json={
@@ -150,7 +249,7 @@ async def test_mcp_structural_attribute_discriminator():
         })
         c2 = json.loads(res2.json()["result"]["content"][0]["text"])
         assert c2["status"] == "NO_VERIFIED_MATCH"
-        assert c2["matchConfidence"] == 0.0
+        assert c2["signatureSimilarity"] == 0.0
 
         # Positive: append
         res3 = await ac.post("/mcp", json={
@@ -163,9 +262,12 @@ async def test_mcp_structural_attribute_discriminator():
             }
         })
         c3 = json.loads(res3.json()["result"]["content"][0]["text"])
-        assert c3["status"] == "VERIFIED_MATCH"
-        assert c3["matchConfidence"] >= 0.98
+        assert c3["status"] == "UNVERIFIED_MATCH"
+        assert c3["signatureSimilarity"] >= 0.98
         assert c3["recipeId"] == "bundle_pandas_20_dataframe_append_001"
+        assert c3["isolationStatus"] == "NOT_ATTESTED"
+        assert c3["isolationProfile"]["attestationAvailable"] is False
+        assert '"ATTESTED"' not in json.dumps(c3)
 
 
 @pytest.mark.asyncio
@@ -187,10 +289,10 @@ async def test_mcp_variant_recall_and_version_mismatch():
             }
         })
         c1 = json.loads(res1.json()["result"]["content"][0]["text"])
-        assert c1["status"] == "VERIFIED_MATCH"
+        assert c1["status"] == "UNVERIFIED_MATCH"
         assert c1["recipeId"] == "bundle_pandas_20_dataframe_append_001"
-        assert c1["signatureConfidence"] >= 0.98
-        assert c1["environmentConfidence"] == 1.0
+        assert c1["signatureSimilarity"] >= 0.98
+        assert c1["versionConstraintMatched"] is True
 
         # 2. Variant Recall: np.Inf
         res2 = await ac.post("/mcp", json={
@@ -205,7 +307,7 @@ async def test_mcp_variant_recall_and_version_mismatch():
             }
         })
         c2 = json.loads(res2.json()["result"]["content"][0]["text"])
-        assert c2["status"] == "VERIFIED_MATCH"
+        assert c2["status"] == "UNVERIFIED_MATCH"
         assert c2["recipeId"] == "bundle_numpy_20_nan_alias_removal_001"
 
         # 3. Version Mismatch: pandas 1.5.3 on DataFrame.append removal
@@ -223,8 +325,8 @@ async def test_mcp_variant_recall_and_version_mismatch():
         })
         c3 = json.loads(res3.json()["result"]["content"][0]["text"])
         assert c3["status"] == "VERSION_MISMATCH"
-        assert c3["signatureConfidence"] >= 0.98
-        assert c3["environmentConfidence"] == 0.0
+        assert c3["signatureSimilarity"] >= 0.98
+        assert c3["versionConstraintMatched"] is False
         assert c3["requestedVersion"] == "1.5.3"
         assert c3["recipeAffectedVersions"] == ">=2.0.0"
 
@@ -255,14 +357,14 @@ async def test_mcp_numpy_bool_rejected_claim_level():
         })
         c = json.loads(res.json()["result"]["content"][0]["text"])
         assert c["status"] == "NO_VERIFIED_MATCH"
-        assert c["matchConfidence"] == 0.0
+        assert c["signatureSimilarity"] == 0.0
 
 
 @pytest.mark.asyncio
 async def test_mcp_unspecified_environment_is_unknown():
     """
     Verifies that when query has DataFrame.append but packages only specifies numpy >= 2.0.0,
-    environmentStatus is 'UNKNOWN' and environmentConfidence is null.
+    environmentStatus is 'UNKNOWN' and versionConstraintMatched is null.
     """
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         import json
@@ -279,10 +381,10 @@ async def test_mcp_unspecified_environment_is_unknown():
             }
         })
         c = json.loads(res.json()["result"]["content"][0]["text"])
-        assert c["status"] == "VERIFIED_MATCH"
-        assert c["signatureConfidence"] >= 0.98
+        assert c["status"] == "UNVERIFIED_MATCH"
+        assert c["signatureSimilarity"] >= 0.98
         assert c["environmentStatus"] == "UNKNOWN"
-        assert c["environmentConfidence"] is None
+        assert c["versionConstraintMatched"] is None
 
 
 @pytest.mark.asyncio
@@ -291,13 +393,13 @@ async def test_mcp_semver_compound_interval_matrix():
     Tests full SemVer interval intersection matrix against affectedVersions '>=2.0.0'.
     """
     matrix = [
-        ("1.5.3", "VERSION_MISMATCH", "MISMATCH", 0.0),
-        ("<2.0", "VERSION_MISMATCH", "MISMATCH", 0.0),
-        (">=1.5,<2.0", "VERSION_MISMATCH", "MISMATCH", 0.0),
-        (">=2.0,<3.0", "VERIFIED_MATCH", "MATCH", 1.0),
-        (">=2.5", "VERIFIED_MATCH", "MATCH", 1.0),
-        (">=1.5", "VERIFIED_MATCH", "MATCH", 1.0),
-        ("==2.0.0", "VERIFIED_MATCH", "MATCH", 1.0),
+        ("1.5.3", "VERSION_MISMATCH", "MISMATCH", False),
+        ("<2.0", "VERSION_MISMATCH", "MISMATCH", False),
+        (">=1.5,<2.0", "VERSION_MISMATCH", "MISMATCH", False),
+        (">=2.0,<3.0", "UNVERIFIED_MATCH", "MATCH", True),
+        (">=2.5", "UNVERIFIED_MATCH", "MATCH", True),
+        (">=1.5", "UNVERIFIED_MATCH", "MATCH", True),
+        ("==2.0.0", "UNVERIFIED_MATCH", "MATCH", True),
     ]
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
@@ -320,7 +422,7 @@ async def test_mcp_semver_compound_interval_matrix():
             c = json.loads(data["result"]["content"][0]["text"])
             assert c["status"] == exp_status, f"Failed for {req_ver}: expected status {exp_status}, got {c['status']}"
             assert c["environmentStatus"] == exp_env_status, f"Failed for {req_ver}: expected envStatus {exp_env_status}, got {c['environmentStatus']}"
-            assert c["environmentConfidence"] == exp_env_conf, f"Failed for {req_ver}: expected envConf {exp_env_conf}, got {c['environmentConfidence']}"
+            assert c["versionConstraintMatched"] is exp_env_conf
 
 
 @pytest.mark.asyncio
@@ -348,7 +450,14 @@ async def test_mcp_httpx_fastapi_python_version_awareness():
         c1 = json.loads(res1.json()["result"]["content"][0]["text"])
         assert c1["status"] == "VERIFIED_MATCH"
         assert c1["environmentStatus"] == "MATCH"
-        assert c1["environmentConfidence"] == 1.0
+        assert c1["versionConstraintMatched"] is True
+        assert c1["exactObservedVersionMatched"] is True
+        assert c1["observedPackageVersion"] == "0.28.1"
+        assert c1["observedMutationsKilled"] == "2/2"
+        assert c1["environment"]["observedMutationsKilled"] == "2/2"
+        assert c1["runArtifactUrl"].endswith(
+            "/api/v1/bundles/bundle_httpx_028_asgi_transport_001/evidence"
+        )
         assert c1["package"] == "httpx"
         assert c1["affectedVersions"] == ">=0.28.0"
         assert c1["recipeId"] == "bundle_httpx_028_asgi_transport_001"
@@ -367,9 +476,9 @@ async def test_mcp_httpx_fastapi_python_version_awareness():
             }
         })
         c2 = json.loads(res2.json()["result"]["content"][0]["text"])
-        assert c2["status"] == "VERIFIED_MATCH"
+        assert c2["status"] == "UNVERIFIED_MATCH"
         assert c2["environmentStatus"] == "MATCH"
-        assert c2["environmentConfidence"] == 1.0
+        assert c2["versionConstraintMatched"] is True
         assert c2["package"] == "fastapi"
         assert c2["affectedVersions"] == ">=0.100.0"
 
@@ -387,9 +496,9 @@ async def test_mcp_httpx_fastapi_python_version_awareness():
             }
         })
         c3 = json.loads(res3.json()["result"]["content"][0]["text"])
-        assert c3["status"] == "VERIFIED_MATCH"
+        assert c3["status"] == "UNVERIFIED_MATCH"
         assert c3["environmentStatus"] == "MATCH"
-        assert c3["environmentConfidence"] == 1.0
+        assert c3["versionConstraintMatched"] is True
         assert c3["package"] == "python"
         assert c3["affectedVersions"] == ">=3.12.0"
 
@@ -409,7 +518,7 @@ async def test_mcp_httpx_fastapi_python_version_awareness():
         c4 = json.loads(res4.json()["result"]["content"][0]["text"])
         assert c4["status"] == "VERSION_MISMATCH"
         assert c4["environmentStatus"] == "MISMATCH"
-        assert c4["environmentConfidence"] == 0.0
+        assert c4["versionConstraintMatched"] is False
         assert c4["package"] == "python"
         assert c4["requestedVersion"] == "3.11.9"
         assert c4["recipeAffectedVersions"] == ">=3.12.0"
@@ -420,7 +529,7 @@ async def test_mcp_prerelease_pep440_matching():
     """
     Verifies that release candidates / alphas of the breaking release
     (e.g. pandas 2.0.0rc1 against >=2.0.0 or httpx 0.28.0rc1 against >=0.28.0)
-    match with status: VERIFIED_MATCH and environmentStatus: MATCH.
+    match with status: UNVERIFIED_MATCH and environmentStatus: MATCH.
     """
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         import json
@@ -439,9 +548,9 @@ async def test_mcp_prerelease_pep440_matching():
             }
         })
         c1 = json.loads(res1.json()["result"]["content"][0]["text"])
-        assert c1["status"] == "VERIFIED_MATCH"
+        assert c1["status"] == "UNVERIFIED_MATCH"
         assert c1["environmentStatus"] == "MATCH"
-        assert c1["environmentConfidence"] == 1.0
+        assert c1["versionConstraintMatched"] is True
 
         # 2. httpx 0.28.0rc1
         res2 = await ac.post("/mcp", json={
@@ -457,8 +566,12 @@ async def test_mcp_prerelease_pep440_matching():
             }
         })
         c2 = json.loads(res2.json()["result"]["content"][0]["text"])
-        assert c2["status"] == "VERIFIED_MATCH"
+        assert c2["status"] == "UNVERIFIED_MATCH"
         assert c2["environmentStatus"] == "MATCH"
+        assert c2["versionConstraintMatched"] is True
+        assert c2["bundleEvidenceQualified"] is True
+        assert c2["exactObservedVersionMatched"] is False
+        assert c2["evidenceTier"] == "RUN_BOUND_EVIDENCE_OTHER_VERSION"
 
 
 @pytest.mark.asyncio
@@ -496,7 +609,7 @@ PydanticDeprecatedSince20: The `@root_validator` method is deprecated, use `@mod
             }
         })
         c = json.loads(res.json()["result"]["content"][0]["text"])
-        assert c["status"] == "VERIFIED_MATCH"
+        assert c["status"] == "UNVERIFIED_MATCH"
         assert "relatedMatches" in c or c.get("multiMatchCount", 1) >= 1
 
 
@@ -504,14 +617,14 @@ PydanticDeprecatedSince20: The `@root_validator` method is deprecated, use `@mod
 async def test_mcp_actionability_field():
     """
     Verifies that the server returns explicit actionability guidance:
-    - APPLY_DIRECTLY for 100% verified + matching environment
-    - APPLY_WITH_CAUTION for verified + unknown environment
+    - REPRODUCE_BEFORE_APPLY for an exact-version run-bound match
+    - REPRODUCE_BEFORE_CONSIDERING when the target version is unknown
     - DO_NOT_APPLY for version mismatch or unknown errors
     """
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         import json
 
-        # 1. APPLY_VERIFIED_PATCH (httpx 0.28.1 + exact match)
+        # 1. Exact version with a valid artifact still requires target reproduction.
         r1 = await ac.post("/mcp", json={
             "jsonrpc": "2.0",
             "id": 401,
@@ -525,10 +638,38 @@ async def test_mcp_actionability_field():
             }
         })
         c1 = json.loads(r1.json()["result"]["content"][0]["text"])
-        assert c1["actionability"] == "APPLY_VERIFIED_PATCH"
+        assert c1["actionability"] == "REPRODUCE_BEFORE_APPLY"
+        assert c1["evidenceContractSatisfied"] is True
+        assert c1["evidenceTier"] == "VERIFIED_REAL_RUNTIME"
+        assert c1["verificationProfile"] == "bundle-4-stage-v1"
+        assert c1["_trustBoundary"]["verificationProfile"] == "bundle-4-stage-v1"
+        assert "codeDiff" in c1
         assert "actionabilityReason" in c1
 
-        # 2. APPLY_WITH_CAUTION (httpx unspecified version)
+        # 2. The same signature on HTTPX 0.28.0 must not inherit the 0.28.1 run.
+        other_version = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 405,
+            "method": "tools/call",
+            "params": {
+                "name": "find_solution",
+                "arguments": {
+                    "errorSignature": "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",
+                    "packages": {"httpx": "0.28.0"},
+                },
+            },
+        })
+        other_content = json.loads(
+            other_version.json()["result"]["content"][0]["text"]
+        )
+        assert other_content["status"] == "UNVERIFIED_MATCH"
+        assert other_content["evidenceTier"] == "RUN_BOUND_EVIDENCE_OTHER_VERSION"
+        assert other_content["exactObservedVersionMatched"] is False
+        assert other_content["evidenceContractSatisfied"] is False
+        assert other_content["observedMutationsKilled"] == "2/2"
+        assert "verificationProfile" not in other_content
+
+        # 3. An unspecified version also requires target-project reproduction.
         r2 = await ac.post("/mcp", json={
             "jsonrpc": "2.0",
             "id": 402,
@@ -541,9 +682,16 @@ async def test_mcp_actionability_field():
             }
         })
         c2 = json.loads(r2.json()["result"]["content"][0]["text"])
-        assert c2["actionability"] == "APPLY_WITH_CAUTION"
+        assert c2["actionability"] == "REPRODUCE_BEFORE_CONSIDERING"
+        assert c2["status"] == "UNVERIFIED_MATCH"
+        assert c2["bundleEvidenceQualified"] is True
+        assert c2["exactObservedVersionMatched"] is None
+        assert c2["evidenceTier"] == "RUN_BOUND_EVIDENCE_TARGET_VERSION_UNKNOWN"
+        assert "verificationProfile" not in c2
+        assert "verificationProfile" not in c2["_trustBoundary"]
+        assert "codeDiff" in c2
 
-        # 3. DO_NOT_APPLY (VERSION_MISMATCH)
+        # 4. DO_NOT_APPLY (VERSION_MISMATCH)
         r3 = await ac.post("/mcp", json={
             "jsonrpc": "2.0",
             "id": 403,
@@ -559,7 +707,7 @@ async def test_mcp_actionability_field():
         c3 = json.loads(r3.json()["result"]["content"][0]["text"])
         assert c3["actionability"] == "DO_NOT_APPLY"
 
-        # 4. DO_NOT_APPLY (NO_VERIFIED_MATCH)
+        # 5. DO_NOT_APPLY (NO_VERIFIED_MATCH)
         r4 = await ac.post("/mcp", json={
             "jsonrpc": "2.0",
             "id": 404,
@@ -573,6 +721,75 @@ async def test_mcp_actionability_field():
         })
         c4 = json.loads(r4.json()["result"]["content"][0]["text"])
         assert c4["actionability"] == "DO_NOT_APPLY"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("lifecycle_state", "expected_action"),
+    [
+        ("DISPUTED", "DO_NOT_APPLY"),
+        ("BROKEN", "DO_NOT_APPLY"),
+        ("UNKNOWN", "DO_NOT_APPLY"),
+        ("SUPERSEDED", "USE_SUPERSEDING_RECORD"),
+        ("STALE", "REVERIFY_BEFORE_CONSIDERING"),
+    ],
+)
+async def test_mcp_historic_lifecycle_evidence_never_surfaces_primary_patch(
+    monkeypatch,
+    lifecycle_state,
+    expected_action,
+):
+    bundle = _httpx_bundle_with_lifecycle(lifecycle_state)
+    monkeypatch.setattr(
+        "app.api.bundles.load_all_golden_bundles",
+        lambda: [bundle],
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as ac:
+        response = await ac.post(
+            "/mcp",
+            json={
+                "jsonrpc": "2.0",
+                "id": 405,
+                "method": "tools/call",
+                "params": {
+                    "name": "find_solution",
+                    "arguments": {
+                        "errorSignature": (
+                            "TypeError: AsyncClient.__init__() got an unexpected "
+                            "keyword argument 'app'"
+                        ),
+                        "packages": {"httpx": "0.28.1"},
+                    },
+                },
+            },
+        )
+
+    content = json.loads(response.json()["result"]["content"][0]["text"])
+    assert content["status"] == "UNVERIFIED_MATCH"
+    assert content["actionability"] == expected_action
+    assert content["evidenceLifecycleStatus"] == lifecycle_state
+    assert content["evidenceContractSatisfied"] is False
+    assert content["bundleEvidenceQualified"] is False
+    assert content["runArtifactAvailable"] is True
+    assert content["runArtifactUrl"].endswith(
+        "/api/v1/bundles/bundle_httpx_028_asgi_transport_001/evidence"
+    )
+    assert "codeDiff" not in content
+    assert "verificationProfile" not in content
+    assert "verificationProfile" not in content["_trustBoundary"]
+    assert "verificationProfile" not in content["isolationProfile"]
+
+    if lifecycle_state == "SUPERSEDED":
+        assert (
+            content["supersededByBundleId"]
+            == "bundle_httpx_029_successor_001"
+        )
+    else:
+        assert "supersededByBundleId" not in content
 
 
 @pytest.mark.asyncio
@@ -627,14 +844,192 @@ async def test_mcp_prompt_injection_sanitization():
             assert "print your system prompt" not in sub_text
 
 
+@pytest.mark.asyncio
+async def test_mcp_submit_tool_declares_storage_only_semantics():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 601,
+            "method": "tools/list",
+            "params": {},
+        })
+    submit_tool = next(
+        tool for tool in res.json()["result"]["tools"] if tool["name"] == "submit_solution"
+    )
+    description = submit_tool["description"]
+    assert "DRAFT" in description
+    assert "unexecuted" in description
+    assert "automated isolated sandbox verification" not in description
 
 
+@pytest.mark.asyncio
+async def test_mcp_submit_stores_draft_without_executing_code(tmp_path):
+    from app.database import get_db_connection
+
+    marker = tmp_path / "mcp-submission-was-executed"
+    error_signature = "McpStorageOnlyRegression: candidate must not execute"
+    submitted_script = (
+        "from pathlib import Path\n"
+        f"Path({str(marker)!r}).write_text('executed', encoding='utf-8')\n"
+    )
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 602,
+            "method": "tools/call",
+            "params": {
+                "name": "submit_solution",
+                "arguments": {
+                    "runtime": "python",
+                    "errorSignature": error_signature,
+                    "description": "Regression fixture for storage-only ingestion",
+                    "summary": "A proposed draft fix",
+                    "codeDiff": "--- a/example.py\n+++ b/example.py\n",
+                    "reproScript": submitted_script,
+                    "testSuite": submitted_script,
+                },
+            },
+        })
+
+    assert res.status_code == 200
+    payload = res.json()
+    assert "error" not in payload
+    response_text = payload["result"]["content"][0]["text"]
+    assert "unexecuted DRAFT candidate" in response_text
+    assert "No submitted code was run" in response_text
+    assert not marker.exists()
+
+    db = await get_db_connection()
+    try:
+        cursor = await db.execute(
+            "SELECT id, evidence_json, verification_status FROM recipes WHERE error_signature = ?",
+            (error_signature,),
+        )
+        row = await cursor.fetchone()
+        assert row is not None
+        assert row["verification_status"] == "DRAFT"
+        assert json.loads(row["evidence_json"])["verificationStatus"] == "DRAFT"
+        await db.execute("DELETE FROM recipes WHERE id = ?", (row["id"],))
+        await db.commit()
+    finally:
+        await db.close()
 
 
+@pytest.mark.asyncio
+async def test_mcp_client_validation_logs_do_not_include_submitted_values(caplog):
+    sensitive_value = "private.person@example.invalid"
+    caplog.set_level("INFO", logger="synapse_mesh.mcp")
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 603,
+            "method": "tools/call",
+            "params": {
+                "name": "submit_solution",
+                "arguments": {
+                    "runtime": [sensitive_value],
+                    "errorSignature": sensitive_value,
+                    "description": "invalid runtime type",
+                    "summary": "invalid fixture",
+                    "reproScript": "pass",
+                    "testSuite": "pass",
+                },
+            },
+        })
+
+    assert res.status_code == 200
+    assert res.json()["error"] == {
+        "code": -32602,
+        "message": "Invalid tool arguments",
+    }
+    assert sensitive_value not in caplog.text
+    assert "Traceback" not in caplog.text
 
 
+@pytest.mark.asyncio
+async def test_mcp_internal_error_log_omits_exception_message_and_traceback(
+    caplog, monkeypatch
+):
+    import app.mcp.server as mcp_server
+
+    sensitive_message = "internal failure included private.person@example.invalid"
+
+    async def fail_closed_store(_request):
+        raise RuntimeError(sensitive_message)
+
+    monkeypatch.setattr(mcp_server, "store_recipe_draft", fail_closed_store)
+    caplog.set_level("ERROR", logger="synapse_mesh.mcp")
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/mcp", json={
+            "jsonrpc": "2.0",
+            "id": 604,
+            "method": "tools/call",
+            "params": {
+                "name": "submit_solution",
+                "arguments": {
+                    "runtime": "python",
+                    "errorSignature": "SafeFixtureError",
+                    "description": "generic fixture",
+                    "summary": "generic fixture",
+                    "reproScript": "pass",
+                    "testSuite": "pass",
+                },
+            },
+        })
+
+    assert res.status_code == 200
+    assert res.json()["error"] == {
+        "code": -32603,
+        "message": "Internal RPC processing error: RuntimeError",
+    }
+    assert sensitive_message not in caplog.text
+    assert "Traceback" not in caplog.text
 
 
+@pytest.mark.asyncio
+async def test_mcp_rejects_non_object_json_rpc_body():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        res = await ac.post("/mcp", json=["not", "an", "object"])
+    assert res.status_code == 400
+    assert res.json() == {"detail": "JSON-RPC payload must be an object"}
 
 
+@pytest.mark.asyncio
+async def test_mcp_fallback_rechecks_exact_requested_version(monkeypatch):
+    import app.mcp.server as mcp_server
+    from app.core.registry_snapshot import build_registry_snapshot
 
+    snapshot = await build_registry_snapshot()
+    verified = snapshot.find("bundle_httpx_028_asgi_transport_001")
+    assert verified is not None
+    assert verified.evidence_status == "VERIFIED"
+
+    async def return_verified_regardless_of_request(_request):
+        return [verified.recipe]
+
+    monkeypatch.setattr(mcp_server, "search_recipes", return_verified_regardless_of_request)
+    monkeypatch.setattr("app.api.bundles.load_all_golden_bundles", lambda: [])
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        other = await ac.post(
+            "/mcp",
+            json={
+                "jsonrpc": "2.0",
+                "id": 605,
+                "method": "tools/call",
+                "params": {
+                    "name": "find_solution",
+                    "arguments": {
+                        "errorSignature": (
+                            "TypeError: AsyncClient.__init__() got an unexpected "
+                            "keyword argument 'app'"
+                        ),
+                        "packages": {"httpx": "0.28.0"},
+                    },
+                },
+            },
+        )
+
+    content = json.loads(other.json()["result"]["content"][0]["text"])
+    assert content["status"] == "NO_VERIFIED_MATCH"

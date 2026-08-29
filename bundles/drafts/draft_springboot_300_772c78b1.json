@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "draft_springboot_300_772c78b1",
-  "status": "VERIFIED",
+  "status": "UNVERIFIED",
   "description": "Draft compatibility bundle for spring-boot 3.0.0 migration.",
   "tags": [
     "spring-boot",

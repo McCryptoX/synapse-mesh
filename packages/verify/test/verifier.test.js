@@ -303,19 +303,32 @@ test('checks patch.sha256 even when the integrity object is absent', () => {
 
 test('validates the contract against the shipped Draft 2020-12 schema subset', () => {
   const schema = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../schemas/compatibility_bundle_v1.json'), 'utf8'));
-  const bundle = syntheticBundle();
-  assert.deepEqual(validateInstanceAgainstSchema(bundle, schema), { valid: true, errors: [] });
+  const lifecycleStatuses = [
+    'DRAFT', 'CANDIDATE', 'UNVERIFIED', 'PROVISIONAL', 'VERIFIED',
+    'STALE', 'BROKEN', 'DISPUTED', 'SUPERSEDED', 'REVOKED'
+  ];
+  const reasonRequiredStatuses = new Set(['STALE', 'BROKEN', 'DISPUTED', 'SUPERSEDED', 'REVOKED']);
+  assert.deepEqual(schema.properties.status.enum, lifecycleStatuses);
 
-  bundle.status = 'STALE';
-  const stale = validateInstanceAgainstSchema(bundle, schema);
-  assert.equal(stale.valid, false);
-  assert.match(stale.errors.join('\n'), /statusReason/);
+  for (const status of lifecycleStatuses) {
+    const bundle = syntheticBundle();
+    bundle.status = status;
+    const withoutReason = validateInstanceAgainstSchema(bundle, schema);
+    if (reasonRequiredStatuses.has(status)) {
+      assert.equal(withoutReason.valid, false, status);
+      assert.match(withoutReason.errors.join('\n'), /statusReason/, status);
+      bundle.statusReason = `${status} lifecycle reason`;
+    }
+    assert.equal(validateInstanceAgainstSchema(bundle, schema).valid, true, status);
+  }
 
-  bundle.statusReason = 'Upstream released a replacement';
-  assert.equal(validateInstanceAgainstSchema(bundle, schema).valid, true);
+  const unknown = syntheticBundle();
+  unknown.status = 'UNKNOWN';
+  assert.equal(validateInstanceAgainstSchema(unknown, schema).valid, false);
 
-  bundle.patch.pinnedDependencies.node = '>=20';
-  const rangedPin = validateInstanceAgainstSchema(bundle, schema);
+  const rangedBundle = syntheticBundle();
+  rangedBundle.patch.pinnedDependencies.node = '>=20';
+  const rangedPin = validateInstanceAgainstSchema(rangedBundle, schema);
   assert.equal(rangedPin.valid, false);
 });
 
@@ -435,20 +448,28 @@ test('preserves every valid lifecycle status in validation evidence', () => {
   try {
     const bundlePath = path.join(parent, 'bundle.json');
     const attestationPath = path.join(parent, 'evidence.json');
-    const bundle = syntheticBundle();
-    bundle.status = 'CANDIDATE';
-    fs.writeFileSync(bundlePath, JSON.stringify(bundle));
-    const result = spawnSync(process.execPath, [
-      path.resolve(__dirname, '../bin.js'),
-      bundlePath,
-      '--validate-only',
-      '--attestation', attestationPath
-    ], { encoding: 'utf8', shell: false });
-    assert.equal(result.status, 0, result.stderr);
-    const output = JSON.parse(result.stdout);
-    const statement = JSON.parse(fs.readFileSync(attestationPath, 'utf8'));
-    assert.equal(output.bundleStatus, 'CANDIDATE');
-    assert.equal(statement.predicate.bundleStatus, 'CANDIDATE');
+    const lifecycleStatuses = [
+      'DRAFT', 'CANDIDATE', 'UNVERIFIED', 'PROVISIONAL', 'VERIFIED',
+      'STALE', 'BROKEN', 'DISPUTED', 'SUPERSEDED', 'REVOKED'
+    ];
+    const reasonRequiredStatuses = new Set(['STALE', 'BROKEN', 'DISPUTED', 'SUPERSEDED', 'REVOKED']);
+    for (const status of lifecycleStatuses) {
+      const bundle = syntheticBundle();
+      bundle.status = status;
+      if (reasonRequiredStatuses.has(status)) bundle.statusReason = `${status} lifecycle reason`;
+      fs.writeFileSync(bundlePath, JSON.stringify(bundle));
+      const result = spawnSync(process.execPath, [
+        path.resolve(__dirname, '../bin.js'),
+        bundlePath,
+        '--validate-only',
+        '--attestation', attestationPath
+      ], { encoding: 'utf8', shell: false });
+      assert.equal(result.status, 0, `${status}: ${result.stderr}`);
+      const output = JSON.parse(result.stdout);
+      const statement = JSON.parse(fs.readFileSync(attestationPath, 'utf8'));
+      assert.equal(output.bundleStatus, status);
+      assert.equal(statement.predicate.bundleStatus, status);
+    }
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }
@@ -458,13 +479,29 @@ test('requires explicit code-execution authorization', async () => {
   await assert.rejects(() => verifyBundle(syntheticBundle()), VerificationError);
 });
 
-test('refuses stale and revoked lifecycle states by default', async () => {
-  for (const status of ['STALE', 'REVOKED']) {
+test('refuses stale lifecycle state by default but permits an explicit re-verification', async () => {
+  const bundle = syntheticBundle();
+  bundle.status = 'STALE';
+  bundle.statusReason = 'Evidence freshness window elapsed';
+  await assert.rejects(
+    () => verifyBundle(bundle, { allowCodeExecution: true }),
+    (error) => error instanceof VerificationError && /STALE/.test(error.message)
+  );
+
+  bundle.scope.runtimeVersion = process.versions.node;
+  const result = await verifyBundle(bundle, { allowCodeExecution: true, allowStale: true });
+  assert.equal(result.bundleStatus, 'STALE');
+  assert.equal(result.verified, false);
+  assert.match(result.failureReason, /Environment preflight failed/);
+});
+
+test('always refuses non-executable lifecycle states even when allowStale is set', async () => {
+  for (const status of ['BROKEN', 'DISPUTED', 'SUPERSEDED', 'REVOKED']) {
     const bundle = syntheticBundle();
     bundle.status = status;
     bundle.statusReason = 'Superseded or withdrawn';
     await assert.rejects(
-      () => verifyBundle(bundle, { allowCodeExecution: true }),
+      () => verifyBundle(bundle, { allowCodeExecution: true, allowStale: true }),
       (error) => error instanceof VerificationError && new RegExp(status).test(error.message)
     );
   }

@@ -33,8 +33,13 @@
       "enum": [
         "DRAFT",
         "CANDIDATE",
+        "UNVERIFIED",
+        "PROVISIONAL",
         "VERIFIED",
         "STALE",
+        "BROKEN",
+        "DISPUTED",
+        "SUPERSEDED",
         "REVOKED"
       ],
       "description": "Lifecycle state. Schema validity alone never upgrades a bundle to VERIFIED."
@@ -86,6 +91,9 @@
           "status": {
             "enum": [
               "STALE",
+              "BROKEN",
+              "DISPUTED",
+              "SUPERSEDED",
               "REVOKED"
             ]
           }

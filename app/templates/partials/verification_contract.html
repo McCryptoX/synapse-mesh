@@ -1,0 +1,32 @@
+<section class="max-w-4xl mx-auto p-4 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-5 sm:space-y-6 glow-border">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3 sm:pb-4">
+        <div>
+            <h2 class="text-lg sm:text-xl font-bold text-white">The 4-Stage Verification Contract</h2>
+            <p class="text-slate-300 text-xs font-mono mt-1">Profile: <code>{{ verification_profile }}</code>. Every stage is required; missing or contradictory evidence fails closed.</p>
+        </div>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">FAIL-CLOSED GATE</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 font-mono text-xs">
+        <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+            <strong class="text-rose-400">1. Pre-Fail Validation</strong>
+            <p class="text-slate-200 leading-relaxed">The unpatched workspace must fail with a non-zero exit code and match the declared error-signature pattern and exception class.</p>
+        </div>
+        <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+            <strong class="text-cyan-400">2. Unified Diff Application</strong>
+            <p class="text-slate-200 leading-relaxed">The shipped unified diff must apply cleanly and strictly to the same declared workspace.</p>
+        </div>
+        <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+            <strong class="text-emerald-400">3. Post-Pass Execution</strong>
+            <p class="text-slate-200 leading-relaxed">The patched workspace must pass the declared test suite on the selected real runtime, compiler, or engine.</p>
+        </div>
+        <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
+            <strong class="text-amber-400">4. Mutation Rejection</strong>
+            <p class="text-slate-200 leading-relaxed">At least two independent incorrect unified diffs must each be rejected by the same test suite.</p>
+        </div>
+    </div>
+
+    <p class="text-slate-300 text-sm leading-relaxed">
+        A mock, a hard-coded error substitute, or a test without meaningful assertions cannot satisfy this contract. A successful run proves only its recorded workspace, dependency scope, toolchain, and isolation properties; it is not a production warranty.
+    </p>
+</section>

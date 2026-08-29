@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "draft_pydantic_200_4bccad48",
-  "status": "VERIFIED",
+  "status": "UNVERIFIED",
   "description": "Draft compatibility bundle for pydantic 2.0.0 migration.",
   "tags": [
     "pydantic",

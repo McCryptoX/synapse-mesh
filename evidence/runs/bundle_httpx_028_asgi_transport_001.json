@@ -1,0 +1,117 @@
+{
+  "artifactType": "synapse-bundle-verification-run",
+  "bundleId": "bundle_httpx_028_asgi_transport_001",
+  "bundleSha256": "aea793c600f9037e1d7b78efb26723f8c99df28c9804d1a3a8a32c66d8d3ae81",
+  "completedAt": "2026-08-27T16:36:09.182237Z",
+  "contractVersion": "bundle-4-stage-v1",
+  "controlsObserved": {
+    "capabilitiesDropped": true,
+    "dockerSocketPresent": false,
+    "gid": 10001,
+    "memoryMaxBytes": 1073741824,
+    "memorySwapMaxBytes": 0,
+    "networkInterfaces": [
+      "lo"
+    ],
+    "noNewPrivileges": true,
+    "nonRoot": true,
+    "onlyLoopbackInterface": true,
+    "outputExecutable": false,
+    "pidsMax": 128,
+    "productionPathsPresent": false,
+    "rootFilesystemReadOnly": true,
+    "seccompMode": "2",
+    "sensitiveEnvironmentPresent": false,
+    "uid": 10001,
+    "workspaceExecutable": true,
+    "workspaceNoDev": true,
+    "workspaceNoSuid": true,
+    "workspaceSizeBytes": 67108864
+  },
+  "dependencyLockSha256": "8727b061b7ee5a2df55baba3e001a525823469b896cca8e44aaff0fa1a0eadf5",
+  "outcome": "PASSED",
+  "publicationValidatorImageDigest": "sha256:afec4e71ad25d7938e6b6c0559c106a915a9720e83ac22e00aae0f065fe2c07c",
+  "rawReportSha256": "74aa11da65c42f6dedd5ac10ae2bc2267eff46a9f898b1f9ba0fe98aef215e7b",
+  "runner": {
+    "bindMountCount": 0,
+    "capabilitiesDropped": true,
+    "cgroupNamespacePrivate": true,
+    "cpuLimit": 2.0,
+    "credentialsPresent": false,
+    "hostDockerSocketMounted": false,
+    "imageDigest": "sha256:849dcc790c274738ed58d8abe9165a364fa22ed66b680bbf7acf684f33494369",
+    "memoryLimitBytes": 1073741824,
+    "memorySwapLimitBytes": 1073741824,
+    "mountNamespacePrivate": true,
+    "networkMode": "none",
+    "noNewPrivileges": true,
+    "nonRoot": true,
+    "oomKilled": false,
+    "outputExecutable": false,
+    "pidNamespacePrivate": true,
+    "pidsLimit": 128,
+    "privileged": false,
+    "productionDataMounted": false,
+    "rootFilesystemReadOnly": true,
+    "runnerVersion": "synapse-disposable-verifier-v1",
+    "seccompMode": "filter",
+    "userNamespaceMode": "daemon-default-host-uid",
+    "workspaceExecutable": true,
+    "workspaceNoDev": true,
+    "workspaceNoSuid": true,
+    "workspaceSizeLimitBytes": 67108864
+  },
+  "schemaVersion": "1.0.0",
+  "sourceRevision": "sha256:9b434aa43e8e9154921d6ea30c9b0f75a96ca09485df05061ac812ed8589cf28",
+  "sourceRevisionKind": "source-tree-sha256",
+  "stages": {
+    "mutations": [
+      {
+        "diffSha256": "16140da60a10f7046adcf8c512fee3f7bbcdc1fec42b38e2097f9042f2ab5c66",
+        "exitCode": 1,
+        "id": "httpx_pass_asgi_app_as_transport",
+        "outputSha256": "eb5858218a512d5c826ac797515ad55b7430ee8789ee40c67f4a71a53baf23f7",
+        "rejected": true,
+        "rejectionKind": "RUNTIME_FAILURE",
+        "strictUnifiedDiffApplied": true
+      },
+      {
+        "diffSha256": "32c802cfa9c2cc9bc67d45d52d90ec6d693372d4a4a68d98aa722327635932fa",
+        "exitCode": 1,
+        "id": "httpx_asgi_transport_without_base_url",
+        "outputSha256": "4140d132d112d08f2e784d1158c60f40bf9a6d42ad0bcb5b8595a56bee86d04c",
+        "rejected": true,
+        "rejectionKind": "RUNTIME_FAILURE",
+        "strictUnifiedDiffApplied": true
+      }
+    ],
+    "patch": {
+      "diffSha256": "2c89515c229bee56e086fa6492d5bbd28d7bb028c1d2bd0701d026ff4377c563",
+      "strictUnifiedDiffApplied": true
+    },
+    "post": {
+      "exitCode": 0,
+      "outputSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "passed": true
+    },
+    "pre": {
+      "exceptionClassMatched": true,
+      "exitCode": 1,
+      "outputSha256": "166db3a39f2e934f0e347cbb25adc5c4636a66af2f392396f221b96fbf518833",
+      "signatureMatched": true
+    }
+  },
+  "startedAt": "2026-08-27T16:36:06.624250Z",
+  "toolchainVersions": {
+    "anyio": "4.14.2",
+    "certifi": "2026.7.22",
+    "h11": "0.16.0",
+    "httpcore": "1.0.9",
+    "httpx": "0.28.1",
+    "idna": "3.19",
+    "packaging": "24.2",
+    "python": "3.12.13",
+    "sniffio": "1.3.1",
+    "typing-extensions": "4.12.2"
+  }
+}

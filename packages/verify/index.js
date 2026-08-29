@@ -24,6 +24,19 @@ const RESERVED_DIRECTORY = '.synapse-verifier';
 const REGEX_TIMEOUT_MS = 500;
 const TERMINATION_GRACE_MS = 250;
 const BUNDLED_SCHEMA_PATH = path.join(__dirname, 'schema', 'compatibility_bundle_v1.json');
+const BUNDLE_LIFECYCLE_STATUSES = new Set([
+  'DRAFT',
+  'CANDIDATE',
+  'UNVERIFIED',
+  'PROVISIONAL',
+  'VERIFIED',
+  'STALE',
+  'BROKEN',
+  'DISPUTED',
+  'SUPERSEDED',
+  'REVOKED'
+]);
+const NON_EXECUTABLE_BUNDLE_STATUSES = new Set(['BROKEN', 'DISPUTED', 'SUPERSEDED', 'REVOKED']);
 let bundledSchemaCache = null;
 const NON_PUBLIC_IPV4_ADDRESSES = new net.BlockList();
 const NON_PUBLIC_IPV6_ADDRESSES = new net.BlockList();
@@ -1671,7 +1684,7 @@ async function verifyBundle(bundle, options = {}) {
     );
   }
   validateBundle(bundle, options.schema || null);
-  if (bundle.status === 'REVOKED' || (bundle.status === 'STALE' && !options.allowStale)) {
+  if (NON_EXECUTABLE_BUNDLE_STATUSES.has(bundle.status) || (bundle.status === 'STALE' && !options.allowStale)) {
     throw new VerificationError(
       `Refusing to execute a ${bundle.status} compatibility bundle`,
       { bundleId: bundle.bundleId, status: bundle.status }
@@ -2189,7 +2202,7 @@ function createAttestation(result, source) {
     /^[a-z0-9](?:[a-z0-9._-]{1,126}[a-z0-9])?$/.test(result.bundleId)
     ? result.bundleId
     : null;
-  const evidenceBundleStatus = ['DRAFT', 'CANDIDATE', 'VERIFIED', 'STALE', 'REVOKED'].includes(result.bundleStatus)
+  const evidenceBundleStatus = BUNDLE_LIFECYCLE_STATUSES.has(result.bundleStatus)
     ? result.bundleStatus
     : null;
   return {

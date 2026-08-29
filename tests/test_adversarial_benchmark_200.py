@@ -8,28 +8,28 @@ from app.main import app
 async def test_200_case_evidence_benchmark():
     """
     Automated 200-Case Adversarial Evidence & Retrieval Benchmark:
-    - 50 Exact Known Signatures (Expected: VERIFIED_MATCH, Precision@1)
-    - 50 Family Variants (Expected: VERIFIED_MATCH, Family-Variant Recall)
+    - 50 Exact Known Signatures (Expected: UNVERIFIED_MATCH, Precision@1)
+    - 50 Family Variants (Expected: UNVERIFIED_MATCH, Family-Variant Recall)
     - 50 Adversarial Near-Misses (Expected: NO_VERIFIED_MATCH or VERSION_MISMATCH, Zero False Positives)
     - 50 Random Noise / Unknown Errors (Expected: NO_VERIFIED_MATCH, 100% Unknown-Rejection)
     """
     
     # 1. 50 Exact Known Signatures (Sampled across golden bundles and verified recipes)
     exact_known_cases = [
-        ("AttributeError: 'DataFrame' object has no attribute 'append'", {"pandas": ">=2.0.0"}, "VERIFIED_MATCH"),
-        ("AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.", {"numpy": ">=2.0.0"}, "VERIFIED_MATCH"),
-        ("sqlalchemy.exc.ObjectNotExecutableError: Not an executable object: 'SELECT 1'. Use text('SELECT 1') instead.", {"sqlalchemy": ">=2.0.0"}, "VERIFIED_MATCH"),
-        ("sqlalchemy.exc.ArgumentError: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')", {"sqlalchemy": ">=2.0.0"}, "VERIFIED_MATCH"),
-        ("LegacyAPIWarning: The Query.get() method is considered legacy in 2.0. Use Session.get() instead.", {"sqlalchemy": ">=2.0.0"}, "VERIFIED_MATCH"),
+        ("AttributeError: 'DataFrame' object has no attribute 'append'", {"pandas": ">=2.0.0"}, "UNVERIFIED_MATCH"),
+        ("AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.", {"numpy": ">=2.0.0"}, "UNVERIFIED_MATCH"),
+        ("sqlalchemy.exc.ObjectNotExecutableError: Not an executable object: 'SELECT 1'. Use text('SELECT 1') instead.", {"sqlalchemy": ">=2.0.0"}, "UNVERIFIED_MATCH"),
+        ("sqlalchemy.exc.ArgumentError: Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')", {"sqlalchemy": ">=2.0.0"}, "UNVERIFIED_MATCH"),
+        ("LegacyAPIWarning: The Query.get() method is considered legacy in 2.0. Use Session.get() instead.", {"sqlalchemy": ">=2.0.0"}, "UNVERIFIED_MATCH"),
     ] * 10  # 50 cases
 
     # 2. 50 Family Variants
     family_variant_cases = [
-        ("AttributeError: 'Series' object has no attribute 'append'", {"pandas": ">=2.0.0"}, "VERIFIED_MATCH"),
-        ("AttributeError: `np.Inf` was removed in the NumPy 2.0 release. Use `np.inf` instead.", {"numpy": ">=2.0.0"}, "VERIFIED_MATCH"),
-        ("AttributeError: `np.Infinity` was removed in the NumPy 2.0 release. Use `np.inf` instead.", {"numpy": ">=2.0.0"}, "VERIFIED_MATCH"),
-        ("AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan` instead.", {"numpy": ">=2.0.0"}, "VERIFIED_MATCH"),
-        ("AttributeError: `np.infty` was removed in the NumPy 2.0 release. Use `np.inf` instead.", {"numpy": ">=2.0.0"}, "VERIFIED_MATCH"),
+        ("AttributeError: 'Series' object has no attribute 'append'", {"pandas": ">=2.0.0"}, "UNVERIFIED_MATCH"),
+        ("AttributeError: `np.Inf` was removed in the NumPy 2.0 release. Use `np.inf` instead.", {"numpy": ">=2.0.0"}, "UNVERIFIED_MATCH"),
+        ("AttributeError: `np.Infinity` was removed in the NumPy 2.0 release. Use `np.inf` instead.", {"numpy": ">=2.0.0"}, "UNVERIFIED_MATCH"),
+        ("AttributeError: `np.NaN` was removed in the NumPy 2.0 release. Use `np.nan` instead.", {"numpy": ">=2.0.0"}, "UNVERIFIED_MATCH"),
+        ("AttributeError: `np.infty` was removed in the NumPy 2.0 release. Use `np.inf` instead.", {"numpy": ">=2.0.0"}, "UNVERIFIED_MATCH"),
     ] * 10  # 50 cases
 
     # 3. 50 Adversarial Near-Misses (Structural attribute mismatch, false claim, version mismatch)

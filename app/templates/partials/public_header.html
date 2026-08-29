@@ -1,0 +1,16 @@
+<header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <a href="/" class="flex items-center space-x-2 group shrink-0" aria-label="Synapse-Mesh Homepage">
+            <span class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></span>
+            <span class="font-bold text-sm sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
+            <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden lg:inline-block">Evidence-First Compatibility</span>
+        </a>
+        <nav aria-label="Main Navigation" class="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm font-mono">
+            <a href="/" class="{% if active_page|default('') == 'search' %}text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5{% else %}text-slate-300 hover:text-brand-400 transition{% endif %} whitespace-nowrap">Search</a>
+            <a href="/benchmark" class="{% if active_page|default('') == 'benchmark' %}text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5{% else %}text-slate-300 hover:text-brand-400 transition{% endif %} whitespace-nowrap hidden sm:inline">Benchmark</a>
+            <a href="/verification" class="{% if active_page|default('') == 'architecture' %}text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5{% else %}text-slate-300 hover:text-brand-400 transition{% endif %} whitespace-nowrap hidden md:inline">Architecture</a>
+            <a href="https://docs.synapsemesh.dev" class="{% if active_page|default('') == 'docs' %}text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5{% else %}text-slate-300 hover:text-brand-400 transition{% endif %} whitespace-nowrap hidden sm:inline">Docs</a>
+            <a href="/#connect" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition text-xs whitespace-nowrap shadow">MCP Connect</a>
+        </nav>
+    </div>
+</header>

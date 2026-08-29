@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "draft_litellm_1400_86f47268",
-  "status": "VERIFIED",
+  "status": "UNVERIFIED",
   "description": "Draft compatibility bundle for litellm 1.40.0 migration.",
   "tags": [
     "litellm",

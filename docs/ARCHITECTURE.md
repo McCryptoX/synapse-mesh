@@ -1,122 +1,156 @@
-# Technische Architektur: Synapse-Mesh (Exocortex)
+# Synapse-Mesh Architecture & System Design
 
-```mermaid
-graph TD
-    subgraph "Clients & Consuming Agents"
-        AgentA["Google Antigravity / Gemini"]
-        AgentB["ChatGPT / Claude / Other LLMs"]
-        AgentC["Autonomous Coding Bot"]
-    end
+This document specifies the technical architecture, data flows, execution boundaries, and trust invariants of Synapse-Mesh (Project Exocortex).
 
-    subgraph "Protocols, Discovery & Gateways"
-        Discovery["Discovery Standards (/.well-known/mcp.json, /.well-known/agent.json)"]
-        MCP["MCP Server (Streamable HTTP: /mcp / stdio)"]
-        A2A["A2A Gateway (Agent-to-Agent / ADK)"]
-        REST["OpenAPI 3.1 / JSON-LD Fallback"]
-    end
+---
 
-    subgraph "Synapse-Mesh Platform Core"
-        Sanitizer["Zero-PII & Compliance Sanitizer"]
-        
-        subgraph "Engines & Validation"
-            RecipeEngine["Living Solutions Engine"]
-            EvidenceLayer["Evidence & Verification Engine"]
-            ToolQuality["MCP Tool Quality & Benchmark Engine"]
-        end
-        
-        subgraph "Execution & Storage"
-            Sandbox["Isolated Test Runner (WASM / Micro-Container)"]
-            DB["Persistent Verified Recipes (PostgreSQL / SQLite)"]
-        end
-    end
+## 1. System Overview & Data Flow
 
-    AgentA -->|Autonomous Discovery| Discovery
-    AgentB -->|Autonomous Discovery| Discovery
-    AgentC -->|Autonomous Discovery| Discovery
-
-    AgentA -->|MCP / Tools & Knowledge| MCP
-    AgentB -->|A2A / Peer Protocols| A2A
-    AgentC -->|REST / Direct API| REST
-
-    MCP --> Sanitizer
-    A2A --> Sanitizer
-    REST --> Sanitizer
-
-    Sanitizer --> RecipeEngine
-    Sanitizer --> ToolQuality
-
-    RecipeEngine --> EvidenceLayer
-    EvidenceLayer --> Sandbox
-    EvidenceLayer --> DB
-    ToolQuality --> Sandbox
+```text
++-----------------------------------------------------------------------------------+
+|                            Clients & External Systems                             |
+|  - Coding Agents (Claude, Cursor, Codex, Antigravity, OpenDevin)                 |
+|  - MCP Clients & HTTP REST API Consumers                                          |
+|  - Web Browsers / Human Developers                                                |
++-----------------------------------------------------------------------------------+
+                                         |
+                                         v
++-----------------------------------------------------------------------------------+
+|                        Caddy 2 (Reverse Proxy & Edge TLS)                         |
+|  - TLS termination (Let's Encrypt / ZeroSSL)                                      |
+|  - Header Sanitization (X-Forwarded-For -> 127.0.0.1, X-Real-IP -> 127.0.0.1)    |
+|  - Zero Edge Logging (`log { output discard }`)                                   |
++-----------------------------------------------------------------------------------+
+                                         |
+                                         v
++-----------------------------------------------------------------------------------+
+|                        FastAPI Application (Port 8000)                            |
+|                                                                                   |
+|  [Entrypoints]                                                                    |
+|  - MCP Server (/mcp) -> find_solution, submit_solution (JSON-RPC 2.0)             |
+|  - REST API (/api/v1/bundles, /api/v1/recipes, /health, /openapi.json)            |
+|  - Web UI & Jinja2 Templates (/, /verification, /legal, /privacy, /ops)           |
+|  - Auto-Discovery (/.well-known/mcp.json, /.well-known/agent.json)                |
+|                                                                                   |
+|  [Core Processing Pipeline]                                                       |
+|  - Inbound Sanitizer (app/core/sanitizer.py) [Strips API keys, PII, User paths]   |
+|  - Version Matcher (app/core/version_matcher.py) [Semver & Range Intersection]    |
+|  - Signature Matcher (app/core/signature_matcher.py) [Class & Regex Matching]     |
+|  - Snapshot & Projection Cache (app/core/registry_snapshot.py)                   |
++-----------------------------------------------------------------------------------+
+            |                               |                           |
+            v                               v                           v
++-----------------------+       +-----------------------+   +-----------------------+
+|  bundles/golden/      |       |  SQLite WAL Database  |   |  evidence/runs/       |
+|  - Immutable JSON     |       |  (data/synapse_mesh)  |   |  - Exact run outputs  |
+|  - Curated Goldens    |       |  - Candidate Drafts   |   |  - Stage signatures   |
+|  - Read-Only mount    |       |  - Coarse Telemetry   |   |  - Run digests        |
+|  - Source of Truth    |       |  - Ops Session Auth   |   |  - Read-Only mount    |
++-----------------------+       +-----------------------+   +-----------------------+
+                                            ^
+                                            | (Hourly Mining Task)
++-----------------------------------------------------------------------------------+
+|                     Autonomous Upstream Miner (0 LLM Tokens)                      |
+|  - Changelog & Feed Harvester (scripts/github_harvester.py)                       |
+|  - Heuristic AST/Regex Synthesizer (app/core/upstream_miner.py)                   |
+|  - Output -> bundles/drafts/*.json (Categorized as UNVERIFIED / DRAFT)            |
++-----------------------------------------------------------------------------------+
+                                            ^
+                                            | (Daily Host-Side Systemd Timer)
++-----------------------------------------------------------------------------------+
+|                   Disposable Verification Worker (Host-Orchestrated)              |
+|  - Host Timer (deploy/systemd/synapse-verification.timer)                         |
+|  - Pinned Toolchain Container (network: none, read-only root, non-root user)      |
+|  - Independent 4-Stage Contract Validation (scripts/run_disposable_verification)  |
+|  - Validated Result -> evidence/runs/ & immutable archive                         |
++-----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 1. Protokolle, Discovery & Schnittstellen
+## 2. Component Specifications
 
-1. **Model Context Protocol (MCP):**
-   - Implementierung via **Streamable HTTP** (`https://mcp.synapsemesh.dev`) und **stdio** für lokale Anbindung.
-   - Ermöglicht Coding-Agents den direkten Aufruf von `find_solution(...)` und `submit_solution(...)`.
+### 2.1 Reverse Proxy (Caddy)
+- Serves as the public edge gateway.
+- Handles automated TLS certificate lifecycle.
+- Implements strict data minimization: completely discards access logs and sanitizes IP headers to loopback (`127.0.0.1`) before forwarding to the application container.
 
-2. **Agent-to-Agent Protocol (A2A):**
-   - Kompatibel mit Multi-Agent-Frameworks (z.B. Google Agent Development Kit).
-   - Dient dem Austausch von Prüfaufträgen, Peer-Validierungen und Verifikations-Tokens zwischen Agenten.
+### 2.2 Application Backend (FastAPI)
+- Single-process async application running on Uvicorn.
+- Disables internal access logging (`--no-access-log`).
+- Manages routing for REST endpoints, MCP JSON-RPC handlers, and server-rendered HTML templates.
+- Enforces strict inbound request body size limits and payload sanitization.
 
-3. **Autonomous Agent Discovery Layer:**
-   - **`/.well-known/mcp.json`**: Maschinenlesbare Konfiguration zur automatischen Einbindung in MCP-kompatible Clients (ChatGPT Actions/Connectors, Claude Desktop, Antigravity).
-   - **`/.well-known/agent.json`**: Deklaration der Agentenfähigkeiten (A2A-Fähigkeiten, Verifikations-Endpoints, Strict Schemas).
-   - **Registry Catalogs**: Registrierung bei Smithery, Glama, Anthropic MCP Registry.
+### 2.3 Model Context Protocol (MCP) Server
+- Conforms to MCP Streamable HTTP specification (Spec Version: `2026-07-28`).
+- Exposes two canonical tools:
+  - `find_solution`: Structured compatibility lookup with error signature, runtime, and package version filtering.
+  - `submit_solution`: Public ingestion mechanism. Validates input schema, sanitizes content, and stores submission as an unexecuted `DRAFT`.
 
-4. **REST & Schema Layer:**
-   - OpenAPI 3.1 mit streng typisierten JSON-LD Schemas.
+### 2.4 Data Storage & Relational Database (SQLite WAL)
+- Persistent SQLite database at `data/synapse_mesh.sqlite3`.
+- Operates in Write-Ahead Logging (`PRAGMA journal_mode=WAL`) with `PRAGMA synchronous=NORMAL`.
+- Stores:
+  - Draft recipes and mined candidate bundles.
+  - Minimal coarse telemetry (client category, action, timestamp — cleared after 30 days).
+  - Operator authentication verifiers (salted PBKDF2-SHA256 password hash and opaque session digests).
+- Automatic startup migrations ensure old plaintext query snippets are cleared and unverified rows are quarantined.
 
+### 2.5 Curated Golden Registry (`bundles/golden/`)
+- Directory of frozen, canonical JSON files representing human-reviewed compatibility solutions.
+- Packaged directly in the repository and mounted read-only in production containers.
+- Represents the baseline source of truth for the public registry.
+
+### 2.6 Evidence & Run Artifact Store (`evidence/runs/`)
+- Stores machine-verifiable JSON run records (`bundle_*.json`) matching the exact SHA-256 digest of verified bundles.
+- Contains execution telemetry, toolchain versions, pre-fail exit codes, unified diff application results, post-pass assertions, and mutant kill records.
+- Maintained as an immutable content-addressed archive under `evidence/runs/archive/`.
 
 ---
 
-## 2. Der Evidence & Verification Layer
-Um Halluzinationen und Modell-Bias zu eliminieren, gilt das Evidence-First-Prinzip:
-- **Sandbox Test Run:** Jedes Rezept muss über ein minimales Reproduktionsskript und eine automatisierte Testsuite verfügen.
-- **Verification Proof:** Ein Rezept gilt erst dann als verifiziert (`confidence > 0.9`), wenn die Testsuite in der Sandbox erfolgreich ausgeführt wurde (`0 exit code`, definierte Testassertions erfüllt).
-- **Status Lifecycle:** `DRAFT` ➔ `SANDBOX_TESTING` ➔ `VERIFIED` ➔ `STALE` (wenn Abhängigkeiten altern).
+## 3. Data & Artifact Classification Matrix
+
+| Artifact / Path | Source of Truth | Mutability | Trust Level | Ingestion / Update Policy |
+|---|---|---|---|---|
+| `bundles/golden/*.json` | Source | Immutable | High (Curated) | Human/Red-Team PR review only. Agents cannot edit. |
+| `bundles/drafts/*.json` | Generated / Submissions | Mutable | Low (Unverified) | Populated by upstream miner and public submissions. |
+| `evidence/runs/*.json` | Generated by Verifier | Immutable per Run | High (Verified) | Published only after successful 4-stage contract verification. |
+| `evidence/lifecycle/*.json` | Governance | Immutable per Record | High (Reviewed) | Manages stale (90d), dispute, and supersession states. |
+| `data/synapse_mesh.sqlite3` | Runtime State | Mutable (WAL) | Mixed | Backed up prior to deployments; preserves drafts and ops state. |
+| `app/core/` & `app/api/` | Source Code | Immutable at Runtime | High | Standard Git commits and CI/CD testing. |
 
 ---
 
-## 3. Tool Quality Layer (MCP Benchmarks)
-Statt eines reinen Katalogs bietet Synapse-Mesh qualitative Health-Checks:
-- **Latenz- und Zuverlässigkeitsmetriken** (z. B. p95 Latenz, 30d Uptime).
-- **Schema-Qualität & Token-Overhead** (wie effizient und präzise sind die Tool-Beschreibungen).
-- **Multi-Model-Kompatibilität** (Gemini ADK, Claude, OpenAI).
+## 4. Execution & Isolation Model
+
+Synapse-Mesh maintains strict separation between trusted fixture execution and untrusted inputs:
+
+### 4.1 Public Submission Boundary (Zero Server Execution)
+- Public submissions through MCP (`submit_solution`) or REST (`/api/v1/recipes/submit`) are **never executed** by the server.
+- Submitted code diffs and scripts are sanitized for secrets and persisted purely as dormant text in draft records.
+
+### 4.2 Autonomous Upstream Mining Boundary
+- The upstream harvester (`scripts/github_harvester.py` / `app/core/upstream_miner.py`) uses heuristic regex and AST pattern matching against public changelogs.
+- Requires zero LLM tokens.
+- Does not execute code found in changelogs.
+- Automatically flags all generated bundles as `DRAFT` / `UNVERIFIED`.
+
+### 4.3 Scheduled Disposable Verifier Boundary
+- Verification jobs run out-of-band via host systemd timer (`deploy/systemd/synapse-verification.timer`).
+- Each verification runs in a dedicated, disposable Docker container:
+  - Network: completely disabled (`--network none`).
+  - Filesystem: read-only root (`--read-only`).
+  - Security: `no-new-privileges`, all Linux capabilities dropped, custom seccomp.
+  - User: fixed non-root UID/GID (10001:10001).
+  - Storage: bounded private tmpfs, no host bind mounts.
+  - Secrets: zero access to host environment, database, or API keys.
+- Results are validated through an independent application verification gate before publication to `evidence/runs/`.
 
 ---
 
-## 4. Sandbox-Isolation & Kernel-Trust-Boundary
+## 5. Security & Privacy Guarantees
 
-Zur sicheren Ausführung von unvertrautem Fremdcode gilt das strikte Axiom: **Application-Level-Hardening ist kein Ersatz für eine echte OS- und Kernel-Sicherheitsgrenze.**
-
-```
-Dedicated Sandbox Job Architecture
-├─ PID Namespace          (Kein /proc/* Snooping auf Host oder andere Prozesse)
-├─ Mount Namespace        (Read-Only Root FS; Backend-Code & DB komplett unmounted)
-├─ Network Namespace      (Zweistufig: Phase 1 Build -> Phase 2 Execution mit network=none)
-├─ cgroups v2             (memory.max=512M, memory.swap.max=0, pids.max=64, cpu.max=10s)
-├─ Private tmpfs          (Größenbegrenzt auf 32 MiB, Quota gegen Disk-Bomben)
-├─ Non-Root Execution     (Ausführung unter unprivilegierter UID/GID)
-├─ no_new_privs           (Verhindert Rechteausweitung über setuid-Binaries)
-├─ Dropped Capabilities   (Alle Linux-Capabilities inklusive CAP_SYS_ADMIN verworfen)
-├─ Seccomp Profile        (Syscall-Filterung für native Isolation)
-└─ Strict Env-Allowlist   (Ausschließlich PATH, LANG, LC_ALL, TERM, TZ; 0 Secrets)
-```
-
-### Evidence Passport: Isolation-Spezifikation
-Jeder Verifikations-Nachweis persistentiert das exakte Kernel-Profil (`isolationProfile`), unter dem der Test empirisch durchgeführt wurde:
-- `pidNamespace: true`
-- `network: "none"`
-- `rootFs: "read-only"`
-- `tmpfsLimit: "32MiB"`
-- `memoryLimit: "512MiB"`
-- `pidsLimit: 64`
-- `capabilities: "none"`
-- `noNewPrivs: true`
-- `seccomp: "synapse-v1"`
-
+1. **Zero Access Logging:** Both edge proxy and application backend discard access logs.
+2. **IP Anonymization:** Client IP addresses are never recorded in database tables.
+3. **Data Scrubbing:** Regular expressions strip API keys (`sk-...`, `ghp_...`, AWS keys), bearer tokens, passwords, email addresses, and private file paths prior to persistence.
+4. **Session Security:** `/ops` authentication uses PBKDF2-SHA256 password hashing with per-session random salts. Cookie is `HttpOnly`, `Secure`, and `SameSite=Strict`.

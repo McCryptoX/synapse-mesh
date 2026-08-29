@@ -1,35 +1,31 @@
-# 📊 Scientific Empirical Benchmark Report (Pilot 5-Case Evaluation)
+# Withdrawn Pilot Benchmark Report
 
-- **Date:** 2026-08-24
-- **Methodology:** 3-Group Randomized Comparative Evaluation (A/B/C Test)
-- **Evaluated Test Cases:** 5 Core Breaking Changes (Python, Node.js, Rust, Docker, SQL)
-- **Protocol:** Pre-Fail Check ➔ AST Patch ➔ Hermetic Sandbox Post-Pass (Exit Code 0) ➔ Mutation Check
+## Status: not product evidence
 
----
+An earlier version of this file presented a five-case A/B/C comparison with percentages, token counts, timing, tool-call counts, and broad conclusions. The repository does not contain the complete raw artifacts needed to reproduce or audit those numbers under a fair matched protocol.
 
-## 📈 Executive Summary Matrix
+The earlier quantitative claims are therefore withdrawn. They must not be copied into the website, README, sales material, legal text, funding applications, or evidence records.
 
-| Evaluation Metric | Group A (Baseline / Zero-Shot) | Group B (Live Web Docs / Search) | Group C (Synapse-Mesh MCP) |
-|---|---|---|---|
-| **First-Try Solve Rate** | 20% (0/5) | 60% (3/5) | **100% (5/5)** |
-| **Total Solve Rate** | 20% (0/5) | 100% (5/5) | **100% (5/5)** |
-| **Average Tokens / Case** | 420 | 3850 | **650 (-83% Token Usage)** |
-| **Average Time / Case** | 1.22s | 4.81s | **0.41s (12x Faster)** |
-| **Average Tool Calls / Turns** | 0.0 | 3.0 | **1.0 (1-Turn Resolution)** |
-| **Hallucinated Patches** | 4 / 5 | 0 / 5 | **0 / 5 (0 Hallucinations)** |
+## What can currently be stated
 
----
+- `benchmark/hardened_cases.json` is a frozen 15-case fixture manifest.
+- Nine entries form the primary `Suite v2-runtime-9` release gate.
+- Six supplemental semantic or toolchain oracles use a separate denominator.
+- The former `9/9` fixture result is withdrawn. Rust R1/R2/R3 now execute successfully in the hardened production image, but frozen TypeScript case N2 reaches `tsc` without a library that defines `Map` and produces `TS2583` before its declared `TS2322` fingerprint; the current numeric result is therefore withheld.
+- The fixture gate tests checked-in reproductions, valid solutions, and negative mutations in available runtimes.
+- It does not compare model-only, web-enabled, and Synapse-enabled agents.
+- It does not establish a general first-try solve rate, token saving, speedup, or absence of incorrect patches.
 
-## 🔬 Key Scientific Observations
+## Conditions for a replacement report
 
-1. **The Knowledge Cutoff & Hallucination Wall (Group A):**
-   * Without external verified knowledge, LLMs fail on 100% of 2024–2026 breaking changes, repeatedly suggesting deprecated or removed syntax.
+A new comparative report may replace this notice only after the experiment satisfies [BENCHMARK_METHODOLOGY.md](BENCHMARK_METHODOLOGY.md), including:
 
-2. **The Search & Retrieval Overhead (Group B):**
-   * While Web Search eventually resolves breaking changes after multi-turn trial-and-error, it consumes **6x more tokens** (~3,850 vs. 650 tokens) and requires parsing verbose, unverified HTML pages.
+1. an immutable preregistration and holdout manifest;
+2. identical model snapshots, prompts, budgets, and non-treatment tools;
+3. a frozen Synapse snapshot;
+4. a dedicated hidden-judge environment isolated from production;
+5. raw prompts, outputs, tool transcripts, submitted patches, and judge results;
+6. explicit handling of retries, skips, timeouts, and infrastructure errors;
+7. a script that regenerates every published table from the raw artifact.
 
-3. **Deterministic Zero-Retraining Execution (Group C):**
-   * Synapse-Mesh provides an immediate, sandbox-verified unified AST diff in **1 single MCP tool call (<15ms latency)**, eliminating multi-turn debugging cycles and achieving **100% First-Try Pass Rate**.
-
----
-*Report generated automatically by `benchmark/run_empirical_benchmark.py` adhering to `docs/BENCHMARK_METHODOLOGY.md`.*
+Until then, the honest comparative result is: **not measured reproducibly.**

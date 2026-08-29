@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "draft_sqlalchemy_200_9127b722",
-  "status": "VERIFIED",
+  "status": "DRAFT",
   "description": "Draft compatibility bundle for sqlalchemy 2.0.0 migration.",
   "tags": [
     "sqlalchemy",
@@ -13,7 +13,7 @@
     "package": "sqlalchemy",
     "fromVersion": "<2.0.0",
     "toVersion": "2.0.0",
-    "affectedVersionRange": ">=2.0.0",
+    "affectedVersionRange": ">=2.0.0,<3.0.0",
     "runtime": "python",
     "runtimeVersion": null,
     "platform": "all"
@@ -26,9 +26,9 @@
   },
   "patch": {
     "targetFile": "client.py",
-    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,9 @@\n-import sys\n-class MockSession:\n-    def execute(self, stmt):\n-        if isinstance(stmt, str):\n-            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n-        return []\n-session = MockSession()\n-try:\n-    result = session.execute(\"SELECT * FROM users WHERE id = 1\")\n-except ValueError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+import sys\n+class MockSession:\n+    def execute(self, stmt):\n+        if isinstance(stmt, str):\n+            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n+        return [\"row1\"]\n+session = MockSession()\n+result = session.execute({\"text\": \"SELECT * FROM users WHERE id = 1\"})\n+assert len(result) == 1",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,4 +1,6 @@\n-from sqlalchemy import create_engine\n-engine = create_engine(\"sqlite:///:memory:\")\n-with engine.connect() as conn:\n-    res = conn.execute(\"SELECT 1\")\n+from sqlalchemy import create_engine, text\n+engine = create_engine(\"sqlite:///:memory:\")\n+with engine.connect() as conn:\n+    res = conn.execute(text(\"SELECT 1\"))\n+    val = res.scalar()\n+    assert val == 1",
     "pinnedDependencies": {
-      "sqlalchemy": "<3.0.0"
+      "sqlalchemy": ">=2.0.0,<3.0.0"
     },
     "doNot": [
       "Do not suppress ArgumentError by wrapping in try/except",
@@ -38,20 +38,20 @@
   "verification": {
     "scriptLanguage": "python",
     "workspaceFiles": {
-      "client.py": "import sys\nclass MockSession:\n    def execute(self, stmt):\n        if isinstance(stmt, str):\n            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n        return []\nsession = MockSession()\ntry:\n    result = session.execute(\"SELECT * FROM users WHERE id = 1\")\nexcept ValueError as e:\n    sys.stderr.write(str(e) + \"\\n\")\n    sys.exit(1)"
+      "client.py": "from sqlalchemy import create_engine\nengine = create_engine(\"sqlite:///:memory:\")\nwith engine.connect() as conn:\n    res = conn.execute(\"SELECT 1\")"
     },
     "reproductionScript": "import runpy\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
-    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"session\", \"form\", \"chain\", \"router\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
+    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"client\", \"transport\", \"u\", \"settings\", \"session\", \"form\", \"chain\", \"router\", \"_obj\", \"app\", \"_handler\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
     "mutations": [
       {
-        "id": "mutant_pass_silence",
-        "description": "Hallucinated empty pass mutant",
-        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockSession:\n-    def execute(self, stmt):\n-        if isinstance(stmt, str):\n-            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n-        return []\n-session = MockSession()\n-try:\n-    result = session.execute(\"SELECT * FROM users WHERE id = 1\")\n-except ValueError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+pass\n"
+        "id": "mutant_empty_bypass",
+        "description": "Empty bypass mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,4 +1,1 @@\n-from sqlalchemy import create_engine\n-engine = create_engine(\"sqlite:///:memory:\")\n-with engine.connect() as conn:\n-    res = conn.execute(\"SELECT 1\")\n+pass\n"
       },
       {
-        "id": "mutant_empty_return",
-        "description": "Hallucinated empty return mutant",
-        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,12 +1,1 @@\n-import sys\n-class MockSession:\n-    def execute(self, stmt):\n-        if isinstance(stmt, str):\n-            raise ValueError(\"ArgumentError: Textual SQL expression must be explicitly declared as text()\")\n-        return []\n-session = MockSession()\n-try:\n-    result = session.execute(\"SELECT * FROM users WHERE id = 1\")\n-except ValueError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+# empty bypass\n"
+        "id": "mutant_exception_bypass",
+        "description": "Exception or empty-output mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,4 +1,1 @@\n-from sqlalchemy import create_engine\n-engine = create_engine(\"sqlite:///:memory:\")\n-with engine.connect() as conn:\n-    res = conn.execute(\"SELECT 1\")\n+# empty bypass\n"
       }
     ],
     "expectedPreExit": 1,
@@ -59,10 +59,12 @@
     "timeoutMs": 15000
   },
   "provenance": {
-    "spdxLicense": "MIT",
+    "spdxLicense": "NOASSERTION",
     "primarySources": [
       "https://docs.sqlalchemy.org/en/20/changelog/changelog_20.html"
     ],
-    "verifiedAt": "2026-08-26T06:39:27.731391+00:00"
-  }
+    "verifiedAt": null,
+    "sourceTrusted": true
+  },
+  "evidencePublication": null
 }

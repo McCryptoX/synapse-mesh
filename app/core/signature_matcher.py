@@ -105,9 +105,9 @@ class SignatureMatcher:
         variants: Optional[list] = None
     ) -> Tuple[bool, float]:
         """
-        Computes structured match and matchConfidence between query error and candidate recipe error.
+        Computes a structured match and deterministic similarity score between query and candidate signatures.
         If variants are supplied, evaluates query against all declared variants.
-        Returns (is_match, match_confidence).
+        Returns (is_match, signature_similarity). The score is a heuristic, not a probability.
         """
         # 1. Evaluate primary signature
         is_match, conf = cls._evaluate_single_match(query_text, target_text, target_regex)
@@ -135,13 +135,15 @@ class SignatureMatcher:
         q = cls.extract_structure(query_text)
         t = cls.extract_structure(target_text)
 
+        # Exception Class Gate comes before every exact/regex/token path.  A
+        # malicious string such as ``ValueError: TypeError: ...`` must not win
+        # merely because it contains the target text.
+        if q["exc_class"] and t["exc_class"] and q["exc_class"] != t["exc_class"]:
+            return (False, 0.0)
+
         # A. Exact full string match
         if q["raw"] == t["raw"] or q["raw"] in t["raw"] or t["raw"] in q["raw"]:
             return (True, 1.0)
-
-        # Exception Class Gate: If both declare an exception class and they differ -> STRICT REJECT
-        if q["exc_class"] and t["exc_class"] and q["exc_class"] != t["exc_class"]:
-            return (False, 0.0)
 
         # B. Regex Fingerprint Match
         if target_regex:

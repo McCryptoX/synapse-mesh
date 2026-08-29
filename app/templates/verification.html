@@ -2,178 +2,79 @@
 <html lang="en" class="dark">
 <head>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="shortcut icon" href="/favicon.ico">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#090d16">
-    <title>Verification Pipeline & Sandbox Architecture | Synapse-Mesh</title>
-    <meta name="description" content="Technical architecture of the Synapse-Mesh isolated sandbox verification pipeline, categorical evidence badges, and security guarantees.">
+    <title>Verification Contract & Trust Boundary | Synapse-Mesh</title>
+    <meta name="description" content="The Synapse-Mesh evidence contract, its active hourly and daily automation paths, and the hostile-code boundary that is not implemented.">
     <link rel="stylesheet" href="/style.min.css">
-    <style>
-      body, html { background-color: #090d16; color: #e2e8f0; font-family: ui-sans-serif, system-ui, sans-serif; }
-    </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
-    <!-- Header / Nav -->
-    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2 group shrink-0" aria-label="Synapse-Mesh Homepage">
-                <div class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></div>
-                <span class="font-bold text-sm sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
-                <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden lg:inline-block">Verified Compatibility</span>
-            </a>
-            <nav aria-label="Main Navigation" class="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm font-mono">
-                <a href="/" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap">Search</a>
-                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap hidden sm:inline">Benchmark</a>
-                <a href="/verification" class="text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5 whitespace-nowrap">Architecture</a>
-                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition hidden sm:inline">Docs</a>
-                <a href="/#connect" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-brand-600 text-slate-950 font-semibold hover:bg-brand-500 transition text-xs whitespace-nowrap shadow">MCP Connect</a>
-            </nav>
-        </div>
-    </header>
+    {% include "partials/public_header.html" %}
 
-    <main class="max-w-6xl mx-auto px-4 py-8 sm:py-12 flex-1 w-full space-y-12 sm:space-y-16">
-        
-        <!-- Hero Section -->
-        <section class="text-center space-y-6 pt-4 max-w-4xl mx-auto">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-xs text-slate-300 font-mono">
-                <span class="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
-                <span>HERMETIC ZERO-TRUST SANDBOX ENGINE</span>
+    <main class="max-w-6xl mx-auto px-4 py-8 sm:py-12 flex-1 w-full space-y-10">
+        <section class="text-center space-y-5 pt-4 max-w-4xl mx-auto">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-950 text-xs text-amber-400 font-mono">
+                <span>CURRENT IMPLEMENTATION, NOT A FUTURE SECURITY CLAIM</span>
             </div>
-            
-            <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-                Verification Pipeline &<br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Evidence Architecture</span>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                Verification Contract &<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">Current Trust Boundary</span>
             </h1>
-
-            <p class="text-slate-200 max-w-3xl mx-auto text-lg leading-relaxed">
-                How Synapse-Mesh deterministically verifies, categorizes, and isolates living compatibility bundles across hermetic execution sandboxes.
+            <p class="text-slate-200 max-w-3xl mx-auto text-base sm:text-lg leading-relaxed">
+                Synapse-Mesh separates a reproducible proof contract from the security boundary used to run it. Those are different claims and are reported separately.
             </p>
         </section>
 
-        <!-- 1. Epistemic Hierarchy -->
-        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-4 glow-border">
-            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                <span>1. Evidence-First Epistemic Hierarchy</span>
-            </h2>
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-700 bg-slate-900/60 space-y-4">
+            <h2 class="text-xl font-bold text-amber-400">Important execution boundaries</h2>
+            <p class="text-slate-200 text-sm leading-relaxed">
+                The embedded trusted-fixture runner uses temporary working directories, a restricted environment, process timeouts, and operating-system resource limits where supported. It runs inside the API container. It does <strong class="text-white">not</strong> create a separate PID, network, or mount namespace for each job, and it does not attest a read-only root filesystem.
+            </p>
+            <p class="text-slate-200 text-sm leading-relaxed">
+                Separately, a host timer runs an exact allowlist of repository-owned fixtures in disposable, network-disabled containers and publishes an artifact only after an independent application-image validation gate. That stronger scheduled path is active, but it is not a general intake runner and does not accept public or crawled code.
+            </p>
+            <p class="text-slate-200 text-sm leading-relaxed">
+                Public recipe submissions are stored as <strong class="text-white">DRAFT</strong> data and are not executed by the server. Local re-verification remains an explicit code-execution action performed by the operator in an environment they control.
+            </p>
+        </section>
+
+        {% include "partials/verification_contract.html" %}
+
+        <section class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-3">
+                <h2 class="text-lg font-bold text-white">Active: hourly draft maintenance</h2>
+                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-300">
+                    <li>Discovers configured upstream release sources without an LLM.</li>
+                    <li>Normalizes and retains candidates only in the draft boundary.</li>
+                    <li>Does not rewrite application source, deploy, execute third-party snippets, or promote drafts into curated files.</li>
+                </ul>
+            </div>
+            <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-3">
+                <h2 class="text-lg font-bold text-white">Active: daily exact allowlist</h2>
+                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-300">
+                    <li>Runs only explicitly configured repository-owned fixtures outside the API request path.</li>
+                    <li>Uses a disposable network-disabled container with a read-only root, non-root identity, dropped capabilities, <code>no_new_privs</code>, no bind mounts, and bounded resources.</li>
+                    <li>Publishes exact run artifacts only after a separate fail-closed validation step.</li>
+                </ul>
+            </div>
+            <div class="p-6 rounded-2xl border border-rose-900/70 bg-slate-900/60 space-y-3 md:col-span-2">
+                <h2 class="text-lg font-bold text-rose-300">Not implemented: public hostile-code runner</h2>
+                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-300">
+                    <li>No public or authenticated endpoint executes submitted or crawled code.</li>
+                    <li>A future service would need a separately reviewed intake and build-supply-chain boundary, isolated queues, abuse controls, result quarantine, and adversarial validation.</li>
+                    <li>Until that exists, an execution request returns an explicit miss instead of an optimistic verification label.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-4">
+            <h2 class="text-xl font-bold text-white">Discovery without model retraining</h2>
             <p class="text-slate-300 text-sm leading-relaxed">
-                Statistical model consensus alone does not guarantee correct execution across breaking library changes. Synapse-Mesh anchors correctness on empirical execution in reproducible, hermetic sandbox environments:
+                Agents can discover the MCP endpoint and tool schemas at runtime through <code>/.well-known/mcp.json</code>. The A2A well-known document is discovery metadata; it is not a claim that a full peer-to-peer task gateway is implemented. Autonomous source collection may propose drafts, but promotion is evidence-gated and does not inherit trust from a source, another recipe, or an AI-generated explanation.
             </p>
-            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400 shadow-inner">
-                Reproducible Sandbox Test (Exit 0) + Test Assertions + Pinned Dependencies + Maintainer Changelog &gt; Secondary Docs &gt; Unverified Model Consensus
-            </div>
-        </section>
-
-        <!-- 2. Categorical Evidence Badges -->
-        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <span>2. Categorical Evidence Classification</span>
-                    </h2>
-                    <p class="text-slate-300 text-xs font-mono mt-0.5">Deterministic criteria required for bundle promotion</p>
-                </div>
-                <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">
-                    AUTOMATED GATING
-                </span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
-                    <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold inline-block">✓ VERIFIED_SANDBOX</span>
-                    <p class="text-slate-300 text-xs leading-relaxed mt-1">Pre-patch repro failed (Proof of Bug), AST patch applied, post-patch test suite passed (Exit Code 0).</p>
-                </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
-                    <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold inline-block">✓ SOURCE_BACKED</span>
-                    <p class="text-slate-300 text-xs leading-relaxed mt-1">Directly cross-referenced against official maintainer release notes, PRs, or migration guides.</p>
-                </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
-                    <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800 font-bold inline-block">✓ REGRESSION_TESTED</span>
-                    <p class="text-slate-300 text-xs leading-relaxed mt-1">Evaluated in hermetic environments against unintended side-effects and mutation checks.</p>
-                </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
-                    <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800 font-bold inline-block">✓ ZERO_PII_AUDITED</span>
-                    <p class="text-slate-300 text-xs leading-relaxed mt-1">Strictly stripped of API keys, auth tokens, IP addresses, and local system paths before persistence.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. Security & Sandboxing Architecture -->
-        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-6 glow-border">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
-                <div>
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <span>3. Sandbox Isolation & Remote Execution Security</span>
-                    </h2>
-                    <p class="text-slate-300 text-xs font-mono mt-0.5">Multi-layered containment for untrusted user/miner submissions</p>
-                </div>
-                <span class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-rose-950/80 text-rose-400 border border-rose-700/60">
-                    CONTAINMENT
-                </span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
-                    <div class="text-rose-400 font-bold">0 Network Egress</div>
-                    <div class="text-slate-300">Sandboxes have zero outbound internet access by default, preventing unintended network connections.</div>
-                </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
-                    <div class="text-amber-400 font-bold">Resource Caps</div>
-                    <div class="text-slate-300">Max 256 MB RAM, 1 vCore, and strict 6.0s hard execution timeout per test run.</div>
-                </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
-                    <div class="text-cyan-400 font-bold">Ephemeral Workspaces</div>
-                    <div class="text-slate-300">Temporary filesystem mounts are completely destroyed and zeroed out after every test run.</div>
-                </div>
-                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 shadow-inner">
-                    <div class="text-emerald-400 font-bold">Non-Root User Isolation</div>
-                    <div class="text-slate-300">Processes run under unprivileged <code>synapse:synapse</code> without sudo or host privileges.</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. MCP Discovery Integration -->
-        <section class="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-4 glow-border">
-            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                <span>4. Autonomous Agent Discovery (Zero-Retraining)</span>
-            </h2>
-            <p class="text-slate-300 text-sm leading-relaxed">
-                Coding agents discover and integrate Synapse-Mesh dynamically at runtime via standard protocol discovery:
-            </p>
-            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs space-y-2 text-slate-300 shadow-inner">
-                <div><span class="text-brand-400 font-semibold">1. Standard Discovery:</span> Agent queries <code>/.well-known/mcp.json</code> or <code>/.well-known/agent.json</code>.</div>
-                <div><span class="text-brand-400 font-semibold">2. Dynamic Tool Manifest:</span> Server exports <code>find_solution</code> and <code>submit_solution</code> schemas.</div>
-                <div><span class="text-brand-400 font-semibold">3. Execution & Verification:</span> Agent queries exact error signature and receives verified unified diffs with reproducible proof.</div>
-            </div>
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-xs text-slate-400 font-mono">
-        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-slate-400">
-                <span class="text-white font-semibold">SYNAPSE-MESH &copy; 2026</span>
-                <span>&bull;</span>
-                <span>Zero-PII Architecture</span>
-                <span>&bull;</span>
-                <span class="text-emerald-400">MCP Spec 2026-07-28</span>
-            </div>
-            <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" aria-label="Footer Navigation">
-                <a href="/" class="text-slate-300 hover:text-brand-400 transition underline">Home</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition underline">Benchmark</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition underline">Architecture</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition underline">Docs</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/legal" class="text-slate-300 hover:text-brand-400 transition underline">Legal Notice</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/privacy" class="text-slate-300 hover:text-brand-400 transition underline">Privacy Policy</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/llms.txt" class="text-slate-300 hover:text-brand-400 transition underline">/llms.txt</a>
-            </nav>
-        </div>
-    </footer>
+    {% include "partials/public_footer.html" %}
 </body>
 </html>

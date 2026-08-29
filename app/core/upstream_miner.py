@@ -2,20 +2,20 @@
 Synapse-Mesh Upstream Mining Engine (Zero-Token Autonomous Recipe Extractor)
 Extracts breaking changes, deprecation warnings, and migration patterns directly from
 upstream open-source repositories, changelogs, and release feeds, synthesizing candidate
-draft bundles and verifying them via the 4-stage hermetic verification contract.
+draft bundles without executing them.
 
 SECURITY DIRECTIVE:
-Automated miners write strictly to `bundles/drafts/` with status DRAFT/UNVERIFIED until
-a 4-stage verification passes. `bundles/golden/` is an immutable, human/CI-curated store.
+Automated miners write strictly to `bundles/drafts/` with status DRAFT. They do not execute,
+promote, or label candidates VERIFIED. `bundles/golden/` is an immutable, reviewed store.
 """
 
 import asyncio
 import hashlib
 import json
 import logging
+import os
 import re
 import urllib.request
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -28,6 +28,7 @@ from app.models.bundle import (
     BundleVerification,
     BundleProvenance,
 )
+from app.core.sanitizer import ZeroPiiSanitizer
 
 logger = logging.getLogger("synapse.miner")
 DRAFTS_DIR = Path(__file__).resolve().parent.parent.parent / "bundles" / "drafts"
@@ -146,8 +147,8 @@ class UpstreamReleaseFetcher:
 
     @classmethod
     def get_seed_changelogs(cls) -> List[Dict[str, Any]]:
-        """Deterministic upstream seed changelogs for hermetic testing and zero-token extraction."""
-        return [
+        """Deterministic upstream seed changelogs with genuine code (zero puppet mocks)."""
+        seeds = [
             {
                 "package": "sqlalchemy",
                 "version": "2.0.0",
@@ -160,30 +161,19 @@ class UpstreamReleaseFetcher:
 ### Migration Example
 Before:
 ```python
-import sys
-class MockSession:
-    def execute(self, stmt):
-        if isinstance(stmt, str):
-            raise ValueError("ArgumentError: Textual SQL expression must be explicitly declared as text()")
-        return []
-session = MockSession()
-try:
-    result = session.execute("SELECT * FROM users WHERE id = 1")
-except ValueError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
+from sqlalchemy import create_engine
+engine = create_engine("sqlite:///:memory:")
+with engine.connect() as conn:
+    res = conn.execute("SELECT 1")
 ```
 After:
 ```python
-import sys
-class MockSession:
-    def execute(self, stmt):
-        if isinstance(stmt, str):
-            raise ValueError("ArgumentError: Textual SQL expression must be explicitly declared as text()")
-        return ["row1"]
-session = MockSession()
-result = session.execute({"text": "SELECT * FROM users WHERE id = 1"})
-assert len(result) == 1
+from sqlalchemy import create_engine, text
+engine = create_engine("sqlite:///:memory:")
+with engine.connect() as conn:
+    res = conn.execute(text("SELECT 1"))
+    val = res.scalar()
+    assert val == 1
 ```
 Pin: sqlalchemy>=2.0.0,<3.0.0
 Do Not: Do not suppress ArgumentError by wrapping in try/except; do not pass raw strings directly.
@@ -203,31 +193,13 @@ Do Not: Do not suppress ArgumentError by wrapping in try/except; do not pass raw
 ### Migration
 Before:
 ```python
-import sys
-class MockNumPy:
-    nan = float('nan')
-    def __getattr__(self, name):
-        if name == 'NAN':
-            raise AttributeError("AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.")
-        raise AttributeError(name)
-np = MockNumPy()
-try:
-    val = np.NAN
-except AttributeError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
+import numpy as np
+val = np.NAN
 ```
 After:
 ```python
-import sys
+import numpy as np
 import math
-class MockNumPy:
-    nan = float('nan')
-    def __getattr__(self, name):
-        if name == 'NAN':
-            raise AttributeError("AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.")
-        raise AttributeError(name)
-np = MockNumPy()
 val = np.nan
 assert math.isnan(val)
 ```
@@ -235,136 +207,6 @@ Pin: numpy>=2.0.0
 Do Not: Do not monkeypatch np.NAN = np.nan on global numpy module.
 """,
                 "url": "https://numpy.org/devdocs/release/2.0.0-notes.html"
-            },
-            {
-                "package": "duckdb",
-                "version": "0.10.0",
-                "ecosystem": "pypi",
-                "runtime": "python",
-                "release_notes": """
-# DuckDB 0.10.0 Release
-### Breaking Changes
-- Implicit string casting in SQL functions now strictly validates signatures.
-- Calling `SUBSTRING(val, '1', '3')` with string offsets raises `duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.`.
-### Migration
-Before:
-```python
-import sys
-class MockDuckDB:
-    def execute(self, q):
-        if "'1'" in q or "'5'" in q:
-            raise TypeError("duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.")
-        return ["OK"]
-con = MockDuckDB()
-try:
-    con.execute("SELECT SUBSTRING(title, '1', '5') FROM articles")
-except TypeError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
-```
-After:
-```python
-import sys
-class MockDuckDB:
-    def execute(self, q):
-        if "'1'" in q or "'5'" in q:
-            raise TypeError("duckdb.BinderException: No function matches the given name and argument types 'substring(VARCHAR, VARCHAR, VARCHAR)'. You might need to add explicit type casts.")
-        return ["OK"]
-con = MockDuckDB()
-res = con.execute("SELECT SUBSTRING(title, 1, 5) FROM articles")
-assert res == ["OK"]
-```
-Pin: duckdb>=0.10.0
-Do Not: Do not pass string literals for integer offset arguments in SQL dialect.
-""",
-                "url": "https://github.com/duckdb/duckdb/releases/tag/v0.10.0"
-            },
-            {
-                "package": "openai",
-                "version": "1.0.0",
-                "ecosystem": "pypi",
-                "runtime": "python",
-                "release_notes": """
-# OpenAI Python SDK 1.0.0 Migration
-### Breaking Changes
-- Top-level `openai.ChatCompletion.create()` has been completely removed in 1.0.0.
-- Accessing `openai.ChatCompletion` raises `APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0. Use client.chat.completions.create() instead.`.
-### Migration
-Before:
-```python
-import sys
-class MockOpenAI:
-    class ChatCompletion:
-        @classmethod
-        def create(cls, *args, **kwargs):
-            raise Exception("APIRemovedInV1: You tried to access openai.ChatCompletion, but this is no longer supported in openai>=1.0.0. Use client.chat.completions.create() instead.")
-openai = MockOpenAI()
-try:
-    openai.ChatCompletion.create(model="gpt-4", messages=[{"role": "user", "content": "hello"}])
-except Exception as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
-```
-After:
-```python
-import sys
-class MockCompletions:
-    def create(self, *args, **kwargs):
-        return {"choices": [{"message": {"content": "Hello from Synapse Mesh"}}]}
-class MockChat:
-    completions = MockCompletions()
-class MockOpenAIClient:
-    chat = MockChat()
-client = MockOpenAIClient()
-result = client.chat.completions.create(model="gpt-4", messages=[{"role": "user", "content": "hello"}])
-assert "choices" in result
-```
-Pin: openai>=1.0.0,<2.0.0
-Do Not: Do not access legacy openai.ChatCompletion class directly.
-""",
-                "url": "https://github.com/openai/openai-python/discussions/742"
-            },
-            {
-                "package": "langchain",
-                "version": "0.2.0",
-                "ecosystem": "pypi",
-                "runtime": "python",
-                "release_notes": """
-# LangChain 0.2.0 Ecosystem Migration
-### Breaking Changes
-- Chat models are no longer exported from root `langchain.chat_models`.
-- Importing from `langchain.chat_models` raises `LangChainDeprecationWarning: Importing chat models from langchain is deprecated. Please use langchain_openai or langchain_community instead.`.
-### Migration
-Before:
-```python
-import sys
-class MockLangChain:
-    def __getattr__(self, name):
-        if name == "chat_models":
-            raise ImportError("LangChainDeprecationWarning: Importing chat models from langchain is deprecated. Please use langchain_openai or langchain_community instead.")
-        raise AttributeError(name)
-langchain = MockLangChain()
-try:
-    models = langchain.chat_models
-except ImportError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
-```
-After:
-```python
-import sys
-class MockChatOpenAI:
-    def invoke(self, prompt):
-        return "Model response: OK"
-ChatOpenAI = MockChatOpenAI
-chat = ChatOpenAI()
-result = chat.invoke("hello")
-assert result == "Model response: OK"
-```
-Pin: langchain>=0.2.0, langchain-openai>=0.1.0
-Do Not: Do not import ChatOpenAI or other LLMs from root langchain.chat_models namespace.
-""",
-                "url": "https://python.langchain.com/v0.2/docs/versions/v0_2/"
             },
             {
                 "package": "pydantic",
@@ -379,30 +221,20 @@ Do Not: Do not import ChatOpenAI or other LLMs from root langchain.chat_models n
 ### Migration
 Before:
 ```python
-import sys
-class MockBaseModel:
-    @classmethod
-    def parse_obj(cls, obj):
-        raise TypeError("PydanticUserError: The 'parse_obj' method has been removed in Pydantic V2. Use 'model_validate' instead.")
-class User(MockBaseModel):
-    pass
-try:
-    User.parse_obj({"id": 1, "name": "Alice"})
-except TypeError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
+from pydantic import BaseModel
+class User(BaseModel):
+    id: int
+    name: str
+u = User.parse_obj({"id": 1, "name": "Alice"})
 ```
 After:
 ```python
-import sys
-class MockBaseModel:
-    @classmethod
-    def model_validate(cls, obj):
-        return {"id": obj.get("id"), "name": obj.get("name"), "validated": True}
-class User(MockBaseModel):
-    pass
-result = User.model_validate({"id": 1, "name": "Alice"})
-assert result.get("validated") is True
+from pydantic import BaseModel
+class User(BaseModel):
+    id: int
+    name: str
+u = User.model_validate({"id": 1, "name": "Alice"})
+assert u.id == 1
 ```
 Pin: pydantic>=2.0.0,<3.0.0
 Do Not: Do not invoke legacy parse_obj() method on Pydantic v2 data models.
@@ -422,31 +254,15 @@ Do Not: Do not invoke legacy parse_obj() method on Pydantic v2 data models.
 ### Migration
 Before:
 ```python
-import sys
-class MockAsyncClient:
-    def __init__(self, **kwargs):
-        if "app" in kwargs:
-            raise TypeError("TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'. Pass transport=ASGITransport(app=app) instead.")
-try:
-    client = MockAsyncClient(app=object(), base_url="http://test")
-except TypeError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
+import httpx
+client = httpx.AsyncClient(app=object(), base_url="http://test")
 ```
 After:
 ```python
-import sys
-class MockASGITransport:
-    def __init__(self, app=None):
-        self.app = app
-class MockAsyncClient:
-    def __init__(self, transport=None, base_url=""):
-        self.transport = transport
-        self.base_url = base_url
-transport = MockASGITransport(app=object())
-client = MockAsyncClient(transport=transport, base_url="http://test")
-result = client.base_url
-assert result == "http://test"
+import httpx
+transport = httpx.ASGITransport(app=object())
+client = httpx.AsyncClient(transport=transport, base_url="http://test")
+assert client.base_url == "http://test"
 ```
 Pin: httpx>=0.28.0,<1.0.0
 Do Not: Do not pass app argument directly into httpx.AsyncClient.
@@ -466,207 +282,150 @@ Do Not: Do not pass app argument directly into httpx.AsyncClient.
 ### Migration
 Before:
 ```python
-import sys
-class MockPydantic:
-    def __getattr__(self, name):
-        if name == "BaseSettings":
-            raise ImportError("ImportError: cannot import name 'BaseSettings' from 'pydantic'. In Pydantic V2, BaseSettings is in pydantic_settings package.")
-        raise AttributeError(name)
-pydantic = MockPydantic()
-try:
-    Settings = pydantic.BaseSettings
-except ImportError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
+from pydantic import BaseSettings
 ```
 After:
 ```python
-import sys
-class MockBaseSettings:
-    def __init__(self, app_name="Synapse"):
-        self.app_name = app_name
-BaseSettings = MockBaseSettings
-con = BaseSettings(app_name="Synapse")
+from pydantic_settings import BaseSettings
+class Settings(BaseSettings):
+    app_name: str = "Synapse"
+con = Settings()
 assert con.app_name == "Synapse"
 ```
 Pin: fastapi>=0.100.0, pydantic-settings>=2.0.0
 Do Not: Do not import BaseSettings from root pydantic module.
 """,
                 "url": "https://fastapi.tiangolo.com/advanced/settings/"
-            },
-            {
-                "package": "pip",
-                "version": "24.0.0",
-                "ecosystem": "pypi",
-                "runtime": "python",
-                "release_notes": """
-# Pip 24.0.0 / PEP 668 Externally Managed Environment
-### Breaking Changes
-- Installing packages directly into the system python without a virtual environment raises `error: externally-managed-environment. This environment is externally managed. See PEP 668.`.
-### Migration
-Before:
-```python
-import sys
-class MockPip:
-    def install(self, pkg):
-        raise SystemExit("error: externally-managed-environment. This environment is externally managed. See PEP 668.")
-pip = MockPip()
-try:
-    pip.install("requests")
-except SystemExit as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
-```
-After:
-```python
-import sys
-class MockVenvPip:
-    def install(self, pkg):
-        return {"installed": pkg, "status": "OK"}
-pip = MockVenvPip()
-result = pip.install("requests")
-assert result["status"] == "OK"
-```
-Pin: pip>=24.0.0
-Do Not: Do not run pip install with --break-system-packages in production Linux environments.
-""",
-                "url": "https://peps.python.org/pep-0668/"
-            },
-            {
-                "package": "litellm",
-                "version": "1.40.0",
-                "ecosystem": "pypi",
-                "runtime": "python",
-                "release_notes": """
-# LiteLLM 1.40.0 Router Migration
-### Breaking Changes
-- Passing model lists directly to `litellm.completion()` raises `LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().`.
-### Migration
-Before:
-```python
-import sys
-class MockLiteLLM:
-    def completion(self, *args, **kwargs):
-        if "model_list" in kwargs:
-            raise ValueError("LiteLLMDeprecationError: model_list must be passed to litellm.Router() instead of litellm.completion().")
-        return {}
-lit = MockLiteLLM()
-try:
-    lit.completion(model_list=[{"model_name": "gpt-4"}])
-except ValueError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
-```
-After:
-```python
-import sys
-class MockRouter:
-    def __init__(self, model_list=None):
-        self.model_list = model_list or []
-    def completion(self, **kwargs):
-        return {"response": "OK", "model": self.model_list[0]["model_name"]}
-router = MockRouter(model_list=[{"model_name": "gpt-4"}])
-result = router.completion()
-assert result["response"] == "OK"
-```
-Pin: litellm>=1.40.0
-Do Not: Do not pass raw model_list arrays into top-level litellm.completion functions.
-""",
-                "url": "https://docs.litellm.ai/docs/routing"
-            },
-            {
-                "package": "go",
-                "version": "1.22.0",
-                "ecosystem": "go",
-                "runtime": "python",
-                "release_notes": """
-# Go 1.22 For-Loop Variable Scoping
-### Breaking Changes
-- In Go 1.22, for-loop iteration variables have per-iteration scoping instead of per-loop sharing.
-- Code capturing loop variables concurrently in older versions triggers `LoopVariableCaptureWarning: loop variable captured by func literal in for loop. Go 1.22 changes for-loop variables to per-iteration scoping.`.
-### Migration
-Before:
-```python
-import sys
-class MockGoRuntime:
-    def execute(self, code):
-        if "val := v" not in code and "go1.22" not in code:
-            raise RuntimeError("LoopVariableCaptureWarning: loop variable captured by func literal in for loop. Go 1.22 changes for-loop variables to per-iteration scoping.")
-        return [1, 2, 3]
-runtime = MockGoRuntime()
-try:
-    runtime.execute("for _, v := range items { go func() { print(v) }() }")
-except RuntimeError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
-```
-After:
-```python
-import sys
-class MockGoRuntime:
-    def execute(self, code):
-        return [1, 2, 3]
-runtime = MockGoRuntime()
-result = runtime.execute("for _, v := range items { val := v; go func() { print(val) }() }")
-assert len(result) == 3
-```
-Pin: go>=1.22.0
-Do Not: Do not rely on shared per-loop iteration variable pointers in concurrent goroutines.
-""",
-                "url": "https://go.dev/doc/go1.22"
-            },
-            {
-                "package": "spring-boot",
-                "version": "3.0.0",
-                "ecosystem": "maven",
-                "runtime": "python",
-                "release_notes": """
-# Spring Boot 3.0 Jakarta EE Migration
-### Breaking Changes
-- Spring Boot 3.0 has completed the baseline upgrade from Java EE to Jakarta EE 10.
-- Importing legacy `javax.servlet.*` packages causes `ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet.*).`.
-### Migration
-Before:
-```python
-import sys
-class MockJVM:
-    def load_class(self, name):
-        if name.startswith("javax.servlet"):
-            raise ModuleNotFoundError("ClassNotFoundException: javax.servlet.http.HttpServletRequest. Spring Boot 3.0 migrated from Java EE to Jakarta EE (jakarta.servlet.*).")
-        return True
-jvm = MockJVM()
-try:
-    jvm.load_class("javax.servlet.http.HttpServletRequest")
-except ModuleNotFoundError as e:
-    sys.stderr.write(str(e) + "\\n")
-    sys.exit(1)
-```
-After:
-```python
-import sys
-class MockJVM:
-    def load_class(self, name):
-        if name.startswith("jakarta.servlet"):
-            return {"loaded": name, "status": "OK"}
-        raise ModuleNotFoundError(name)
-jvm = MockJVM()
-result = jvm.load_class("jakarta.servlet.http.HttpServletRequest")
-assert result["status"] == "OK"
-```
-Pin: org.springframework.boot:spring-boot-starter-web>=3.0.0
-Do Not: Do not import deprecated javax.servlet or javax.persistence packages in Spring Boot 3.
-""",
-                "url": "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide"
             }
         ]
+        for seed in seeds:
+            # Only repository-owned fixtures may contribute executable code.
+            seed["trusted_code_examples"] = True
+        return seeds
 
 
 class BreakingChangeExtractor:
     """Deterministic regex & AST pattern parser that extracts structured bundle fields with zero LLM tokens."""
 
+    _GENERIC_TOKENS = frozenset({
+        "attribute", "instead", "method", "function", "class", "module", "version",
+        "error", "warning", "change", "api", "the", "this", "that", "use", "with",
+        "from", "import", "removed", "deprecated", "please", "see", "docs",
+        "breaking", "changes", "release", "notes", "new", "old", "now", "was",
+        "has", "been", "and", "or", "for", "not", "no", "longer", "supported",
+        "argument", "parameter", "keyword", "kwarg", "args", "kwargs",
+        "decorator", "async", "await", "sync", "coroutine", "python",
+        "javascript", "typescript", "package", "library", "value", "name",
+        "type", "object", "none", "true", "false", "null", "self", "init",
+    })
+
+    _IMPORT_ALIASES = {
+        "redis-py": "redis",
+        "next.js": "next",
+        "nextjs": "next",
+        "scikit-learn": "sklearn",
+        "python-dotenv": "dotenv",
+        "pillow": "PIL",
+        "beautifulsoup4": "bs4",
+        "pyyaml": "yaml",
+        "opencv-python": "cv2",
+        "langchain-core": "langchain_core",
+        "langchain-openai": "langchain_openai",
+        "pydantic-settings": "pydantic_settings",
+        "typing-extensions": "typing_extensions",
+        "google-generativeai": "google.generativeai",
+        "python-multipart": "multipart",
+    }
+
+    _SHORT_ALIASES = {
+        "np": "numpy",
+        "pd": "pandas",
+        "tf": "tensorflow",
+        "plt": "matplotlib.pyplot",
+    }
+
+    @classmethod
+    def _is_valid_symbol(cls, symbol: str) -> bool:
+        token = (symbol or "").strip("`\"'() ")
+        if len(token) < 2:
+            return False
+        if token.lower() in cls._GENERIC_TOKENS:
+            return False
+        return bool(re.match(r"^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$", token))
+
+    @classmethod
+    def _import_name(cls, package: str) -> str:
+        """Map registry names (redis-py) onto valid Python/JS import identifiers."""
+        raw = (package or "").strip()
+        if not raw:
+            return "pkg"
+        alias = cls._IMPORT_ALIASES.get(raw.lower())
+        if alias:
+            return alias
+        cleaned = re.sub(r"[^A-Za-z0-9_.]+", "_", raw).strip("._")
+        if not cleaned:
+            return "pkg"
+        if cleaned[0].isdigit():
+            return f"pkg_{cleaned}"
+        return cleaned
+
+    @classmethod
+    def _alias_snippets(cls, package: str, old_sym: str, new_sym: str, runtime: str) -> Optional[Dict[str, str]]:
+        if not cls._is_valid_symbol(old_sym) or not cls._is_valid_symbol(new_sym) or old_sym == new_sym:
+            return None
+        pkg = cls._import_name(package)
+
+        def _py_expr(sym: str) -> tuple[str, str]:
+            root = sym.split(".", 1)[0]
+            if root in cls._SHORT_ALIASES:
+                return f"import {cls._SHORT_ALIASES[root]} as {root}", sym
+            if "." in sym:
+                if root == pkg:
+                    return f"import {pkg}", sym
+                return f"import {pkg}", f"{pkg}.{sym}"
+            return f"import {pkg}", f"getattr({pkg}, '{sym}', None) or {pkg}.{sym}()"
+
+        if runtime == "python":
+            b_imp, b_expr = _py_expr(old_sym)
+            a_imp, a_expr = _py_expr(new_sym)
+            return {
+                "before": f"{b_imp}\nres = {b_expr}\nprint('OLD_EXECUTED', res)\n",
+                "after": f"{a_imp}\nres = {a_expr}\nprint('NEW_EXECUTED', res)\n",
+                "kind": "alias",
+            }
+        if runtime in ("nodejs", "javascript", "typescript"):
+            return {
+                "before": (
+                    f"const {pkg} = require('{pkg}');\n"
+                    f"const res = {pkg}.{old_sym} || {pkg}.{old_sym}();\n"
+                    f"console.log('OLD_EXECUTED', res);\n"
+                ),
+                "after": (
+                    f"const {pkg} = require('{pkg}');\n"
+                    f"const res = {pkg}.{new_sym} || {pkg}.{new_sym}();\n"
+                    f"console.log('NEW_EXECUTED', res);\n"
+                ),
+                "kind": "alias",
+            }
+        return None
+
     @classmethod
     def extract_error_signature(cls, text: str) -> Optional[str]:
         """Extracts exact error signature pattern from changelog text."""
+        specific_patterns = (
+            r"(TypeError:[^\n`]{8,240}unexpected keyword argument[^\n`]{0,80})",
+            r"(RuntimeWarning:[^\n`]{8,240}never awaited[^\n`]{0,80})",
+            r"(DeprecationWarning:[^\n`]{8,240})",
+            r"(PydanticUserError:[^\n`]{8,240})",
+            r"(APIRemovedInV1:[^\n`]{8,240})",
+        )
+        for pat in specific_patterns:
+            match = re.search(pat, text, re.IGNORECASE)
+            if match:
+                sig = match.group(1).strip("`\"' .")
+                if len(sig) > 8:
+                    return sig
+
         match = re.search(r'(?:raise|raises|raising|throw|throws|threw|causes)?\s*`?([A-Za-z0-9_.]*(?:Exception|Error|Warning|APIRemoved\w*|SyntaxError|TypeError)[\w\s:()\'".,`\-]+)`?', text, re.IGNORECASE)
         if match:
             sig = match.group(1).strip("`\"' .")
@@ -680,75 +439,395 @@ class BreakingChangeExtractor:
         return None
 
     @classmethod
-    def extract_before_after(cls, text: str, package: str = "", runtime: str = "python") -> Optional[Dict[str, str]]:
+    def extract_constructor_migration(
+        cls, text: str, package: str = "", runtime: str = "python"
+    ) -> Optional[Dict[str, str]]:
+        """Synthesize patches for constructor/kwarg signature breaks (unexpected keyword argument)."""
+        callee = None
+        old_kw = None
+
+        init_match = re.search(
+            r"([A-Za-z_][\w.]*)\.__init__\(\)\s+got an unexpected keyword argument\s+['\"](\w+)['\"]",
+            text,
+            re.IGNORECASE,
+        )
+        if init_match:
+            callee = init_match.group(1)
+            old_kw = init_match.group(2)
+        else:
+            call_match = re.search(
+                r"([A-Za-z_][\w.]*)\(\)\s+got an unexpected keyword argument\s+['\"](\w+)['\"]",
+                text,
+                re.IGNORECASE,
+            )
+            if call_match:
+                callee = call_match.group(1)
+                old_kw = call_match.group(2)
+            else:
+                kw_only = re.search(
+                    r"unexpected keyword argument\s+['\"](\w+)['\"]",
+                    text,
+                    re.IGNORECASE,
+                )
+                if kw_only:
+                    old_kw = kw_only.group(1)
+
+        if not old_kw:
+            removed = re.search(
+                r"(?:removed|dropped|no longer (?:accepts|supports))\s+(?:the\s+)?[`'\"]?(\w+)[`'\"]?\s+(?:keyword\s+)?(?:argument|parameter|kwarg)",
+                text,
+                re.IGNORECASE,
+            )
+            if removed:
+                old_kw = removed.group(1)
+
+        if not old_kw or not cls._is_valid_symbol(old_kw):
+            return None
+
+        new_kw = None
+        assign_match = re.search(
+            r"(?:pass|use|provide|prefer)\s+[`'\"]?([A-Za-z_][\w]*)\s*=",
+            text,
+            re.IGNORECASE,
+        )
+        if assign_match:
+            cand = assign_match.group(1)
+            if cand.lower() != old_kw.lower() and cls._is_valid_symbol(cand):
+                new_kw = cand
+        if not new_kw:
+            named = re.search(
+                r"(?:use|replaced by|replace with)\s+(?:the\s+)?[`'\"]([A-Za-z_][\w]*)[`'\"]\s+(?:parameter|argument|kwarg|keyword)",
+                text,
+                re.IGNORECASE,
+            )
+            if named:
+                cand = named.group(1)
+                if cand.lower() != old_kw.lower() and cls._is_valid_symbol(cand):
+                    new_kw = cand
+        if not new_kw:
+            pair = re.search(
+                rf"(?:use|replaced by)\s+[`'\"]?([A-Za-z_][\w]*)[`'\"]?\s+instead of\s+[`'\"]?{re.escape(old_kw)}[`'\"]?",
+                text,
+                re.IGNORECASE,
+            )
+            if pair and cls._is_valid_symbol(pair.group(1)):
+                new_kw = pair.group(1)
+
+        if not new_kw:
+            return None
+
+        pkg = cls._import_name(package)
+        callee_name = None
+        if callee:
+            callee_name = callee.split(".")[-1]
+            if callee_name.lower() in cls._GENERIC_TOKENS or callee_name.startswith("__"):
+                callee_name = None
+        is_class = bool(callee_name and callee_name[:1].isupper())
+        target = callee_name or "Client"
+
+        if runtime == "python":
+            if is_class:
+                before = (
+                    f"import sys\n"
+                    f"from {pkg} import {target}\n"
+                    f"try:\n"
+                    f"    _obj = {target}({old_kw}=None)\n"
+                    f"except TypeError as e:\n"
+                    f"    sys.stderr.write(str(e) + \"\\n\")\n"
+                    f"    sys.exit(1)\n"
+                )
+                after = (
+                    f"from {pkg} import {target}\n"
+                    f"_obj = {target}({new_kw}=None)\n"
+                    f"assert _obj is not None\n"
+                )
+            else:
+                before = (
+                    f"import sys\n"
+                    f"import {pkg}\n"
+                    f"try:\n"
+                    f"    _obj = {pkg}.{target}({old_kw}=None)\n"
+                    f"except TypeError as e:\n"
+                    f"    sys.stderr.write(str(e) + \"\\n\")\n"
+                    f"    sys.exit(1)\n"
+                )
+                after = (
+                    f"import {pkg}\n"
+                    f"_obj = {pkg}.{target}({new_kw}=None)\n"
+                    f"assert _obj is not None\n"
+                )
+            return {"before": before, "after": after, "kind": "constructor"}
+
+        if runtime in ("nodejs", "javascript", "typescript"):
+            before = (
+                f"const {{ {target} }} = require('{pkg}');\n"
+                f"const _obj = new {target}({{ {old_kw}: null }});\n"
+            )
+            after = (
+                f"const {{ {target} }} = require('{pkg}');\n"
+                f"const _obj = new {target}({{ {new_kw}: null }});\n"
+            )
+            return {"before": before, "after": after, "kind": "constructor"}
+        return None
+
+    @classmethod
+    def extract_async_migration(
+        cls, text: str, package: str = "", runtime: str = "python"
+    ) -> Optional[Dict[str, str]]:
+        """Synthesize patches for sync→async API migrations (await / asyncio.run / get_event_loop)."""
+        if runtime not in ("python", "nodejs", "javascript", "typescript"):
+            return None
+
+        if re.search(r"get_event_loop", text) and re.search(
+            r"deprecated|removed|no current event loop|use asyncio\.run", text, re.IGNORECASE
+        ):
+            if runtime == "python":
+                return {
+                    "before": (
+                        "import asyncio\n"
+                        "loop = asyncio.get_event_loop()\n"
+                        "result = loop.run_until_complete(asyncio.sleep(0, result=True))\n"
+                    ),
+                    "after": (
+                        "import asyncio\n"
+                        "result = asyncio.run(asyncio.sleep(0, result=True))\n"
+                        "assert result is True\n"
+                    ),
+                    "kind": "async",
+                }
+
+        func = None
+        now_async = re.search(
+            r"[`'\"]((?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*)(?:\(\))?[`'\"]?\s+"
+            r"(?:is now|has become|was converted to|is now an?)\s+"
+            r"(?:an?\s+)?(?:async(?:hronous)?(?:\s+(?:function|method|api))?|coroutine)",
+            text,
+            re.IGNORECASE,
+        )
+        if now_async:
+            func = now_async.group(1)
+        if not func:
+            awaited = re.search(
+                r"coroutine\s+[`'\"]?((?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*)[`'\"]?\s+was never awaited",
+                text,
+                re.IGNORECASE,
+            )
+            if awaited:
+                func = awaited.group(1)
+        if not func:
+            use_await = re.search(
+                r"use\s+[`'\"]?await\s+((?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*)(?:\(\))?[`'\"]?"
+                r"\s+instead of\s+[`'\"]?((?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*)",
+                text,
+                re.IGNORECASE,
+            )
+            if use_await:
+                func = use_await.group(1)
+        if not func:
+            must_await = re.search(
+                r"[`'\"]((?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*)(?:\(\))?[`'\"]?\s+"
+                r"(?:must|needs to|should)\s+(?:now\s+)?be\s+awaited",
+                text,
+                re.IGNORECASE,
+            )
+            if must_await:
+                func = must_await.group(1)
+
+        if not func or not cls._is_valid_symbol(func):
+            return None
+
+        pkg = cls._import_name(package)
+        call = func if "." in func else f"{pkg}.{func}"
+
+        if runtime == "python":
+            return {
+                "before": f"import {pkg}\nresult = {call}()\nprint(result)\n",
+                "after": (
+                    f"import asyncio\n"
+                    f"import {pkg}\n"
+                    f"async def _main():\n"
+                    f"    return await {call}()\n"
+                    f"result = asyncio.run(_main())\n"
+                    f"print(result)\n"
+                ),
+                "kind": "async",
+            }
+        return {
+            "before": (
+                f"const {pkg} = require('{pkg}');\n"
+                f"const result = {call}();\n"
+                f"console.log(result);\n"
+            ),
+            "after": (
+                f"const {pkg} = require('{pkg}');\n"
+                f"(async () => {{\n"
+                f"  const result = await {call}();\n"
+                f"  console.log(result);\n"
+                f"}})();\n"
+            ),
+            "kind": "async",
+        }
+
+    @classmethod
+    def extract_decorator_migration(
+        cls, text: str, package: str = "", runtime: str = "python"
+    ) -> Optional[Dict[str, str]]:
+        """Synthesize patches for deprecated decorator migrations (on_event→lifespan, @old→@new)."""
+        if runtime != "python":
+            return None
+
+        if re.search(r"on_event", text) and re.search(r"lifespan", text, re.IGNORECASE):
+            return {
+                "before": (
+                    "from fastapi import FastAPI\n"
+                    "app = FastAPI()\n"
+                    "\n"
+                    "@app.on_event(\"startup\")\n"
+                    "def _startup():\n"
+                    "    app.state.ready = True\n"
+                ),
+                "after": (
+                    "from contextlib import asynccontextmanager\n"
+                    "from fastapi import FastAPI\n"
+                    "\n"
+                    "@asynccontextmanager\n"
+                    "async def lifespan(app):\n"
+                    "    app.state.ready = True\n"
+                    "    yield\n"
+                    "\n"
+                    "app = FastAPI(lifespan=lifespan)\n"
+                ),
+                "kind": "decorator",
+            }
+
+        pair = re.search(
+            r"use\s+@([A-Za-z_][\w.]*)\s+instead of\s+@([A-Za-z_][\w.]*)",
+            text,
+            re.IGNORECASE,
+        )
+        if pair:
+            new_dec, old_dec = pair.group(1), pair.group(2)
+        else:
+            deprecated = re.search(
+                r"@([A-Za-z_][\w.]*)\s+(?:is|has been|was)\s+(?:deprecated|removed)"
+                r"[^.\n]{0,180}(?:use|replace with|replaced by)\s+@([A-Za-z_][\w.]*)",
+                text,
+                re.IGNORECASE,
+            )
+            if not deprecated:
+                return None
+            old_dec, new_dec = deprecated.group(1), deprecated.group(2)
+
+        if not cls._is_valid_symbol(old_dec) or not cls._is_valid_symbol(new_dec) or old_dec == new_dec:
+            return None
+
+        pkg = cls._import_name(package)
+
+        def _dec_expr(name: str) -> str:
+            if "." in name or name.startswith(pkg + "."):
+                return f"@{name}"
+            return f"@{pkg}.{name}"
+
+        return {
+            "before": f"import {pkg}\n\n{_dec_expr(old_dec)}\ndef _handler():\n    return True\n",
+            "after": f"import {pkg}\n\n{_dec_expr(new_dec)}\ndef _handler():\n    return True\n",
+            "kind": "decorator",
+        }
+
+    @classmethod
+    def extract_before_after(
+        cls,
+        text: str,
+        package: str = "",
+        runtime: str = "python",
+        allow_embedded_code: bool = True,
+    ) -> Optional[Dict[str, str]]:
         """Extracts Before/After code blocks from explicit markdown or synthesizes from natural language migration text."""
         # 1. Explicit Before / After Markdown blocks
-        before_match = re.search(r'Before:?\s*```(?:python|javascript|typescript|json|rust)?\s*([\s\S]*?)```', text, re.IGNORECASE)
-        after_match = re.search(r'After:?\s*```(?:python|javascript|typescript|json|rust)?\s*([\s\S]*?)```', text, re.IGNORECASE)
+        before_match = re.search(r'Before:?\s*```(?:python|javascript|typescript|json|rust)?\s*([\s\S]*?)```', text, re.IGNORECASE) if allow_embedded_code else None
+        after_match = re.search(r'After:?\s*```(?:python|javascript|typescript|json|rust)?\s*([\s\S]*?)```', text, re.IGNORECASE) if allow_embedded_code else None
 
         if before_match and after_match:
             before_code = before_match.group(1).strip()
             after_code = after_match.group(1).strip()
             return {"before": before_code, "after": after_code}
 
-        # 2. Heuristic Pattern: "use `<new>` instead of `<old>`" / "replace `<old>` with `<new>`"
+        # 2. Constructor / unexpected-keyword signature changes
+        ctor = cls.extract_constructor_migration(text, package=package, runtime=runtime)
+        if ctor:
+            return ctor
+
+        # 3. Deprecated decorator migrations
+        dec = cls.extract_decorator_migration(text, package=package, runtime=runtime)
+        if dec:
+            return dec
+
+        # 4. Sync → async API migrations
+        async_mig = cls.extract_async_migration(text, package=package, runtime=runtime)
+        if async_mig:
+            return async_mig
+
+        # 5. Heuristic Pattern: "use `<new>` instead of `<old>`" / "replace `<old>` with `<new>`"
+        old_sym, new_sym = None, None
         use_instead_match = re.search(r'(?:use|replace with)\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?\s+(?:instead of|for|rather than)\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?', text, re.IGNORECASE)
-        if not use_instead_match:
-            use_instead_match = re.search(r'[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?\s+(?:is deprecated|was removed|is no longer supported)[^.\n]*?(?:use|replace with)\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?', text, re.IGNORECASE)
+        if use_instead_match:
+            new_sym = use_instead_match.group(1).strip("`\"'() ")
+            old_sym = use_instead_match.group(2).strip("`\"'() ")
+        else:
+            use_instead_match = re.search(
+                r'[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?\s+(?:is deprecated|was removed|has been removed|is no longer supported)[^\n]{0,180}?(?:use|replace with)\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?',
+                text,
+                re.IGNORECASE,
+            )
             if use_instead_match:
                 old_sym = use_instead_match.group(1).strip("`\"'() ")
                 new_sym = use_instead_match.group(2).strip("`\"'() ")
             else:
-                old_sym, new_sym = None, None
-        else:
-            new_sym = use_instead_match.group(1).strip("`\"'() ")
-            old_sym = use_instead_match.group(2).strip("`\"'() ")
+                trailing_instead = re.search(
+                    r'[`"]([A-Za-z_][\w.]*)[`"]?\s+(?:was removed|has been removed|is deprecated)[^\n]{0,180}[Uu]se\s+[`"]([A-Za-z_][\w.]*)[`"]?\s+instead',
+                    text,
+                )
+                if trailing_instead:
+                    old_sym = trailing_instead.group(1).strip("`\"'() ")
+                    new_sym = trailing_instead.group(2).strip("`\"'() ")
 
-        if old_sym and new_sym and old_sym != new_sym:
-            pkg = package or "pkg"
-            if runtime == "python":
-                before_code = f"import {pkg}\nres = getattr({pkg}, '{old_sym}', None) or {pkg}.{old_sym}()\nprint('OLD_EXECUTED', res)\n"
-                after_code = f"import {pkg}\nres = getattr({pkg}, '{new_sym}', None) or {pkg}.{new_sym}()\nprint('NEW_EXECUTED', res)\n"
-                return {"before": before_code, "after": after_code}
-            elif runtime in ("nodejs", "javascript", "typescript"):
-                before_code = f"const {pkg} = require('{pkg}');\nconst res = {pkg}.{old_sym} || {pkg}.{old_sym}();\nconsole.log('OLD_EXECUTED', res);\n"
-                after_code = f"const {pkg} = require('{pkg}');\nconst res = {pkg}.{new_sym} || {pkg}.{new_sym}();\nconsole.log('NEW_EXECUTED', res);\n"
-                return {"before": before_code, "after": after_code}
+        alias = cls._alias_snippets(package, old_sym or "", new_sym or "", runtime) if old_sym and new_sym else None
+        if alias:
+            return alias
 
-        # 3. Heuristic Pattern: "renamed `<old>` to `<new>`"
+        # 6. Heuristic Pattern: "renamed `<old>` to `<new>`"
         rename_match = re.search(r'renamed\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?\s+to\s+[`"]?([a-zA-Z0-9_\.]+(?:\(\))?)[`"]?', text, re.IGNORECASE)
         if rename_match:
-            old_sym = rename_match.group(1).strip("`\"'() ")
-            new_sym = rename_match.group(2).strip("`\"'() ")
-            if old_sym != new_sym:
-                pkg = package or "pkg"
-                if runtime == "python":
-                    before_code = f"import {pkg}\nres = getattr({pkg}, '{old_sym}', None) or {pkg}.{old_sym}()\nprint('OLD_EXECUTED', res)\n"
-                    after_code = f"import {pkg}\nres = getattr({pkg}, '{new_sym}', None) or {pkg}.{new_sym}()\nprint('NEW_EXECUTED', res)\n"
-                    return {"before": before_code, "after": after_code}
-                elif runtime in ("nodejs", "javascript", "typescript"):
-                    before_code = f"const {pkg} = require('{pkg}');\nconst res = {pkg}.{old_sym} || {pkg}.{old_sym}();\nconsole.log('OLD_EXECUTED', res);\n"
-                    after_code = f"const {pkg} = require('{pkg}');\nconst res = {pkg}.{new_sym} || {pkg}.{new_sym}();\nconsole.log('NEW_EXECUTED', res);\n"
-                    return {"before": before_code, "after": after_code}
+            renamed = cls._alias_snippets(
+                package,
+                rename_match.group(1).strip("`\"'() "),
+                rename_match.group(2).strip("`\"'() "),
+                runtime,
+            )
+            if renamed:
+                return renamed
 
         return None
 
     @classmethod
     def extract_pins(cls, text: str, package: str) -> Dict[str, str]:
-        """Extracts version pins from release notes."""
-        pins = {}
-        match = re.search(r'Pin:\s*([a-zA-Z0-9_\-]+[><=!~^0-9.,* ]+)', text, re.IGNORECASE)
+        """Extract package constraints without dropping comma-separated clauses."""
+        pins: Dict[str, str] = {}
+        match = re.search(r"Pin:\s*([^\n\r]+)", text, re.IGNORECASE)
         if match:
-            pin_str = match.group(1).strip()
-            for part in pin_str.split(","):
-                part = part.strip()
-                m = re.match(r'([a-zA-Z0-9_\-]+)\s*([><=!~^0-9.,* ]+)', part)
-                if m:
-                    pins[m.group(1)] = m.group(2).strip()
-                elif package:
-                    pins[package] = part
-        if not pins and package:
-            pins[package] = ">=1.0.0"
+            current_package: Optional[str] = None
+            for raw_part in match.group(1).split(","):
+                part = raw_part.strip()
+                named = re.fullmatch(
+                    r"([A-Za-z0-9_@./\-]+)\s*((?:[<>=!~]=?|\^)[0-9A-Za-z.*+!<>=~\-]+)",
+                    part,
+                )
+                continuation = re.fullmatch(r"((?:[<>=!~]=?|\^)[0-9A-Za-z.*+!<>=~\-]+)", part)
+                if named:
+                    current_package = named.group(1)
+                    pins[current_package] = named.group(2)
+                elif continuation and current_package:
+                    pins[current_package] = f"{pins[current_package]},{continuation.group(1)}"
         return pins
 
     @classmethod
@@ -790,17 +869,38 @@ class BundleSynthesizer:
 
     @classmethod
     def synthesize_bundle(cls, raw_entry: Dict[str, Any]) -> Optional[CompatibilityBundle]:
-        pkg = raw_entry.get("package", "unknown")
-        ver = raw_entry.get("version", "1.0.0")
+        pkg = str(raw_entry.get("package", "unknown")).strip().lower()
+        ver = str(raw_entry.get("version", "1.0.0")).strip().lstrip("v")
         notes = raw_entry.get("release_notes", "")
-        rt = raw_entry.get("runtime", "python")
+        rt = str(raw_entry.get("runtime", "python")).lower()
         url = raw_entry.get("url", f"https://synapsemesh.dev/bundles/{pkg}")
+        known_packages = {target["package"] for target in KNOWN_UPSTREAM_TARGETS}
+        if pkg not in known_packages or rt not in {"python", "nodejs", "javascript", "typescript"}:
+            return None
+        if not re.fullmatch(r"[0-9][0-9A-Za-z.+\-]{0,63}", ver):
+            return None
+        if not isinstance(notes, str) or len(notes) > 8000:
+            return None
+        if not isinstance(url, str) or not re.match(r"^https?://", url, re.IGNORECASE):
+            url = "https://synapsemesh.dev/"
+        trusted_examples = raw_entry.get("trusted_code_examples") is True
+        if not trusted_examples:
+            notes = ZeroPiiSanitizer.sanitize_text(notes)
+            url = ZeroPiiSanitizer.sanitize_text(url)
+            if not re.match(r"^https?://", url, re.IGNORECASE):
+                url = "https://synapsemesh.dev/"
 
         err_sig = BreakingChangeExtractor.extract_error_signature(notes)
         if not err_sig:
             err_sig = f"BreakingChange: {pkg} version {ver} API incompatibility"
+        err_sig = ZeroPiiSanitizer.sanitize_text(err_sig)
 
-        before_after = BreakingChangeExtractor.extract_before_after(notes, package=pkg, runtime=rt)
+        before_after = BreakingChangeExtractor.extract_before_after(
+            notes,
+            package=pkg,
+            runtime=rt,
+            allow_embedded_code=trusted_examples,
+        )
         if not before_after:
             return None
 
@@ -811,31 +911,38 @@ class BundleSynthesizer:
         unified_diff = BreakingChangeExtractor.generate_unified_diff(before_code, after_code, target_file)
         pins = BreakingChangeExtractor.extract_pins(notes, pkg)
         do_not = BreakingChangeExtractor.extract_do_not(notes)
+        do_not = ZeroPiiSanitizer.sanitize_data(do_not)
 
         sig_hash = hashlib.sha256(f"{pkg}_{ver}_{err_sig}".encode("utf-8")).hexdigest()[:8]
         clean_pkg = re.sub(r'[^a-zA-Z0-9]', '', pkg).lower()
         clean_ver = re.sub(r'[^a-zA-Z0-9]', '', ver).lower()
         bundle_id = f"draft_{clean_pkg}_{clean_ver}_{sig_hash}"
 
-        repro_script = """import runpy
+        if rt == "python":
+            repro_script = """import runpy
 runpy.run_path("client.py", run_name="__main__")
 """
-        test_suite = """import runpy
+            test_suite = """import runpy
 mod = runpy.run_path("client.py", run_name="__main__")
-assert any(k in mod for k in ("result", "val", "res", "con", "session", "form", "chain", "router")), "Target execution failed to produce valid output state"
+assert any(k in mod for k in ("result", "val", "res", "con", "client", "transport", "u", "settings", "session", "form", "chain", "router", "_obj", "app", "_handler")), "Target execution failed to produce valid output state"
 print("VERIFICATION_PASSED_STAGE_3")
 """
+        else:
+            repro_script = "require('./client.js');\n"
+            test_suite = "require('./client.js');\nconsole.log('VERIFICATION_PASSED_STAGE_3');\n"
 
+        replacement_one = "pass" if rt == "python" else "// empty bypass"
+        replacement_two = "# empty bypass" if rt == "python" else "throw new Error('mutant');"
         mutations = [
             BundleMutation(
-                id="mutant_pass_silence",
-                description="Hallucinated empty pass mutant",
-                unifiedDiff=f"--- a/{target_file}\n+++ b/{target_file}\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + "\n+pass\n"
+                id="mutant_empty_bypass",
+                description="Empty bypass mutant",
+                unifiedDiff=f"--- a/{target_file}\n+++ b/{target_file}\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + f"\n+{replacement_one}\n"
             ),
             BundleMutation(
-                id="mutant_empty_return",
-                description="Hallucinated empty return mutant",
-                unifiedDiff=f"--- a/{target_file}\n+++ b/{target_file}\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + "\n+# empty bypass\n"
+                id="mutant_exception_bypass",
+                description="Exception or empty-output mutant",
+                unifiedDiff=f"--- a/{target_file}\n+++ b/{target_file}\n@@ -1,{len(before_code.splitlines())} +1,1 @@\n" + "\n".join(f"-{line}" for line in before_code.splitlines()) + f"\n+{replacement_two}\n"
             )
         ]
 
@@ -849,7 +956,7 @@ print("VERIFICATION_PASSED_STAGE_3")
                 package=pkg,
                 fromVersion=f"<{ver}",
                 toVersion=ver if not ver.startswith(">=") else ver.replace(">=", ""),
-                affectedVersionRange=f">={ver}" if not ver.startswith(">=") else ver,
+                affectedVersionRange=pins.get(pkg) or f">={ver}",
                 runtime=rt,
                 platform="all"
             ),
@@ -875,16 +982,24 @@ print("VERIFICATION_PASSED_STAGE_3")
                 timeoutMs=15000
             ),
             provenance=BundleProvenance(
-                spdxLicense="MIT",
+                spdxLicense="NOASSERTION",
                 primarySources=[url],
-                verifiedAt=datetime.now(timezone.utc).isoformat()
+                verifiedAt=None,
+                sourceTrusted=trusted_examples,
             )
         )
         return bundle
 
 
 class UpstreamMiningEngine:
-    """Top-level autonomous worker executing zero-token upstream mining and sandbox verification."""
+    """Top-level zero-token worker for discovery and unexecuted draft retention."""
+
+    @staticmethod
+    def is_synthetic_oracle(bundle: CompatibilityBundle) -> bool:
+        """Classify fixture shape without executing candidate code."""
+        from scripts.synapse_reverify import bundle_uses_real_package
+
+        return not bundle_uses_real_package(bundle.model_dump())
 
     @classmethod
     async def mine_and_verify_all(
@@ -894,123 +1009,86 @@ class UpstreamMiningEngine:
     ) -> List[CompatibilityBundle]:
         """
         Runs autonomous mining pipeline across all seed and live upstream registries.
-        Persists strictly to `bundles/drafts/` with status DRAFT or VERIFIED (if 4 stages pass).
-        NEVER writes directly to `bundles/golden/`.
+        Persists strictly to `bundles/drafts/` with status DRAFT. It does not
+        execute candidates or write to `bundles/golden/`.
         """
         candidates = []
         
-        # 1. Gather upstream changelogs
+        # 1. Gather upstream changelogs. Blocking registry clients run off the
+        # event loop so API workers remain responsive.
         seed_data = UpstreamReleaseFetcher.get_seed_changelogs()
-        
-        for target in KNOWN_UPSTREAM_TARGETS:
+
+        async def fetch_target(target: Dict[str, Any]) -> List[Dict[str, Any]]:
+            entries: List[Dict[str, Any]] = []
             if target.get("ecosystem") == "pypi":
-                live_res = UpstreamReleaseFetcher.fetch_pypi_changelog(target["package"])
-                seed_data.extend(live_res)
+                entries.extend(await asyncio.to_thread(
+                    UpstreamReleaseFetcher.fetch_pypi_changelog,
+                    target["package"],
+                ))
             if target.get("repo"):
-                atom_res = UpstreamReleaseFetcher.fetch_github_releases_atom(target["repo"], limit=3)
+                atom_res = await asyncio.to_thread(
+                    UpstreamReleaseFetcher.fetch_github_releases_atom,
+                    target["repo"],
+                    3,
+                )
                 for ar in atom_res:
                     ar["runtime"] = target.get("runtime", "python")
-                    seed_data.append(ar)
+                    ar["package"] = target["package"]
+                    entries.append(ar)
+            return entries
+
+        fetched_groups = await asyncio.gather(
+            *(fetch_target(target) for target in KNOWN_UPSTREAM_TARGETS),
+            return_exceptions=True,
+        )
+        for group in fetched_groups:
+            if isinstance(group, list):
+                seed_data.extend(group)
 
         # Also fetch live stream from PyPI RSS updates
-        rss_updates = UpstreamReleaseFetcher.fetch_pypi_rss_updates(limit=10)
-        seed_data.extend(rss_updates)
+        known_packages = {target["package"] for target in KNOWN_UPSTREAM_TARGETS}
+        rss_updates = await asyncio.to_thread(UpstreamReleaseFetcher.fetch_pypi_rss_updates, 10)
+        seed_data.extend(entry for entry in rss_updates if entry.get("package") in known_packages)
 
-        # 2. Extract & Synthesize
-        from scripts.synapse_reverify import verify_golden_bundle
-
+        # Stable de-duplication keeps repository-owned seeds authoritative.
+        unique_entries: Dict[tuple[str, str, str], Dict[str, Any]] = {}
         for entry in seed_data:
+            key = (
+                str(entry.get("package") or "").lower(),
+                str(entry.get("version") or ""),
+                str(entry.get("runtime") or "python").lower(),
+            )
+            unique_entries.setdefault(key, entry)
+
+        # 2. Extract and synthesize storage-only candidates.
+        for entry in unique_entries.values():
             bundle = BundleSynthesizer.synthesize_bundle(entry)
             if not bundle:
                 continue
 
-            # 3. Execute 4-stage verification in sandbox
-            bundle_dict = bundle.model_dump()
-            try:
-                ver_res = verify_golden_bundle(bundle_dict)
-                # verify_golden_bundle returns a boolean True/False
-                if ver_res is True or (isinstance(ver_res, dict) and ver_res.get("verified") is True):
-                    bundle.status = "VERIFIED"
-                else:
-                    bundle.status = "UNVERIFIED"
-            except Exception as e:
-                logger.debug(f"4-stage test execution for {bundle.bundleId} failed: {e}")
-                bundle.status = "DRAFT"
-
+            # No source category, including repository-owned seed prose, may
+            # bypass the disposable allowlist worker and exact-run artifact gate.
+            bundle.status = "DRAFT"
             candidates.append(bundle)
 
         # 4. Persist to drafts directory
         if persist_to_disk:
             try:
-                target_dir = destination_dir or DRAFTS_DIR
+                target_dir = (destination_dir or DRAFTS_DIR).resolve()
+                golden_dir = (DRAFTS_DIR.parent / "golden").resolve()
+                if target_dir == golden_dir or golden_dir in target_dir.parents:
+                    raise ValueError("autonomous miners may not write to bundles/golden")
                 target_dir.mkdir(parents=True, exist_ok=True)
                 for b in candidates:
                     out_path = target_dir / f"{b.bundleId}.json"
-                    out_path.write_text(json.dumps(b.model_dump(), indent=2), encoding="utf-8")
+                    temp_path = target_dir / f".{b.bundleId}.{os.getpid()}.tmp"
+                    temp_path.write_text(json.dumps(b.model_dump(), indent=2), encoding="utf-8")
+                    os.replace(temp_path, out_path)
                     logger.info(f"Persisted draft bundle: {b.bundleId} (Status: {b.status})")
-            except Exception as pe:
-                logger.warning(f"File persistence for drafts skipped ({pe}); proceeding to database sync.")
-
-        # 5. Automatically sync verified bundles into SQLite database
-        try:
-            from app.database import get_db_connection
-            db = await get_db_connection()
-            try:
-                for b in candidates:
-                    is_verified = (b.status == "VERIFIED")
-                    prob = {
-                        "errorSignature": b.fingerprint.errorSignature,
-                        "runtime": b.scope.runtime,
-                        "packages": b.patch.pinnedDependencies,
-                        "description": b.description
-                    }
-                    sol = {
-                        "summary": b.description,
-                        "codeDiff": b.patch.unifiedDiff,
-                        "patchDiff": b.patch.unifiedDiff,
-                        "instructions": ["Apply verified patch to resolve breaking change."],
-                        "pinnedDependencies": b.patch.pinnedDependencies,
-                        "doNot": b.patch.doNot
-                    }
-                    repro = {
-                        "script": b.verification.reproductionScript,
-                        "testSuite": b.verification.testSuite
-                    }
-                    evi = {
-                        "verificationStatus": "VERIFIED" if is_verified else "DRAFT",
-                        "sandboxExitCode": 0 if is_verified else 1,
-                        "passedTests": 1 if is_verified else 0,
-                        "totalTests": 1,
-                        "confidenceScore": 1.0 if is_verified else 0.65,
-                        "primarySource": b.provenance.primarySources[0] if b.provenance.primarySources else None
-                    }
-                    recipe_id = f"rec_{b.bundleId}"
-                    await db.execute("""
-                        INSERT INTO recipes (id, runtime, error_signature, problem_json, solution_json, reproduction_json, evidence_json, confidence_score, verification_status, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                        ON CONFLICT(id) DO UPDATE SET
-                            problem_json = excluded.problem_json,
-                            solution_json = excluded.solution_json,
-                            reproduction_json = excluded.reproduction_json,
-                            evidence_json = excluded.evidence_json,
-                            verification_status = excluded.verification_status,
-                            confidence_score = excluded.confidence_score,
-                            updated_at = CURRENT_TIMESTAMP
-                    """, (
-                        recipe_id,
-                        b.scope.runtime,
-                        b.fingerprint.errorSignature,
-                        json.dumps(prob),
-                        json.dumps(sol),
-                        json.dumps(repro),
-                        json.dumps(evi),
-                        1.0 if is_verified else 0.65,
-                        "VERIFIED" if is_verified else "DRAFT"
-                    ))
-                await db.commit()
-            finally:
-                await db.close()
-        except Exception as e:
-            logger.error(f"Error syncing mined verified bundles to SQLite: {e}")
+            except Exception as exc:
+                logger.warning(
+                    "File persistence for drafts skipped (%s); cycle continues without writes.",
+                    type(exc).__name__,
+                )
 
         return candidates

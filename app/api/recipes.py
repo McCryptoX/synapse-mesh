@@ -4,8 +4,9 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import json
 import uuid
-from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
+import sqlite3
+import re
+from typing import List, Optional, Any
 from app.models.recipe import (
     VerifiedRecipe,
     RecipeSearchRequest,
@@ -13,65 +14,86 @@ from app.models.recipe import (
     ProblemDefinition,
     SolutionDefinition,
     ReproductionDefinition,
-    EvidenceDefinition
+    EvidenceDefinition,
+    VERIFIED_EVIDENCE_CONTRACT,
 )
 from app.database import get_db_connection
+from app.config import settings
 from app.core.sanitizer import ZeroPiiSanitizer
-from app.core.sandbox import SandboxRunner
+from app.core.registry_snapshot import build_registry_snapshot, project_recipe_row
+from app.core.version_matcher import VersionMatcher
+from app.core.telemetry_categories import (
+    summarize_action,
+    summarize_source,
+    summarize_user_agent,
+)
 
 router = APIRouter(tags=["Living Solutions Recipes"])
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=True)
 
+RECIPE_ID_PATTERN = re.compile(r"^rec_[a-z0-9][a-z0-9_-]{0,59}$")
+
+
+def _recipe_from_row(row: Any) -> Optional[VerifiedRecipe]:
+    """Compatibility wrapper for callers and focused regression tests."""
+    return project_recipe_row(row)
+
 
 @router.get("/api/v1/recipes/stats", tags=["System"])
 async def get_recipe_stats(response: Response):
-    """Returns real-time statistics and agent usage metrics (Zero-PII)."""
+    """Return one internally consistent registry snapshot and coarse usage."""
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     db = await get_db_connection()
     try:
-        cursor = await db.execute("SELECT COUNT(*) as total FROM recipes")
-        total_all = (await cursor.fetchone())["total"]
-
-        cursor = await db.execute("SELECT COUNT(*) as verified FROM recipes WHERE verification_status = 'VERIFIED'")
-        total_verified = (await cursor.fetchone())["verified"]
-
-        cursor = await db.execute("SELECT COUNT(*) as draft FROM recipes WHERE verification_status IN ('DRAFT', 'PROVISIONAL')")
-        db_drafts = (await cursor.fetchone())["draft"]
-
-        cursor = await db.execute("SELECT runtime, COUNT(*) as count FROM recipes WHERE verification_status = 'VERIFIED' GROUP BY runtime")
-        by_runtime = {row["runtime"].lower(): row["count"] for row in await cursor.fetchall()}
-
-        import glob
-        disk_drafts = len(glob.glob("bundles/drafts/*.json"))
-        total_drafts = db_drafts + disk_drafts
+        snapshot = await build_registry_snapshot(db)
 
         # Access & Agent Activity Metrics
         cursor = await db.execute("SELECT COUNT(*) as calls FROM access_logs WHERE source_type = 'mcp_call'")
         total_mcp_calls = (await cursor.fetchone())["calls"]
 
         cursor = await db.execute("SELECT user_agent_summary, COUNT(*) as count FROM access_logs GROUP BY user_agent_summary")
-        agent_breakdown = {row["user_agent_summary"]: row["count"] for row in await cursor.fetchall()}
+        agent_breakdown: dict[str, int] = {}
+        for row in await cursor.fetchall():
+            category = summarize_user_agent(row["user_agent_summary"])
+            agent_breakdown[category] = agent_breakdown.get(category, 0) + row["count"]
+        agent_breakdown = dict(sorted(agent_breakdown.items()))
 
         # Go-Gate 10 Anti-Leakage: Never expose raw query strings in public telemetry
         cursor = await db.execute("SELECT source_type, action, user_agent_summary, created_at FROM access_logs ORDER BY id DESC LIMIT 10")
         recent_activity = [
             {
-                "type": r["source_type"],
-                "action": r["action"],
-                "client": r["user_agent_summary"],
+                "type": summarize_source(r["source_type"]),
+                "action": summarize_action(r["action"]),
+                "client": summarize_user_agent(r["user_agent_summary"]),
                 "timestamp": r["created_at"]
             }
             for r in await cursor.fetchall()
         ]
 
         return {
-            "totalRecipes": total_all + disk_drafts,
-            "verifiedRecipes": total_verified,
-            "draftRecipes": total_drafts,
-            "verifiedRatio": round(total_verified / (total_all + disk_drafts), 2) if (total_all + disk_drafts) > 0 else 1.0,
-            "runtimes": by_runtime,
+            # Compatibility keys retain their names while their values now
+            # come from the same validated snapshot as the list and Ops UI.
+            "totalRecipes": snapshot.total,
+            "verifiedRecipes": snapshot.evidence_qualified_curated,
+            "goldenBundles": snapshot.curated,
+            "draftRecipes": snapshot.drafts,
+            "runtimes": snapshot.by_runtime,
+            # Explicit orthogonal taxonomy for new clients.
+            "curatedBundles": snapshot.curated,
+            "evidenceQualifiedCurated": snapshot.evidence_qualified_curated,
+            "unverifiedCurated": (
+                snapshot.curated - snapshot.evidence_qualified_curated
+            ),
+            "failedRecipes": snapshot.failed,
+            "invalidRecords": snapshot.invalid_records,
+            "recordClassCounts": {
+                "CURATED": snapshot.curated,
+                "DRAFT": snapshot.drafts,
+                "FAILED": snapshot.failed,
+            },
+            "evidenceStatusCounts": snapshot.evidence_statuses,
             "agentUsage": {
                 "totalMcpCalls": total_mcp_calls,
                 "agentBreakdown": agent_breakdown,
@@ -81,8 +103,6 @@ async def get_recipe_stats(response: Response):
     finally:
         await db.close()
 
-
-import re
 
 STOPWORDS = {
     "the", "was", "has", "been", "and", "for", "with", "from", "that", "this", 
@@ -108,6 +128,56 @@ PACKAGE_ALIASES = {
 }
 
 
+def _normalise_package_versions(
+    packages: Optional[dict[str, str]],
+) -> dict[str, str]:
+    if not packages:
+        return {}
+    return {str(name).lower(): version for name, version in packages.items()}
+
+
+def _recipe_package_names(recipe: VerifiedRecipe) -> set[str]:
+    searchable = " ".join(
+        (
+            recipe.id.lower(),
+            recipe.problem.errorSignature.lower(),
+            recipe.problem.description.lower(),
+        )
+    )
+    names = {package for package in KNOWN_PACKAGES if package in searchable}
+    for symbol, package in PACKAGE_ALIASES.items():
+        if symbol in searchable:
+            names.add(package)
+    return names
+
+
+def recipe_matches_requested_evidence_versions(
+    recipe: VerifiedRecipe,
+    packages: Optional[dict[str, str]],
+    *,
+    require_explicit: bool = False,
+) -> bool:
+    """Keep run-bound evidence scoped to its exact observed package release."""
+    requested = _normalise_package_versions(packages)
+    if not requested:
+        return not require_explicit
+
+    relevant = set(requested).intersection(_recipe_package_names(recipe))
+    if not relevant:
+        return False
+
+    observed = {
+        str(name).lower(): version
+        for name, version in recipe.evidence.toolchainVersions.items()
+    }
+    return all(
+        VersionMatcher.matches_exact_observed_version(
+            requested[package], observed.get(package)
+        )
+        for package in relevant
+    )
+
+
 @router.post("/api/v1/recipes/search", response_model=List[VerifiedRecipe])
 async def search_recipes(req: RecipeSearchRequest):
     """High-precision search for verified solutions with exact whole-word scoring and package relevance."""
@@ -121,94 +191,73 @@ async def search_recipes(req: RecipeSearchRequest):
         if t in PACKAGE_ALIASES:
             query_packages.add(PACKAGE_ALIASES[t])
             
-    if req.packages:
-        query_packages.update(req.packages.keys())
+    requested_package_versions = _normalise_package_versions(req.packages)
+    query_packages.update(requested_package_versions)
 
-    db = await get_db_connection()
-    try:
-        # Load candidate recipes matching runtime or basic confidence
-        query = "SELECT * FROM recipes WHERE confidence_score >= ?"
-        params: List[Any] = [req.minConfidence]
-        if req.runtime:
-            query += " AND runtime = ?"
-            params.append(req.runtime.lower())
-            
-        cursor = await db.execute(query, params)
-        rows = await cursor.fetchall()
-        
-        from app.core.signature_matcher import SignatureMatcher
-        
-        scored_recipes = []
-        for row in rows:
-            prob = json.loads(row["problem_json"])
-            sol = json.loads(row["solution_json"])
-            repro = json.loads(row["reproduction_json"])
-            evi = json.loads(row["evidence_json"])
-            
-            sig = row["error_signature"] or ""
-            desc = prob.get("description", "").lower()
-            rec_id = row["id"].lower()
-            
-            # Package-Specific Relevance
-            recipe_packages = {pkg.lower() for pkg in KNOWN_PACKAGES if pkg in rec_id or pkg in sig.lower() or pkg in desc}
-            for sym, mapped_pkg in PACKAGE_ALIASES.items():
-                if sym in sig.lower() or sym in desc:
-                    recipe_packages.add(mapped_pkg)
-                    
-            if query_packages and recipe_packages and not query_packages.intersection(recipe_packages):
-                # Query clearly asked for package X, but this recipe is package Y -> strictly reject
-                continue
+    snapshot = await build_registry_snapshot()
+    from app.core.signature_matcher import SignatureMatcher
 
-            # Structural Semantic Matcher Gate
-            is_matched, match_conf = SignatureMatcher.compute_match(req.errorSignature, sig)
-            if not is_matched or match_conf < 0.70:
-                continue
+    scored_recipes = []
+    for entry in snapshot.entries:
+        recipe_obj = entry.recipe
+        if entry.evidence_status != "VERIFIED":
+            continue
+        if req.runtime and recipe_obj.problem.runtime.lower() != req.runtime.lower():
+            continue
 
-            score = match_conf * 1000.0
-            if row["verification_status"] == "VERIFIED":
-                score += 100.0
-            score *= (row["confidence_score"] or 0.5)
+        sig = recipe_obj.problem.errorSignature
+        desc = recipe_obj.problem.description.lower()
+        rec_id = recipe_obj.id.lower()
 
-            recipe_obj = VerifiedRecipe(
-                id=row["id"],
-                problem=ProblemDefinition(**prob),
-                solution=SolutionDefinition(**sol),
-                reproduction=ReproductionDefinition(**repro),
-                evidence=EvidenceDefinition(**evi)
-            )
-            scored_recipes.append((score, recipe_obj))
+        # Package-Specific Relevance
+        recipe_packages = _recipe_package_names(recipe_obj)
 
-        # Sort by relevance score descending
-        scored_recipes.sort(key=lambda x: x[0], reverse=True)
-        if not scored_recipes:
-            return []
-            
-        top_score = scored_recipes[0][0]
-        filtered = [r for score, r in scored_recipes if score >= (top_score * 0.6)]
-        return filtered[:req.limit]
-    finally:
-        await db.close()
+        if query_packages and not query_packages.intersection(recipe_packages):
+            continue
+        if req.packages and not recipe_matches_requested_evidence_versions(
+            recipe_obj, req.packages
+        ):
+            continue
+
+        is_matched, match_conf = SignatureMatcher.compute_match(
+            req.errorSignature, sig
+        )
+        if not is_matched or match_conf < 0.70:
+            continue
+
+        score = match_conf * 1000.0 + 100.0
+        scored_recipes.append((score, recipe_obj))
+
+    scored_recipes.sort(key=lambda x: x[0], reverse=True)
+    if not scored_recipes:
+        return []
+
+    top_score = scored_recipes[0][0]
+    filtered = [r for score, r in scored_recipes if score >= (top_score * 0.6)]
+    return filtered[:req.limit]
 
 
-@router.post("/api/v1/recipes/submit", response_model=VerifiedRecipe, status_code=201)
-async def submit_recipe(req: RecipeSubmitRequest):
-    """Submits a new living solution recipe, sanitizes it and executes automated sandbox verification."""
+async def store_recipe_draft(req: RecipeSubmitRequest) -> VerifiedRecipe:
+    """Sanitize and persist a public submission as DRAFT without executing its code."""
     recipe_id = req.id or f"rec_{uuid.uuid4().hex[:12]}"
-    
-    # 1. Zero-PII Sanitization
+    if recipe_id.startswith("bundle_"):
+        raise HTTPException(status_code=422, detail="The bundle_ namespace is reserved for curated bundles")
+    if not RECIPE_ID_PATTERN.fullmatch(recipe_id):
+        raise HTTPException(
+            status_code=422,
+            detail="Recipe IDs must start with rec_ and contain only lowercase letters, digits, underscores, or hyphens",
+        )
+
     sanitized_prob = ZeroPiiSanitizer.sanitize_data(req.problem.model_dump())
     sanitized_sol = ZeroPiiSanitizer.sanitize_data(req.solution.model_dump())
     sanitized_repro = ZeroPiiSanitizer.sanitize_data(req.reproduction.model_dump())
-    
-    # 2. Automated Sandbox Verification (Full 4-Stage)
-    evidence = await SandboxRunner.verify_recipe_full(
-        runtime=sanitized_prob["runtime"],
-        error_signature=sanitized_prob.get("errorSignature", ""),
-        repro_script=sanitized_repro.get("script", ""),
-        test_suite=sanitized_repro.get("testSuite", ""),
-        primary_source=req.primarySource
+    sanitized_source = ZeroPiiSanitizer.sanitize_text(req.primarySource) if req.primarySource else None
+
+    evidence = EvidenceDefinition(
+        primarySource=sanitized_source,
+        verificationNote="Public submission stored without server-side code execution; independent verification is required.",
     )
-    
+
     recipe = VerifiedRecipe(
         id=recipe_id,
         problem=ProblemDefinition(**sanitized_prob),
@@ -216,79 +265,48 @@ async def submit_recipe(req: RecipeSubmitRequest):
         reproduction=ReproductionDefinition(**sanitized_repro),
         evidence=evidence
     )
-    
+
     db = await get_db_connection()
     try:
-        await db.execute("""
-            INSERT OR REPLACE INTO recipes (
-                id, runtime, error_signature, problem_json, solution_json, 
-                reproduction_json, evidence_json, confidence_score, verification_status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            recipe.id,
-            recipe.problem.runtime.lower(),
-            recipe.problem.errorSignature,
-            json.dumps(recipe.problem.model_dump()),
-            json.dumps(recipe.solution.model_dump()),
-            json.dumps(recipe.reproduction.model_dump()),
-            json.dumps(recipe.evidence.model_dump(), default=str),
-            recipe.evidence.confidenceScore,
-            recipe.evidence.verificationStatus
-        ))
-        await db.commit()
-        return recipe
+        try:
+            await db.execute("""
+                INSERT INTO recipes (
+                    id, runtime, error_signature, problem_json, solution_json,
+                    reproduction_json, evidence_json, confidence_score, verification_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                recipe.id,
+                recipe.problem.runtime.lower(),
+                recipe.problem.errorSignature,
+                json.dumps(recipe.problem.model_dump()),
+                json.dumps(recipe.solution.model_dump()),
+                json.dumps(recipe.reproduction.model_dump()),
+                json.dumps(recipe.evidence.model_dump(), default=str),
+                0.0,
+                "DRAFT",
+            ))
+            await db.commit()
+        except sqlite3.IntegrityError as exc:
+            await db.rollback()
+            raise HTTPException(status_code=409, detail="A recipe with this ID already exists") from exc
     finally:
         await db.close()
+    return recipe
+
+
+@router.post("/api/v1/recipes/submit", response_model=VerifiedRecipe, status_code=201)
+async def submit_recipe(req: RecipeSubmitRequest):
+    """Store a sanitized public submission as an unexecuted DRAFT."""
+    return await store_recipe_draft(req)
 
 
 @router.post("/api/v1/recipes/{recipe_id}/verify", response_model=VerifiedRecipe)
 async def verify_recipe_by_id(recipe_id: str):
-    """Re-runs the sandbox verification for an existing recipe and updates evidence logs."""
-    db = await get_db_connection()
-    try:
-        cursor = await db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
-        row = await cursor.fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Recipe not found")
-            
-        prob = json.loads(row["problem_json"])
-        sol = json.loads(row["solution_json"])
-        repro = json.loads(row["reproduction_json"])
-        evi = json.loads(row["evidence_json"])
-        
-        new_evidence = await SandboxRunner.verify_recipe_full(
-            runtime=prob["runtime"],
-            error_signature=prob.get("errorSignature", ""),
-            repro_script=repro.get("script", ""),
-            test_suite=repro.get("testSuite", ""),
-            primary_source=evi.get("primarySource")
-        )
-        
-        recipe = VerifiedRecipe(
-            id=row["id"],
-            problem=ProblemDefinition(**prob),
-            solution=SolutionDefinition(**sol),
-            reproduction=ReproductionDefinition(**repro),
-            evidence=new_evidence
-        )
-        
-        await db.execute("""
-            UPDATE recipes SET 
-                evidence_json = ?, 
-                confidence_score = ?, 
-                verification_status = ?,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """, (
-            json.dumps(new_evidence.model_dump(), default=str),
-            new_evidence.confidenceScore,
-            new_evidence.verificationStatus,
-            recipe_id
-        ))
-        await db.commit()
-        return recipe
-    finally:
-        await db.close()
+    """Fail closed: public requests cannot execute stored community code."""
+    raise HTTPException(
+        status_code=403,
+        detail="Server-side verification of public recipes is disabled; use the controlled bundle verification pipeline",
+    )
 
 
 @router.get("/recipes/{recipe_id}", response_class=HTMLResponse, tags=["Web UI"])
@@ -296,35 +314,21 @@ async def get_recipe_html_page(request: Request, recipe_id: str):
     """HTML Web Detail Page with Schema.org JSON-LD for Search Engines & Developers."""
     recipe = await get_recipe_by_id(recipe_id)
     template = jinja_env.get_template("recipe_detail.html")
-    confidence_percent = int(recipe.evidence.confidenceScore * 100)
-    html_content = template.render(recipe=recipe, confidence_percent=confidence_percent)
+    html_content = template.render(
+        recipe=recipe,
+        active_page="",
+        canonical_mcp_url=settings.canonical_mcp_url,
+    )
     return HTMLResponse(content=html_content)
 
 
 @router.get("/api/v1/recipes/{recipe_id}", response_model=VerifiedRecipe)
 async def get_recipe_by_id(recipe_id: str):
-    """Retrieve a specific recipe by ID as JSON."""
-    db = await get_db_connection()
-    try:
-        cursor = await db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,))
-        row = await cursor.fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Recipe not found")
-            
-        prob = json.loads(row["problem_json"])
-        sol = json.loads(row["solution_json"])
-        repro = json.loads(row["reproduction_json"])
-        evi = json.loads(row["evidence_json"])
-        
-        return VerifiedRecipe(
-            id=row["id"],
-            problem=ProblemDefinition(**prob),
-            solution=SolutionDefinition(**sol),
-            reproduction=ReproductionDefinition(**repro),
-            evidence=EvidenceDefinition(**evi)
-        )
-    finally:
-        await db.close()
+    """Retrieve a record from the same current snapshot used by list and Ops."""
+    entry = (await build_registry_snapshot()).find(recipe_id)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return entry.recipe
 
 
 @router.get("/api/v1/recipes", response_model=List[VerifiedRecipe])
@@ -333,31 +337,13 @@ async def list_recipes(
     limit: int = Query(200, ge=1, le=1000),
     status: Optional[str] = Query(None)
 ):
-    """List recently verified recipes."""
+    """List the current registry; filters are applied before the limit."""
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    db = await get_db_connection()
-    try:
-        if status:
-            cursor = await db.execute(
-                "SELECT * FROM recipes WHERE verification_status = ? ORDER BY updated_at DESC LIMIT ?",
-                (status.upper(), limit)
-            )
+    entries = list((await build_registry_snapshot()).entries)
+    if status:
+        normalized = status.upper()
+        if normalized in {"CURATED", "DRAFT", "FAILED"}:
+            entries = [entry for entry in entries if entry.record_class == normalized]
         else:
-            cursor = await db.execute("SELECT * FROM recipes ORDER BY updated_at DESC LIMIT ?", (limit,))
-        rows = await cursor.fetchall()
-        results = []
-        for row in rows:
-            prob = json.loads(row["problem_json"]) if row["problem_json"] else {}
-            sol = json.loads(row["solution_json"]) if row["solution_json"] else {}
-            repro = json.loads(row["reproduction_json"]) if row["reproduction_json"] else {}
-            evi = json.loads(row["evidence_json"]) if row["evidence_json"] else {}
-            results.append(VerifiedRecipe(
-                id=row["id"],
-                problem=ProblemDefinition(**prob),
-                solution=SolutionDefinition(**sol),
-                reproduction=ReproductionDefinition(**repro),
-                evidence=EvidenceDefinition(**evi)
-            ))
-        return results
-    finally:
-        await db.close()
+            entries = [entry for entry in entries if entry.evidence_status == normalized]
+    return [entry.recipe for entry in entries[:limit]]

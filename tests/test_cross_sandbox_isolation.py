@@ -1,68 +1,54 @@
 import asyncio
-import os
 import uuid
+
 import pytest
+
 from app.core.sandbox import SandboxRunner
-from app.core.kernel_sandbox import KernelSandboxRunner
 
 
 @pytest.mark.asyncio
-async def test_concurrent_cross_sandbox_zero_information_leakage():
+async def test_concurrent_trusted_runner_exposes_shared_workspace_boundary(tmp_path, monkeypatch):
     """
-    Adversarial Test: Sandbox A runs concurrently with secret token A.
-    Sandbox B actively searches /proc, /tmp, and filesystem looking for Sandbox A's secret.
-    Asserts that Sandbox B cannot read or detect Sandbox A's private data (Zero Leakage).
-    """
-    secret_nonce_a = f"SYNAPSE_SECRET_A_{uuid.uuid4().hex}"
+    Prove the documented limitation instead of claiming per-run isolation.
 
-    # Sandbox A script: persists secret in memory and writes to local workspace file
+    Concurrent trusted fixtures share the API container's filesystem namespace,
+    so a sibling workspace is visible when its path is discovered. Public or
+    crawled code must therefore never be executed by this runner.
+    """
+    boundary_marker = f"SYNAPSE_BOUNDARY_MARKER_{uuid.uuid4().hex}"
+    workspace_a = tmp_path / "job-a"
+    workspace_b = tmp_path / "job-b"
+    allocated = iter((workspace_a, workspace_b))
+
+    def allocate_workspace(*, prefix):
+        assert prefix == "synapse_sandbox_"
+        path = next(allocated)
+        path.mkdir()
+        return str(path)
+
+    monkeypatch.setattr("app.core.sandbox.tempfile.mkdtemp", allocate_workspace)
+
+    # Fixture A writes a marker and remains active while fixture B inspects the
+    # shared parent directory.
     script_a = f"""
-import time, os
-secret = "{secret_nonce_a}"
-with open("private_secret.txt", "w") as f:
-    f.write(secret)
-# Keep alive briefly for concurrency
+import time
+with open("private_marker.txt", "w") as f:
+    f.write("{boundary_marker}")
 time.sleep(2.0)
 print("JOB_A_DONE")
 """
 
-    # Sandbox B script (Adversarial Scanner): attempts to discover secret_nonce_a
     script_b = f"""
-import os, glob
+from pathlib import Path
 
-discovered = []
-target_token = "{secret_nonce_a}"
-
-# 1. Probe sibling sandbox directories in /tmp
-for fpath in glob.glob("/tmp/synapse_sandbox_*/*"):
-    try:
-        with open(fpath, "r", errors="ignore") as f:
-            content = f.read()
-            if target_token in content:
-                discovered.append(fpath)
-    except Exception:
-        pass
-
-# 2. Scan /proc for other process cmdlines and environ
-if os.path.exists("/proc"):
-    for pid_entry in os.listdir("/proc"):
-        if pid_entry.isdigit() and pid_entry != str(os.getpid()):
-            for fname in ("cmdline", "environ"):
-                fpath = f"/proc/{{pid_entry}}/{{fname}}"
-                try:
-                    with open(fpath, "rb") as f:
-                        if target_token.encode() in f.read():
-                            discovered.append(fpath)
-                except Exception:
-                    pass
-
-if discovered:
-    print(f"LEAK_DETECTED: {{discovered}}")
+target = "{boundary_marker}"
+marker_file = Path({str(workspace_a / 'private_marker.txt')!r})
+if marker_file.is_file() and target in marker_file.read_text(errors="ignore"):
+    print("SIBLING_WORKSPACE_VISIBLE")
 else:
-    print("ZERO_LEAK_CONFIRMED")
+    print("SIBLING_WORKSPACE_NOT_OBSERVED")
 """
 
-    # Launch Sandbox A and Sandbox B concurrently
     task_a = asyncio.create_task(
         SandboxRunner.run_workspace_test(
             files={"worker_a.py": script_a},
@@ -71,8 +57,12 @@ else:
         )
     )
 
-    # Small delay to ensure Sandbox A is actively executing
-    await asyncio.sleep(0.3)
+    marker_path = workspace_a / "private_marker.txt"
+    for _ in range(100):
+        if marker_path.exists():
+            break
+        await asyncio.sleep(0.02)
+    assert marker_path.exists()
 
     task_b = asyncio.create_task(
         SandboxRunner.run_workspace_test(
@@ -86,5 +76,4 @@ else:
 
     assert res_a["passed"]
     assert res_b["passed"]
-    assert "ZERO_LEAK_CONFIRMED" in res_b["stdout"]
-    assert "LEAK_DETECTED" not in res_b["stdout"]
+    assert "SIBLING_WORKSPACE_VISIBLE" in res_b["stdout"]

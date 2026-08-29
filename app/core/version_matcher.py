@@ -6,9 +6,9 @@ from typing import Optional, Tuple, Dict, Any, Set
 class VersionMatcher:
     """
     Evaluates semantic package and runtime version constraints with mathematical interval intersection:
-    - MATCH: Target dependency specified and non-empty intersection (environmentConfidence = 1.0)
-    - MISMATCH: Target dependency specified with empty intersection (environmentConfidence = 0.0)
-    - UNKNOWN: Target dependency not specified in request (environmentConfidence = null)
+    - MATCH: Target dependency specified and non-empty intersection
+    - MISMATCH: Target dependency specified with empty intersection
+    - UNKNOWN: Target dependency not specified in request
     """
 
     @staticmethod
@@ -16,10 +16,10 @@ class VersionMatcher:
         pkg_name: str,
         req_packages_dict: Optional[Dict[str, str]],
         affected_version_spec: Optional[str]
-    ) -> Tuple[str, Optional[float]]:
+    ) -> Tuple[str, Optional[bool]]:
         """
         Evaluates epistemological status of environment:
-        Returns (environmentStatus, environmentConfidence).
+        Returns (environmentStatus, versionConstraintMatched).
         """
         if not req_packages_dict or pkg_name.lower() not in {k.lower(): v for k, v in req_packages_dict.items()}:
             return ("UNKNOWN", None)
@@ -30,9 +30,9 @@ class VersionMatcher:
         
         is_compat = VersionMatcher.check_version_compatibility(req_version_spec, affected_version_spec)
         if is_compat:
-            return ("MATCH", 1.0)
+            return ("MATCH", True)
         else:
-            return ("MISMATCH", 0.0)
+            return ("MISMATCH", False)
 
     @staticmethod
     def check_version_compatibility(
@@ -44,7 +44,7 @@ class VersionMatcher:
         Returns True iff (requestedRange ∩ affectedRange ≠ ∅).
         """
         if not requested_version_spec or not affected_version_spec:
-            return True
+            return False
             
         clean_req = requested_version_spec.strip()
         clean_aff = affected_version_spec.strip()
@@ -79,8 +79,8 @@ class VersionMatcher:
                 
             req_spec = SpecifierSet(",".join(normalized_clauses))
             aff_spec = SpecifierSet(clean_aff)
-        except Exception:
-            return True
+        except (InvalidSpecifier, InvalidVersion, ValueError, TypeError):
+            return False
 
         # Extract all boundary candidate version points from both constraints
         all_ver_strs = re.findall(r"[0-9]+(?:\.[0-9]+)*", clean_req + " " + clean_aff)
@@ -103,9 +103,38 @@ class VersionMatcher:
             if maj > 0:
                 test_versions.add(Version(f"{maj-1}.99.99"))
 
+        if not test_versions:
+            return False
+
         # If ANY probe version satisfies BOTH sets, intersection is non-empty
         for v in test_versions:
             if (v in req_spec) and (v in aff_spec):
                 return True
                 
         return False
+
+    @staticmethod
+    def matches_exact_observed_version(
+        requested_version_spec: Optional[str],
+        observed_version: Optional[str],
+    ) -> bool:
+        """Return true only when a request names the exact observed release.
+
+        Ranges and prereleases do not inherit a run recorded for one concrete
+        release, even when their constraints overlap the bundle's affected
+        range.
+        """
+        if not isinstance(requested_version_spec, str) or not isinstance(observed_version, str):
+            return False
+        requested = requested_version_spec.strip()
+        if requested.startswith("=="):
+            requested = requested[2:].strip()
+        requested = requested.lstrip("v").strip()
+        if not requested or any(
+            token in requested for token in ("<", ">", "~", "!", "*", ",")
+        ):
+            return False
+        try:
+            return Version(requested) == Version(observed_version.strip())
+        except (InvalidVersion, TypeError, ValueError):
+            return False

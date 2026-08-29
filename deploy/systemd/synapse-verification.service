@@ -1,0 +1,33 @@
+[Unit]
+Description=Synapse-Mesh exact allowlisted verification refresh
+Documentation=https://synapsemesh.dev/verification
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/synapse-mesh/verification/targets.json
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/synapse-mesh
+ExecStart=/usr/bin/python3 /opt/synapse-mesh/scripts/run_scheduled_verifications.py
+TimeoutStartSec=45min
+UMask=0027
+Nice=10
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=DOCKER_CONFIG=/tmp/docker-config
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/synapse-mesh/evidence/runs
+# The trusted host orchestrator may pull pinned images. The verification
+# container itself is still created with Docker network mode "none".
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true

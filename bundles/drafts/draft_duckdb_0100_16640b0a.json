@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "draft_duckdb_0100_16640b0a",
-  "status": "VERIFIED",
+  "status": "UNVERIFIED",
   "description": "Draft compatibility bundle for duckdb 0.10.0 migration.",
   "tags": [
     "duckdb",

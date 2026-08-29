@@ -2,7 +2,7 @@
 Synapse-Mesh Universal CLI
 Commands:
   - synapse search <query>: Queries verified compatibility bundles via MCP/REST.
-  - synapse reverify <bundle_id>: Runs local 2-phase sandbox verification (Pre-Fail + Post-Pass).
+  - synapse reverify <bundle_id>: Runs the local four-stage verifier for trusted code.
   - synapse doctor: Checks local compiler toolchains & Synapse-Mesh node connectivity.
   - synapse install-mcp: Automatically registers Synapse MCP server in Cursor, Claude, Antigravity.
 """
@@ -24,6 +24,7 @@ except ImportError:
     httpx = None
 
 API_DEFAULT = "https://api.synapsemesh.dev"
+MCP_DEFAULT = "https://mcp.synapsemesh.dev/mcp"
 
 
 def cmd_doctor(api_base: str):
@@ -171,8 +172,13 @@ def cmd_search(query: str, runtime: Optional[str], api_base: str):
 
 
 def cmd_reverify(bundle_id: str, api_base: str):
-    """Executes 2-phase client-side verification on local machine."""
+    """Execute the four-stage verifier for an explicitly trusted input."""
     from scripts.synapse_reverify import reverify_recipe
+    print(
+        "[!] Trust boundary: bundle test code runs with your local process permissions. "
+        "Inspect it first and prefer a disposable environment.",
+        file=sys.stderr,
+    )
     ok = reverify_recipe(bundle_id, api_base=api_base)
     sys.exit(0 if ok else 1)
 
@@ -193,7 +199,7 @@ def cmd_install_mcp():
         if "mcpServers" not in data:
             data["mcpServers"] = {}
         data["mcpServers"]["synapse-mesh"] = {
-            "url": "https://mcp.synapsemesh.dev/mcp",
+            "url": MCP_DEFAULT,
             "type": "streamable-http"
         }
         file_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -227,7 +233,7 @@ def cmd_install_mcp():
         inject(fallback, "Generic MCP Client")
 
     print(f"\n[★] Synapse-Mesh MCP installed successfully in {configs_written} client configuration(s)!")
-    print("Endpoint: https://mcp.synapsemesh.dev/mcp (Protocol Spec 2026-07-28)")
+    print(f"Endpoint: {MCP_DEFAULT} (Protocol Spec 2026-07-28)")
 
 
 
@@ -262,7 +268,7 @@ def cmd_mine(package: Optional[str], persist: bool, api_base: str):
 def cli_entrypoint():
     parser = argparse.ArgumentParser(
         prog="synapse",
-        description="Synapse-Mesh CLI: The Open Verified Compatibility Layer for Software Agents"
+        description="Synapse-Mesh CLI: fail-closed compatibility evidence for software agents"
     )
     parser.add_argument("--api", default=API_DEFAULT, help="Synapse-Mesh API base URL")
 
@@ -274,8 +280,8 @@ def cli_entrypoint():
     p_search.add_argument("--runtime", help="Filter by runtime (e.g. python, nodejs, rust)")
 
     # Reverify
-    p_reverify = subparsers.add_parser("reverify", help="Locally re-verify a bundle in isolated sandbox")
-    p_reverify.add_argument("bundle", help="Bundle ID (e.g. rec_svelte5_runes_migration_065) or URL")
+    p_reverify = subparsers.add_parser("reverify", help="Run trusted bundle code locally with explicit process permissions")
+    p_reverify.add_argument("bundle", help="Curated bundle ID or inspected local JSON path; arbitrary URLs are rejected")
 
     # Doctor
     subparsers.add_parser("doctor", help="Check local toolchains and node connectivity")
@@ -284,7 +290,7 @@ def cli_entrypoint():
     subparsers.add_parser("install-mcp", help="Auto-register Synapse MCP in Cursor, Claude, Antigravity")
 
     # Mine (Zero Token Upstream Mining)
-    p_mine = subparsers.add_parser("mine", help="Extract breaking changes and synthesize verified bundles (0 Tokens)")
+    p_mine = subparsers.add_parser("mine", help="Extract breaking changes and synthesize candidate drafts without an LLM")
     p_mine.add_argument("--package", help="Specific package to mine (e.g. sqlalchemy, numpy, duckdb)")
     p_mine.add_argument("--no-persist", action="store_true", help="Do not persist candidate bundles to disk")
 

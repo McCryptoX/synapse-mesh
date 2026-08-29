@@ -1,13 +1,21 @@
+from pathlib import Path
+
 from fastapi import APIRouter
-from app.models.discovery import McpManifest, AgentManifest
+from fastapi.responses import PlainTextResponse
+
+from app.config import settings
+from app.models.discovery import AgentManifest, McpManifest
+from app.models.recipe import VERIFIED_EVIDENCE_CONTRACT
+
 
 router = APIRouter()
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent.parent / "scripts"
 
 
 @router.get("/.well-known/mcp.json", tags=["Discovery"], response_model=McpManifest)
 @router.head("/.well-known/mcp.json", tags=["Discovery"], include_in_schema=False)
 async def get_mcp_manifest():
-    """Agent discovery manifest for automatic MCP client integration."""
+    """Return the MCP discovery manifest."""
     return McpManifest()
 
 
@@ -16,190 +24,148 @@ async def get_mcp_manifest():
 @router.get("/.well-known/agent.json", tags=["Discovery"], response_model=AgentManifest)
 @router.head("/.well-known/agent.json", tags=["Discovery"], include_in_schema=False)
 async def get_agent_manifest():
-    """A2A (Agent-to-Agent) discovery descriptor conforming to A2A standard."""
+    """Return discovery metadata; this is not an A2A task gateway."""
     return AgentManifest()
-
-from fastapi.responses import PlainTextResponse
-from pathlib import Path
-
-SCRIPTS_DIR = Path(__file__).resolve().parent.parent.parent / "scripts"
 
 
 @router.get("/install.sh", tags=["Agent Tooling"], response_class=PlainTextResponse)
 @router.head("/install.sh", tags=["Agent Tooling"], include_in_schema=False)
 async def get_install_script():
-    """One-command bash installer for Cursor, Claude Desktop, and Antigravity."""
+    """Return the optional local CLI installer."""
     install_file = SCRIPTS_DIR / "install.sh"
     if install_file.exists():
-        return PlainTextResponse(install_file.read_text(encoding="utf-8"), media_type="text/x-shellscript")
-    return PlainTextResponse("#!/usr/bin/env bash\necho 'Installer not found'\nexit 1\n", status_code=404)
+        return PlainTextResponse(
+            install_file.read_text(encoding="utf-8"),
+            media_type="text/x-shellscript",
+        )
+    return PlainTextResponse(
+        "#!/usr/bin/env bash\necho 'Installer not found'\nexit 1\n",
+        status_code=404,
+    )
 
 
 LLMS_TXT_CONTENT = """# Synapse-Mesh
 
-> Portable, execution-verified compatibility and bug-fix layer for AI software agents (MCP Spec 2026-07-28 & A2A protocol).
+> Fail-closed compatibility evidence for software agents over MCP and REST.
 
-Synapse-Mesh delivers deterministically proven code patches, exact package pins, negative recipes (`doNot`), and a 4-stage client verifier that every AI agent can independently re-verify in its own workspace.
+Synapse-Mesh publishes curated compatibility bundle records with exact version
+scope, unified diffs, negative examples, provenance, and a declared four-stage
+verification contract. A record becomes `VERIFIED` only when a separate valid
+run artifact is bound to its exact bytes and toolchain. Otherwise it remains an
+explicitly unverified candidate. No record is a production warranty.
 
-## Agent-Native Tooling & Integration
-- [MCP Gateway](https://mcp.synapsemesh.dev/mcp): Streamable HTTP JSON-RPC 2.0 MCP endpoint exposing `find_solution` and `submit_solution`.
-- [MCP Discovery Manifest](https://synapsemesh.dev/.well-known/mcp.json): Model Context Protocol server capabilities and schema descriptor.
-- [A2A Agent Card](https://synapsemesh.dev/.well-known/agent-card.json): Autonomous Agent-to-Agent discovery manifest.
-- [One-Line CLI Installer](https://synapsemesh.dev/install.sh): Bash script to install `synapse` CLI and auto-configure Claude Desktop, Cursor, and Codex.
+## Implemented interfaces
 
-## System Architecture & Benchmarks
-- [4-Stage Verification Contract](https://synapsemesh.dev/verification): Epistemic specification (Pre-Fail Exit 1 -> AST Diff -> Post-Pass Exit 0 -> Mutation Sanity).
-- [Empirical Benchmark](https://synapsemesh.dev/benchmark): Controlled evaluation of 4-stage contracts vs ungrounded LLM code generation.
-- [Interactive OpenAPI Docs](https://docs.synapsemesh.dev): Complete REST API documentation and interactive Swagger UI.
+- [MCP endpoint](__CANONICAL_MCP_ENDPOINT__): `find_solution` and storage-only `submit_solution`.
+- [MCP manifest](https://synapsemesh.dev/.well-known/mcp.json).
+- [REST/OpenAPI](https://docs.synapsemesh.dev).
+- [Curated bundle API](https://synapsemesh.dev/api/v1/bundles): authoritative current runtime statuses.
+- Qualified bundle records expose a validated run at their `evidencePublication.runArtifactUrl`.
+- [Verification boundary](https://synapsemesh.dev/verification).
+- [Frozen fixture evaluation](https://synapsemesh.dev/benchmark).
+- [Full agent context](https://synapsemesh.dev/llms-full.txt).
 
-## Verified Compatibility Bundles (Python)
-- [HTTPX 0.28 ASGI Transport](https://synapsemesh.dev/api/v1/bundles/bundle_httpx_028_asgi_transport_001): Fixes `TypeError: AsyncClient.__init__() got unexpected keyword 'app'` via `ASGITransport`.
-- [Pydantic v2 Model Validator](https://synapsemesh.dev/api/v1/bundles/bundle_pydantic_v2_model_validator_001): Migrates deprecated `@root_validator` to `@model_validator(mode='before')`.
-- [FastAPI Lifespan Context](https://synapsemesh.dev/api/v1/bundles/bundle_fastapi_0115_lifespan_context_001): Replaces deprecated `@app.on_event` with `@asynccontextmanager` lifespan.
-- [Python 3.12 UTC Datetime](https://synapsemesh.dev/api/v1/bundles/bundle_python_312_datetime_utc_aware_001): Replaces deprecated `datetime.utcnow()` with `datetime.now(timezone.utc)`.
-- [SQLAlchemy 2.0 Select Scalars](https://synapsemesh.dev/api/v1/bundles/bundle_sqlalchemy_20_select_scalars_001): Fixes removed `Query.get()` with `session.get()` or `session.execute(select(...)).scalars()`.
-- [NumPy 2.0 Scalar Aliases](https://synapsemesh.dev/api/v1/bundles/bundle_numpy_20_nan_alias_removal_001): Migrates removed `np.NAN`, `np.Inf`, and `np.bool` to standard `np.nan`, `np.inf`, and `bool`.
-- [DuckDB 0.10 Substring Types](https://synapsemesh.dev/api/v1/bundles/bundle_duckdb_010_substring_casting_001): Resolves strict type binding in SQL function signatures for numeric offsets.
-- [LangChain 0.3 Runnable Invoke](https://synapsemesh.dev/api/v1/bundles/bundle_langchain_03_runnable_invoke_001): Migrates legacy `LLMChain.run()` to canonical `Runnable.invoke()`.
+The agent-card routes provide discovery metadata only; no A2A task gateway is
+implemented. Public and crawled submissions are sanitised and retained as
+unexecuted `DRAFT` records. Server-side hostile-code verification is disabled.
+Use local re-verification only for code you have chosen to trust.
+""".replace("__CANONICAL_MCP_ENDPOINT__", settings.canonical_mcp_url)
 
-## Verified Compatibility Bundles (Node.js & TypeScript)
-- [TypeScript 5.6 Map Lookup](https://synapsemesh.dev/api/v1/bundles/bundle_typescript_56_strict_map_lookup_001): Resolves TS2532 `Map.get()` undefined indexing under `--noUncheckedIndexedAccess`.
-- [Next.js 15 Async Params](https://synapsemesh.dev/api/v1/bundles/bundle_nextjs_15_async_params_001): Updates dynamic App Router page params to async Promise handling.
-- [React 19 useActionState](https://synapsemesh.dev/api/v1/bundles/bundle_react_19_use_action_state_001): Migrates deprecated `useFormState` to standard React 19 `useActionState`.
-- [Express 5.0 Route Regex](https://synapsemesh.dev/api/v1/bundles/bundle_express_50_path_to_regexp_001): Updates wildcard routes to named parameter syntax (`/{*splat}`) for path-to-regexp v8.
 
-## Full Context & Integration Resources
-- [Full LLM Context (llms-full.txt)](https://synapsemesh.dev/llms-full.txt): Complete uncompressed documentation stream with tool schemas, diffs, and verification rules.
-- [Public MCP GitHub Gateway](https://github.com/McCryptoX/synapse-mesh-mcp): Public MCP server configuration, connectors, and integration tooling.
-- [Direct API Gateway](https://api.synapsemesh.dev): High-performance HTTP/3 API access and living solution endpoints.
-"""
+LLMS_FULL_TXT_CONTENT = """# Synapse-Mesh: Technical Reference for Software Agents
 
-LLMS_FULL_TXT_CONTENT = """# Synapse-Mesh: Complete Technical Reference for AI Agents
+## Trust model
 
-> Open, verifiable compatibility and verification layer for AI software agents (MCP Spec 2026-07-28 & A2A protocol).
+Synapse-Mesh is a narrow compatibility evidence registry. It returns a scoped
+record or an explicit miss; it does not claim universal correctness.
 
-## 1. Executive Summary & Epistemic Axiom
+`VERIFIED` requires a run artifact bound to the exact bundle bytes and exact
+toolchain, recording the `__VERIFICATION_PROFILE__` contract on the real declared
+package, compiler, or engine:
 
-Synapse-Mesh does not claim universal answers. It delivers portable, execution-verified compatibility bundles: exact package pins, clean unified diffs, negative recipes (`doNot`), and a 4-stage client verifier that every AI can prove in its own workspace.
+1. the unpatched workspace fails with the declared exception class/signature;
+2. a strict unified diff applies to that workspace;
+3. the patched workspace passes in the selected runtime;
+4. at least two independent mutant diffs fail the same suite.
 
-**Axiom:** *"Synapse does not try to be known by AIs. Synapse is built so that AIs can discover, understand, and immediately execute it as a tool."*
+Missing evidence, ambiguous versions, substitute mocks, or unknown runtime state
+fail closed. The API bundle list is the authoritative current status surface;
+curated location alone does not imply `VERIFIED`. A qualified bundle exposes
+its validated artifact at `/api/v1/bundles/{bundleId}/evidence`.
 
----
+## MCP
 
-## 2. MCP Tools Specification (JSON-RPC 2.0)
+Endpoint: `POST __CANONICAL_MCP_ENDPOINT__`
 
-Endpoint: `POST https://mcp.synapsemesh.dev/mcp`
+### `find_solution`
 
-### Tool: `find_solution`
-Searches Synapse-Mesh for reproducibly verified bug fixes and CI/CD-tested code patches.
-```json
-{
-  "name": "find_solution",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "errorSignature": {
-        "type": "string",
-        "description": "The exact error message, exception type, or traceback snippet"
-      },
-      "runtime": {
-        "type": "string",
-        "enum": ["all", "python", "nodejs", "docker"],
-        "description": "Optional runtime filter"
-      },
-      "packages": {
-        "type": "object",
-        "description": "Optional key-value pairs of packages and version strings e.g. {'fastapi': '>=0.100.0'}"
-      }
-    },
-    "required": ["errorSignature"]
-  }
-}
-```
+Required input: `errorSignature`. Optional inputs: `runtime` and a package-to-
+version map. Results include evidence scope and actionability:
 
-### Tool: `submit_solution`
-Submits a reproducible problem, unified diff fix, and test suite for automated isolated sandbox verification.
-```json
-{
-  "name": "submit_solution",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "runtime": { "type": "string", "description": "Language or runtime e.g. 'python'" },
-      "errorSignature": { "type": "string", "description": "The exact error signature resolved" },
-      "description": { "type": "string", "description": "Description of why the error occurs" },
-      "summary": { "type": "string", "description": "Summary of the solution fix" },
-      "codeDiff": { "type": "string", "description": "Unified git diff of the patch" },
-      "reproScript": { "type": "string", "description": "Minimal script triggering the error" },
-      "testSuite": { "type": "string", "description": "Test code asserting the fix works" },
-      "primarySource": { "type": "string", "description": "Official docs / release notes link" }
-    },
-    "required": ["runtime", "errorSignature", "description", "summary", "reproScript", "testSuite"]
-  }
-}
-```
+- `VERIFIED_MATCH`: a valid exact-run artifact exists and the supplied package version equals the observed release; still reproduce before applying.
+- `UNVERIFIED_MATCH`: no exact-version run evidence applies, including when the target version is missing, ambiguous, or different; reproduce every stage before considering it.
+- `VERSION_MISMATCH`: the supplied version is outside the record's declared scope; do not apply.
+- `NO_VERIFIED_MATCH`: no curated record passed the deterministic match gates; do not apply.
 
----
+### `submit_solution`
 
-## 3. The 4-Stage Verification Contract
+Accepts a technical problem, proposed diff, reproduction, test suite, and optional
+HTTP(S) source. It sanitises and stores the input as an unexecuted `DRAFT`.
+Submission does not verify, promote, or execute code.
 
-Every bundle in Synapse-Mesh must pass all 4 stages in an isolated, hermetic container:
-1. **Stage 1 (Pre-Fail Validation):** Reproduction script executes unpatched -> Must exit with code 1 and match error regex.
-2. **Stage 2 (Unified Diff Application):** Clean, AST-compliant git patch is applied to isolated workspace.
-3. **Stage 3 (Post-Pass Execution):** Test suite executes on patched workspace -> Must exit with code 0 in native compiler/engine.
-4. **Stage 4 (Mutation Sanity):** Known web-fehlfixes and hallucinated partial fixes are injected -> Must be rejected 100%.
+## Execution boundary
 
----
+The trusted-fixture worker accepts only exact repository-owned allowlist entries
+and runs in a separately built, pinned container with no network, no bind mounts,
+a read-only root, private temporary filesystems, a non-root identity, dropped
+capabilities, seccomp, and explicit CPU, memory, PID, output, and time limits.
+The resulting artifact is admitted only after a separate application-image gate
+validates it against the exact curated bundle bytes. This is not a general
+hostile-code service: public and crawled submissions remain storage-only drafts,
+and authenticated server verification routes remain disabled.
 
-## 4. Golden Bundle Catalog & Diffs
+The local CLI executes trusted bundle code with the invoking user's process
+permissions. Inspect the bundle first and run it in a disposable environment.
 
-### bundle_httpx_028_asgi_transport_001
-- **Runtime:** Python
-- **Error:** `TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'`
-- **Fix:** Use `httpx.ASGITransport(app=app)` and pass `transport=transport` to `AsyncClient`.
-- **doNot:** `["Do not pin httpx<0.28 indefinitely", "Do not instantiate ASGITransport without app kwarg"]`
+## Autonomous maintenance
 
-### bundle_pydantic_v2_model_validator_001
-- **Runtime:** Python
-- **Error:** `PydanticDeprecatedSince20: Pydantic V1 style @root_validator validators are deprecated.`
-- **Fix:** Replace `@root_validator(pre=True)` with `@model_validator(mode='before') @classmethod`.
-- **doNot:** `["Do not use mode='after' when parsing raw unparsed dicts", "Do not omit @classmethod decorator"]`
+One elected hourly worker fetches allowlisted release metadata, normalises and
+synthesises candidate drafts without an LLM, and writes only to
+`bundles/drafts/`. Remote snippets are not executed. The worker does not edit
+application source, deploy itself, or promote files into `bundles/golden/`.
 
-### bundle_fastapi_0115_lifespan_context_001
-- **Runtime:** Python
-- **Error:** `DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.`
-- **Fix:** Wrap startup/shutdown logic into an `@asynccontextmanager async def lifespan(app: FastAPI)` generator.
-- **doNot:** `["Do not mix legacy on_event handlers with lifespan handlers"]`
+Separately, a daily host timer starts the disposable exact verifier for the
+pre-approved repository-owned target allowlist. It publishes an evidence
+artifact only after every evidence stage and the independent application gate
+pass. It is not triggered through the public API or the Ops page.
 
-### bundle_typescript_56_strict_map_lookup_001
-- **Runtime:** Node.js / TypeScript
-- **Error:** `TS2532: Object is possibly 'undefined' when accessing Map.get() result property`
-- **Fix:** Add optional chaining `map.get(id)?.role ?? 'GUEST'` or explicit undefined check.
-- **doNot:** `["Do not disable noUncheckedIndexedAccess globally as a workaround"]`
+## Evaluation
 
-### bundle_nextjs_15_async_params_001
-- **Runtime:** Node.js
-- **Error:** `Error: Route dynamic params must be awaited in Next.js 15 App Router`
-- **Fix:** Type `params` as `Promise<{ id: string }>` and execute `const { id } = await params`.
-- **doNot:** `["Do not access params.id synchronously in Next.js 15 components"]`
+`Suite v2-runtime-9` is the frozen primary-runtime fixture corpus. Its numeric
+result is currently withheld because the latest production-runtime revalidation
+did not satisfy every required case. This is not live-registry coverage or an
+A/B model result.
 
----
+## Privacy
 
-## 5. CLI & Public MCP Gateway
+The service is configured not to persist client IP addresses, raw User-Agent
+strings, or query text. Minimal telemetry contains a coarse client class, event
+category, and timestamp and is purged after 30 days on startup. Do not submit
+personal data, credentials, or proprietary source code.
 
-Install CLI:
-```bash
-curl -fsSL https://synapsemesh.dev/install.sh | bash
-```
+## Resources
 
-Public MCP Gateway & Connectors:
-- [GitHub: McCryptoX/synapse-mesh-mcp](https://github.com/McCryptoX/synapse-mesh-mcp)
-
-Run independent client-side verification:
-```bash
-synapse reverify bundle_httpx_028_asgi_transport_001
-```
-"""
+- https://synapsemesh.dev/api/v1/bundles
+- https://synapsemesh.dev/api/v1/bundles/{bundleId}/evidence
+- https://synapsemesh.dev/.well-known/mcp.json
+- https://synapsemesh.dev/openapi.json
+- https://synapsemesh.dev/verification
+- https://synapsemesh.dev/benchmark
+- https://synapsemesh.dev/legal
+- https://synapsemesh.dev/privacy
+""".replace("__CANONICAL_MCP_ENDPOINT__", settings.canonical_mcp_url).replace(
+    "__VERIFICATION_PROFILE__", VERIFIED_EVIDENCE_CONTRACT
+)
 
 
 @router.get("/llms.txt", tags=["Discovery"], response_class=PlainTextResponse)
@@ -207,12 +173,12 @@ synapse reverify bundle_httpx_028_asgi_transport_001
 @router.get("/.well-known/llms.txt", tags=["Discovery"], response_class=PlainTextResponse)
 @router.head("/.well-known/llms.txt", tags=["Discovery"], include_in_schema=False)
 async def get_llms_txt():
-    """Conforms to llmstxt.org specification for LLM crawler discovery."""
+    """Return concise machine-readable discovery context."""
     return PlainTextResponse(LLMS_TXT_CONTENT, media_type="text/markdown; charset=utf-8")
 
 
 @router.get("/llms-full.txt", tags=["Discovery"], response_class=PlainTextResponse)
 @router.head("/llms-full.txt", tags=["Discovery"], include_in_schema=False)
 async def get_llms_full_txt():
-    """Full context file for LLMs conforming to llmstxt.org."""
+    """Return full machine-readable trust and interface context."""
     return PlainTextResponse(LLMS_FULL_TXT_CONTENT, media_type="text/markdown; charset=utf-8")

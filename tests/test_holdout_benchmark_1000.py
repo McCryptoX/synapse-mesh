@@ -28,14 +28,14 @@ async def test_1000_case_independent_holdout_benchmark():
     for i in range(250):
         choice = i % 4
         if choice == 0:
-            exact_cases.append(("AttributeError: 'DataFrame' object has no attribute 'append'", {"pandas": ">=2.0.0"}, "VERIFIED_MATCH"))
+            exact_cases.append(("AttributeError: 'DataFrame' object has no attribute 'append'", {"pandas": ">=2.0.0"}, "UNVERIFIED_MATCH"))
         elif choice == 1:
-            exact_cases.append(("AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.", {"numpy": ">=2.0.0"}, "VERIFIED_MATCH"))
+            exact_cases.append(("AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.", {"numpy": ">=2.0.0"}, "UNVERIFIED_MATCH"))
         elif choice == 2:
             sql = exact_sql_queries[i % len(exact_sql_queries)]
-            exact_cases.append((f"sqlalchemy.exc.ObjectNotExecutableError: Not an executable object: '{sql}'. Use text('{sql}') instead.", {"sqlalchemy": ">=2.0.0"}, "VERIFIED_MATCH"))
+            exact_cases.append((f"sqlalchemy.exc.ObjectNotExecutableError: Not an executable object: '{sql}'. Use text('{sql}') instead.", {"sqlalchemy": ">=2.0.0"}, "UNVERIFIED_MATCH"))
         else:
-            exact_cases.append(("LegacyAPIWarning: The Query.get() method is considered legacy in 2.0. Use Session.get() instead.", {"sqlalchemy": ">=2.0.0"}, "VERIFIED_MATCH"))
+            exact_cases.append(("LegacyAPIWarning: The Query.get() method is considered legacy in 2.0. Use Session.get() instead.", {"sqlalchemy": ">=2.0.0"}, "UNVERIFIED_MATCH"))
 
     # 2. 250 Procedural Family Claim Variants
     family_cases = []
@@ -43,13 +43,13 @@ async def test_1000_case_independent_holdout_benchmark():
     for i in range(250):
         choice = i % 3
         if choice == 0:
-            family_cases.append(("AttributeError: 'Series' object has no attribute 'append'", {"pandas": ">=2.0.0"}, "VERIFIED_MATCH"))
+            family_cases.append(("AttributeError: 'Series' object has no attribute 'append'", {"pandas": ">=2.0.0"}, "UNVERIFIED_MATCH"))
         elif choice == 1:
             sym = numpy_variants[i % len(numpy_variants)]
-            family_cases.append((f"AttributeError: `np.{sym}` was removed in the NumPy 2.0 release. Use `np.inf` instead.", {"numpy": ">=2.0.0"}, "VERIFIED_MATCH"))
+            family_cases.append((f"AttributeError: `np.{sym}` was removed in the NumPy 2.0 release. Use `np.inf` instead.", {"numpy": ">=2.0.0"}, "UNVERIFIED_MATCH"))
         else:
             sql = exact_sql_queries[i % len(exact_sql_queries)]
-            family_cases.append((f"sqlalchemy.exc.ArgumentError: Textual SQL expression '{sql}' should be explicitly declared as text('{sql}')", {"sqlalchemy": ">=2.0.0"}, "VERIFIED_MATCH"))
+            family_cases.append((f"sqlalchemy.exc.ArgumentError: Textual SQL expression '{sql}' should be explicitly declared as text('{sql}')", {"sqlalchemy": ">=2.0.0"}, "UNVERIFIED_MATCH"))
 
     # 3. 250 Procedural Adversarial Near-Misses & Version Mismatches
     near_miss_methods = [

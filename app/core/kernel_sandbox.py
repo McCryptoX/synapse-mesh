@@ -3,7 +3,6 @@ import os
 import sys
 import json
 import time
-import socket
 import tempfile
 import shutil
 from pathlib import Path
@@ -15,48 +14,39 @@ from app.models.recipe import EvidenceDefinition
 
 class KernelIsolationProbe:
     """
-    Empirically inspects and attests the runtime kernel boundary facts:
-    - PID and IPC namespace isolation
-    - Network isolation (Phase 2 execution: none)
-    - Filesystem privacy (Read-Only Root / Private Tmpfs / Backend & DB Unmounted)
-    - Linux no_new_privs, seccomp mode, and dropped capabilities
-    - Readback of live active cgroup limits
+    Reports facts that can be observed about the current API container.
+
+    These observations do not attest the child process used by ``SandboxRunner``.
+    Unmeasurable values remain ``None``/``unmeasured`` instead of inheriting an
+    ideal policy passport.
     """
 
     @classmethod
     async def probe_runtime_environment(cls) -> Dict[str, Any]:
         """Runs an empirical self-attestation probe measuring observed kernel facts."""
         observed = {
-            "pidNamespace": True,
-            "ipcNamespace": True,
-            "network": "none",
-            "rootFs": "read-only",
-            "backendMountsVisible": False,
-            "dockerSocketPresent": False,
-            "noNewPrivs": True,
-            "seccompMode": 2,
-            "effectiveCapabilities": "0x0000000000000000",
-            "privateTmpfs": True,
-            "blockedSyscalls": ["mount", "ptrace", "bpf", "setns", "unshare", "raw_socket"]
+            "pidNamespace": None,
+            "ipcNamespace": None,
+            "network": "unmeasured",
+            "rootFs": "unmeasured",
+            "backendMountsVisible": None,
+            "dockerSocketPresent": os.path.exists("/var/run/docker.sock"),
+            "noNewPrivs": None,
+            "seccompMode": None,
+            "effectiveCapabilities": None,
+            "privateTmpfs": None,
+            "blockedSyscalls": [],
         }
 
         # 1. PID Namespace check: count visible PIDs in /proc
         if os.path.exists("/proc"):
             try:
                 pids = [int(p) for p in os.listdir("/proc") if p.isdigit()]
-                observed["pidNamespace"] = (len(pids) < 50)
+                # A small PID count is not proof of a separate namespace.  Keep
+                # the observation as a count and leave attestation false.
+                observed["visiblePidCount"] = len(pids)
             except Exception:
-                observed["pidNamespace"] = True
-
-        # 2. Network check: verify external network isolation
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(0.2)
-            sock.connect(("1.1.1.1", 53))
-            sock.close()
-            observed["network"] = "open"
-        except Exception:
-            observed["network"] = "none"
+                pass
 
         # 3. Root Filesystem & Backend Mount Privacy
         try:
@@ -67,10 +57,7 @@ class KernelIsolationProbe:
         except (PermissionError, OSError):
             observed["rootFs"] = "read-only"
 
-        # Check for docker socket
-        observed["dockerSocketPresent"] = os.path.exists("/var/run/docker.sock")
-
-        # 4. Linux-specific checks: no_new_privs & seccomp
+        # 3. Linux-specific checks: no_new_privs & seccomp
         if sys.platform.startswith("linux"):
             try:
                 import ctypes
@@ -81,11 +68,11 @@ class KernelIsolationProbe:
                 
                 PR_GET_SECCOMP = 21
                 sec = libc.prctl(PR_GET_SECCOMP, 0, 0, 0, 0)
-                observed["seccompMode"] = sec if sec >= 0 else 2
+                observed["seccompMode"] = sec if sec >= 0 else None
             except Exception:
                 pass
 
-        # 5. Linux Capabilities check in /proc/self/status
+        # 4. Linux Capabilities check in /proc/self/status
         if os.path.exists("/proc/self/status"):
             try:
                 status_text = Path("/proc/self/status").read_text()
@@ -96,12 +83,12 @@ class KernelIsolationProbe:
             except Exception:
                 pass
 
-        # 6. Read back live observed cgroup limits
+        # 5. Read back live observed cgroup limits.  Unknown is not a limit.
         observed_cgroup = {
-            "memoryMaxBytes": 536870912,  # 512 MiB
-            "memorySwapMaxBytes": 0,
-            "pidsMax": 64,
-            "cpuMax": "100000 100000"
+            "memoryMaxBytes": None,
+            "memorySwapMaxBytes": None,
+            "pidsMax": None,
+            "cpuMax": None,
         }
         if os.path.exists("/sys/fs/cgroup/memory.max"):
             try:
@@ -119,12 +106,15 @@ class KernelIsolationProbe:
                 pass
 
         configured = {
-            "seccompProfile": "synapse-v1",
-            "seccompProfileDigest": "sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
-            "memoryLimitBytes": 536870912,  # 512 MiB
-            "tmpfsLimitBytes": 33554432,   # 32 MiB
-            "pidsLimit": 64,
-            "cpuLimitSeconds": 10
+            "verificationBoundary": "shared-container-process",
+            "attestable": False,
+            "cpuRlimitSeconds": 10,
+            "outputLimitBytes": SandboxRunner.MAX_OUTPUT_BYTES,
+            "pythonAddressSpaceRlimitBytes": (
+                SandboxRunner.PYTHON_MAX_ADDRESS_SPACE_BYTES
+                if sys.platform.startswith("linux")
+                else None
+            ),
         }
 
         return {
@@ -136,8 +126,10 @@ class KernelIsolationProbe:
 
 class KernelSandboxRunner(SandboxRunner):
     """
-    Next-Gen Kernel Isolation Sandbox Runner implementing 'synapse-kernel-v1'.
-    Executes empirical verification only after self-attesting the isolation environment.
+    Compatibility wrapper retained for callers of the former kernel API.
+
+    No separate per-run namespace exists today, so this wrapper always reports
+    ``NOT_ATTESTED`` and cannot promote evidence to VERIFIED.
     """
 
     @classmethod
@@ -158,13 +150,7 @@ class KernelSandboxRunner(SandboxRunner):
         probe_result = await KernelIsolationProbe.probe_runtime_environment()
         observed = probe_result["observedMetrics"]
         
-        is_attested = (
-            observed["rootFs"] == "read-only" or 
-            observed["network"] == "none" or
-            observed["pidNamespace"]
-        )
-
-        # 2. Run 4-stage empirical verification
+        # 2. Run the diagnostic split-script check.  It is never the Golden contract.
         evidence = await cls.verify_recipe_full(
             runtime=runtime,
             error_signature=error_signature,
@@ -174,10 +160,10 @@ class KernelSandboxRunner(SandboxRunner):
             primary_source=primary_source
         )
 
-        # 3. Attach Attested Isolation Profile
+        # 3. Attach an honest, non-inheritable observation profile.
         evidence.isolationProfile = {
-            "verificationProfile": "synapse-kernel-v1",
-            "isolationStatus": "ATTESTED" if (evidence.verificationStatus == "VERIFIED" and is_attested) else "LEGACY_PROCESS_GROUP",
+            "verificationProfile": "trusted-process-limits-v1",
+            "isolationStatus": "NOT_ATTESTED",
             "attestedAt": datetime.now(timezone.utc).isoformat(),
             "observedMetrics": observed,
             "observedCgroup": probe_result["observedCgroup"],

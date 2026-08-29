@@ -16,13 +16,13 @@ async def test_kernel_isolation_probe():
     assert "pidNamespace" in probe_data["observedMetrics"]
     assert "network" in probe_data["observedMetrics"]
     assert "rootFs" in probe_data["observedMetrics"]
-    assert "memoryLimitBytes" in probe_data["configuredPolicy"]
-    assert "pidsLimit" in probe_data["configuredPolicy"]
-    assert probe_data["configuredPolicy"]["pidsLimit"] == 64
+    assert probe_data["configuredPolicy"]["attestable"] is False
+    assert probe_data["configuredPolicy"]["verificationBoundary"] == "shared-container-process"
+    assert probe_data["observedMetrics"]["network"] == "unmeasured"
 
 
 @pytest.mark.asyncio
-async def test_numpy_nan_kernel_v1_attestation():
+async def test_legacy_kernel_wrapper_never_attests_or_verifies():
     """
     Tests the first genuine 'synapse-kernel-v1' verified recipe: NumPy NAN removal.
     Executes live verification with kernel probe attestation.
@@ -61,12 +61,12 @@ val = np.NaN  # Buggy mutant 2
         primary_source="https://numpy.org/devdocs/release/2.0.0-notes.html"
     )
 
-    assert evidence.verificationStatus == "VERIFIED"
+    assert evidence.verificationStatus == "PROVISIONAL"
     assert evidence.sandboxExitCode == 0
-    assert evidence.confidenceScore >= 0.95
+    assert evidence.confidenceScore is None
     assert evidence.isolationProfile is not None
-    assert evidence.isolationProfile["verificationProfile"] == "synapse-kernel-v1"
-    assert evidence.isolationProfile["isolationStatus"] == "ATTESTED"
+    assert evidence.isolationProfile["verificationProfile"] == "trusted-process-limits-v1"
+    assert evidence.isolationProfile["isolationStatus"] == "NOT_ATTESTED"
     assert "observedMetrics" in evidence.isolationProfile
     assert "observedCgroup" in evidence.isolationProfile
-    assert evidence.isolationProfile["observedCgroup"]["pidsMax"] == 64
+    assert "pidsMax" in evidence.isolationProfile["observedCgroup"]

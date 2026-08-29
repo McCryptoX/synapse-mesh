@@ -100,7 +100,9 @@ resolved external crate source tree together with its package identity, and
 binds the invoked Cargo/rustc executable bytes (plus selected toolchain
 binaries when discoverable). `rustc` and `cargo` may also be declared as exact
 toolchain pins. External registries still belong in the caller's read-only
-container boundary. `STALE` and `REVOKED` bundles are refused by default.
+container boundary. `BROKEN`, `DISPUTED`, `SUPERSEDED`, and `REVOKED` bundles
+are always refused. `STALE` bundles are refused by default and may be rerun only
+when the API caller explicitly sets `allowStale: true`.
 The CLI and `verifySource` apply a fail-closed five-minute wall-clock budget to
 source/schema retrieval plus execution; `verifyBundle` applies it to execution
 because the caller has already supplied parsed bytes. `--total-timeout-ms`

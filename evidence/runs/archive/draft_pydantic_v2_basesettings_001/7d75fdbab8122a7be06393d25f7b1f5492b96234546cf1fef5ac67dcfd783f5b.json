@@ -1,0 +1,110 @@
+{
+  "artifactType": "synapse-bundle-verification-run",
+  "bundleId": "draft_pydantic_v2_basesettings_001",
+  "bundleSha256": "3a11404fd3271490de54b3f39f4cca3df6a2c4495897048300a0bc1056a14731",
+  "completedAt": "2026-08-29T09:44:18.412016Z",
+  "contractVersion": "bundle-4-stage-v1",
+  "controlsObserved": {
+    "capabilitiesDropped": true,
+    "dockerSocketPresent": false,
+    "gid": 10001,
+    "memoryMaxBytes": 1073741824,
+    "memorySwapMaxBytes": 0,
+    "networkInterfaces": [
+      "lo"
+    ],
+    "noNewPrivileges": true,
+    "nonRoot": true,
+    "onlyLoopbackInterface": true,
+    "outputExecutable": false,
+    "pidsMax": 128,
+    "productionPathsPresent": false,
+    "rootFilesystemReadOnly": true,
+    "seccompMode": "2",
+    "sensitiveEnvironmentPresent": false,
+    "uid": 10001,
+    "workspaceExecutable": true,
+    "workspaceNoDev": true,
+    "workspaceNoSuid": true,
+    "workspaceSizeBytes": 67108864
+  },
+  "dependencyLockSha256": "d6fbc1502fdcc1c7f81f527d5892cc8c1b1f1830a8e33921bf9e7e34b242388c",
+  "outcome": "PASSED",
+  "publicationValidatorImageDigest": "sha256:a495351c9163b82f4f016597dafa6ae6c21d7422baf3424bff5c2f168f09189b",
+  "rawReportSha256": "0caf1e3f8045b62a8ab1f49fdabda778951740988c5926873c63bfec955ff75c",
+  "runner": {
+    "bindMountCount": 0,
+    "capabilitiesDropped": true,
+    "cgroupNamespacePrivate": true,
+    "cpuLimit": 2.0,
+    "credentialsPresent": false,
+    "hostDockerSocketMounted": false,
+    "imageDigest": "sha256:a495351c9163b82f4f016597dafa6ae6c21d7422baf3424bff5c2f168f09189b",
+    "memoryLimitBytes": 1073741824,
+    "memorySwapLimitBytes": 1073741824,
+    "mountNamespacePrivate": true,
+    "networkMode": "none",
+    "noNewPrivileges": true,
+    "nonRoot": true,
+    "oomKilled": false,
+    "outputExecutable": false,
+    "pidNamespacePrivate": true,
+    "pidsLimit": 128,
+    "privileged": false,
+    "productionDataMounted": false,
+    "rootFilesystemReadOnly": true,
+    "runnerVersion": "synapse-disposable-verifier-v1",
+    "seccompMode": "filter",
+    "userNamespaceMode": "daemon-default-host-uid",
+    "workspaceExecutable": true,
+    "workspaceNoDev": true,
+    "workspaceNoSuid": true,
+    "workspaceSizeLimitBytes": 67108864
+  },
+  "schemaVersion": "1.0.0",
+  "sourceRevision": "sha256:d67bef61dfcf696540015fdf05d3f75a59877b895e84643fb38e9459dfc179c3",
+  "sourceRevisionKind": "source-tree-sha256",
+  "stages": {
+    "mutations": [
+      {
+        "diffSha256": "3c439403d96c5272793d41d43d1938d7dfe09c39fe3fcef60d0dbda33e1fabdc",
+        "exitCode": 1,
+        "id": "mut_wrong_import",
+        "outputSha256": "d5b83ad8626e5159bde322c2e11ab122f69d117cf59f4ade4525ba806c3da35e",
+        "rejected": true,
+        "rejectionKind": "ASSERTION_FAILURE",
+        "strictUnifiedDiffApplied": true
+      },
+      {
+        "diffSha256": "01ff4f4d3a758d237b5bbc3777d9d93fe83395e932f8790a505b19557109f418",
+        "exitCode": 1,
+        "id": "mut_dummy_object",
+        "outputSha256": "d5b83ad8626e5159bde322c2e11ab122f69d117cf59f4ade4525ba806c3da35e",
+        "rejected": true,
+        "rejectionKind": "ASSERTION_FAILURE",
+        "strictUnifiedDiffApplied": true
+      }
+    ],
+    "patch": {
+      "diffSha256": "ce2715a8ac787e4a63d26dc477ff3aaeeff458b479a8257669f675c407eab68d",
+      "strictUnifiedDiffApplied": true
+    },
+    "post": {
+      "exitCode": 0,
+      "outputSha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "passed": true
+    },
+    "pre": {
+      "exceptionClassMatched": true,
+      "exitCode": 1,
+      "outputSha256": "180df99287b79e609a3cfe3b65eb2fa01fc0f308ed0ce5e7bc712197746c1aa0",
+      "signatureMatched": true
+    }
+  },
+  "startedAt": "2026-08-29T09:44:18.091736Z",
+  "toolchainVersions": {
+    "pydantic": "2.13.4",
+    "pydantic-settings": "2.15.0",
+    "python": "3.14.6"
+  }
+}

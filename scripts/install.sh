@@ -10,6 +10,7 @@ CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
+MCP_ENDPOINT='https://mcp.synapsemesh.dev/mcp'
 
 echo -e "${CYAN}"
 echo "  ___                                   __  __           _     "
@@ -35,6 +36,7 @@ CONFIG_FOUND=0
 inject_mcp() {
     local target_file="$1"
     local app_name="$2"
+    local mcp_endpoint="$MCP_ENDPOINT"
     mkdir -p "$(dirname "$target_file")"
     
     python3 -c "
@@ -54,7 +56,7 @@ if 'mcpServers' not in data:
     data['mcpServers'] = {}
 
 data['mcpServers']['synapse-mesh'] = {
-    'url': 'https://mcp.synapsemesh.dev/mcp',
+    'url': '$mcp_endpoint',
     'type': 'streamable-http'
 }
 
@@ -94,4 +96,4 @@ fi
 echo "--------------------------------------------------------------------------------"
 echo -e "${GREEN}Configuration Complete!${NC}"
 echo "AI coding agents can now query verified compatibility bundles via 'find_solution'."
-echo "Endpoint: https://mcp.synapsemesh.dev/mcp"
+echo "Endpoint: ${MCP_ENDPOINT}"

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Self-hosted Synapse-Mesh API reference generated from the current OpenAPI schema.">
+    <title>API Reference | Synapse-Mesh</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/style.min.css">
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-200">
+    {% include "partials/public_header.html" %}
+
+    <main class="max-w-6xl mx-auto px-4 py-12 space-y-8">
+        <section class="space-y-4">
+            <p class="font-mono text-sm text-brand-400">SELF-HOSTED API REFERENCE</p>
+            <h1 class="text-3xl font-extrabold text-white">{{ api_title }}</h1>
+            {% if api_description %}<p class="max-w-3xl text-slate-300 leading-relaxed">{{ api_description }}</p>{% endif %}
+            <div class="flex flex-wrap gap-3 text-sm">
+                <span class="rounded-full border border-slate-700 px-3 py-1">Version {{ api_version }}</span>
+                <span class="rounded-full border border-slate-700 px-3 py-1">{{ endpoint_count }} documented operations</span>
+                <a href="/openapi.json" class="rounded-full border border-brand-500/60 px-3 py-1 text-brand-400 hover:text-brand-300">OpenAPI JSON</a>
+            </div>
+            <p class="text-sm text-slate-300">
+                This read-only reference is generated from the service's current OpenAPI schema.
+                It does not load third-party scripts, styles, fonts, analytics, or interactive request tooling.
+            </p>
+        </section>
+
+        {% for group in groups %}
+        <section class="rounded-xl border border-slate-800 bg-slate-900 p-6 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-xl font-bold text-white">{{ group.name }}</h2>
+                <span class="text-xs text-slate-300">{{ group.endpoints | length }} operations</span>
+            </div>
+            <div class="space-y-3">
+                {% for endpoint in group.endpoints %}
+                <article class="rounded-lg border border-slate-700 bg-slate-950 p-4">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="rounded border border-brand-500 px-2 py-1 font-mono text-xs font-bold text-brand-400">{{ endpoint.method }}</span>
+                        <code class="break-words text-sm text-white">{{ endpoint.path }}</code>
+                        {% if endpoint.deprecated %}<span class="text-xs text-amber-400">Deprecated</span>{% endif %}
+                    </div>
+                    <p class="pt-2 text-sm text-slate-300">{{ endpoint.summary }}</p>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% else %}
+        <section class="rounded-xl border border-slate-800 bg-slate-900 p-6">
+            <h2 class="text-xl font-bold text-white">No documented operations</h2>
+            <p class="pt-2 text-sm text-slate-300">The current OpenAPI schema does not expose any operations.</p>
+        </section>
+        {% endfor %}
+    </main>
+
+    {% include "partials/public_footer.html" %}
+</body>
+</html>

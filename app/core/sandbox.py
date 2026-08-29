@@ -31,10 +31,14 @@ def kill_process_tree(process_or_pid):
             pass
 
 
-def sandbox_preexec_limits():
-    """Applies strict POSIX resource limits (CPU, Filesize, Process Count) to child process."""
-    # 1. Limit Max Created File Size to 10 MiB (prevents disk filling /tmp bombs)
-    max_file = 10 * 1024 * 1024
+def sandbox_preexec_limits(
+    address_space_limit_bytes: Optional[int] = None,
+    max_file_size_bytes: int = 10 * 1024 * 1024,
+):
+    """Apply the configured POSIX resource limits to the child process."""
+    # 1. Bound each created file. Repository-owned compiler harnesses need
+    # larger debug/link outputs but remain inside the outer tmpfs and cgroup.
+    max_file = max(1, min(max_file_size_bytes, 128 * 1024 * 1024))
     try:
         resource.setrlimit(resource.RLIMIT_FSIZE, (max_file, max_file))
     except BaseException:
@@ -52,6 +56,19 @@ def sandbox_preexec_limits():
             resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))
     except BaseException:
         pass
+
+    # Python does not reserve a large virtual heap at startup, so a per-process
+    # address-space ceiling is usable here. Node/V8 and compiler processes have
+    # different virtual-memory behaviour and remain bounded by the container
+    # cgroup until they are moved to a dedicated worker boundary.
+    if address_space_limit_bytes and hasattr(resource, "RLIMIT_AS"):
+        try:
+            resource.setrlimit(
+                resource.RLIMIT_AS,
+                (address_space_limit_bytes, address_space_limit_bytes),
+            )
+        except BaseException:
+            pass
 
     # 4. Linux-specific: Ensure death signal is sent if parent dies
     if sys.platform.startswith("linux"):
@@ -95,26 +112,67 @@ async def read_stream_capped(
 
 
 class SandboxRunner:
-    """Executes multi-ecosystem reproduction and test suites in isolated temporary workspaces with strict limits."""
+    """Run trusted test fixtures in a temporary, process-limited workspace.
+
+    This runner is deliberately *not* described as a security sandbox.  A child
+    process still shares the API container's filesystem and network namespaces.
+    Public and crawled code must therefore never be passed to this class.
+    """
 
     TIMEOUT_SECONDS = 12.0
     MAX_OUTPUT_BYTES = 512 * 1024  # 512 KiB per stream
+    PYTHON_MAX_ADDRESS_SPACE_BYTES = 512 * 1024 * 1024
+    TOOLCHAIN_MAX_FILE_BYTES = 64 * 1024 * 1024
 
     @classmethod
     async def run_workspace_test(
         cls,
         files: Dict[str, str],
         entrypoint: str,
-        runtime: str = "python"
+        runtime: str = "python",
+        *,
+        allow_toolchain_subprocesses: bool = False,
     ) -> Dict[str, Any]:
-        """Executes a multi-file workspace hermetically in an isolated directory across Python, Node.js, and Rust."""
+        """Execute a trusted fixture with bounded time/output in a temporary directory.
+
+        ``allow_toolchain_subprocesses`` is reserved for repository-owned Python
+        harnesses that launch Node or compiler processes. Those tools reserve
+        substantially more virtual address space and remain bounded by the
+        outer container cgroup; ordinary Python fixtures retain RLIMIT_AS.
+        """
         start_time = time.time()
         temp_dir = tempfile.mkdtemp(prefix="synapse_sandbox_")
 
         try:
             # 1. Write all workspace files
+            if not files or len(files) > 64:
+                return {
+                    "exitCode": -1,
+                    "passed": False,
+                    "durationMs": 0.0,
+                    "stdout": "",
+                    "stderr": "UNVERIFIED: invalid workspace",
+                    "unverified": True,
+                }
             for rel_path, content in files.items():
-                target_file = Path(temp_dir) / rel_path
+                rel = Path(rel_path)
+                target_file = (Path(temp_dir) / rel).resolve()
+                workspace_root = Path(temp_dir).resolve()
+                if (
+                    rel.is_absolute()
+                    or ".." in rel.parts
+                    or target_file == workspace_root
+                    or workspace_root not in target_file.parents
+                    or len(content.encode("utf-8")) > 1024 * 1024
+                ):
+                    return {
+                        "exitCode": -1,
+                        "passed": False,
+                        "durationMs": 0.0,
+                        "stdout": "",
+                        "stderr": "UNVERIFIED: unsafe workspace path or size",
+                        "unverified": True,
+                    }
                 target_file.parent.mkdir(parents=True, exist_ok=True)
                 target_file.write_text(content, encoding="utf-8")
 
@@ -167,10 +225,34 @@ class SandboxRunner:
                     rustc_bin = shutil.which("rustc")
                     args = [rustc_bin, entrypoint]
             else:
-                executable = sys.executable
-                args = [executable, entrypoint]
+                return {
+                    "exitCode": -1,
+                    "passed": False,
+                    "durationMs": 0.0,
+                    "stdout": "",
+                    "stderr": f"UNVERIFIED: unsupported runtime '{rt}'",
+                    "unverified": True,
+                }
+
+            entrypoint_path = (Path(temp_dir) / entrypoint).resolve()
+            if Path(entrypoint).is_absolute() or Path(temp_dir).resolve() not in entrypoint_path.parents:
+                return {
+                    "exitCode": -1,
+                    "passed": False,
+                    "durationMs": 0.0,
+                    "stdout": "",
+                    "stderr": "UNVERIFIED: unsafe entrypoint",
+                    "unverified": True,
+                }
 
             # Spawn process in isolated process group with kernel resource limits
+            address_space_limit = (
+                cls.PYTHON_MAX_ADDRESS_SPACE_BYTES
+                if rt == "python"
+                and sys.platform.startswith("linux")
+                and not allow_toolchain_subprocesses
+                else None
+            )
             process = await asyncio.create_subprocess_exec(
                 *args,
                 cwd=temp_dir,
@@ -178,7 +260,12 @@ class SandboxRunner:
                 stderr=asyncio.subprocess.PIPE,
                 env=env,
                 start_new_session=True,
-                preexec_fn=sandbox_preexec_limits
+                preexec_fn=lambda: sandbox_preexec_limits(
+                    address_space_limit,
+                    cls.TOOLCHAIN_MAX_FILE_BYTES
+                    if allow_toolchain_subprocesses
+                    else 10 * 1024 * 1024,
+                )
             )
 
             def on_output_exceeded():
@@ -249,13 +336,25 @@ class SandboxRunner:
         mutations: Optional[List[str]] = None,
         primary_source: Optional[str] = None
     ) -> EvidenceDefinition:
-        """
-        Executes genuine 4-stage empirical verification matching the Hidden Judge bar:
-          1. Pre-Fail Validation: repro_script must fail (exit != 0) and emit error_signature.
-          2. Post-Pass Execution: test_suite must pass (exit == 0).
-          3. Multi-Mutation Sanity: all provided mutant patches must fail.
+        """Run the legacy split-script check for trusted internal fixtures.
+
+        The method does not apply a unified diff to the failing workspace and its
+        mutation inputs are standalone programs, not mutant diffs.  Consequently
+        it can never issue the ``bundle-4-stage-v1`` contract or ``VERIFIED``.
         """
         rt = runtime.lower()
+        if rt not in ("python", "nodejs", "node", "javascript", "typescript", "rust"):
+            return EvidenceDefinition(
+                verificationStatus="FAILED",
+                sandboxExitCode=-1,
+                passedTests=0,
+                totalTests=0,
+                confidenceScore=None,
+                preExit=-1,
+                postExit=-1,
+                mutationsKilled="0/0",
+                primarySource=primary_source,
+            )
         ext = ".py" if rt == "python" else (".js" if rt in ("nodejs", "javascript", "typescript") else ".rs")
 
         # 1. Pre-Fail Validation
@@ -296,25 +395,13 @@ class SandboxRunner:
                 if not res_mut["passed"]:
                     mutations_killed += 1
 
-        # Determine strict epistemic status and confidence
-        if post_passed and pre_passed and total_mutations >= 2 and mutations_killed == total_mutations:
-            # Full 4-stage empirical verification with multi-mutation killing
-            status = "VERIFIED"
-            confidence = 0.99
-        elif post_passed and pre_passed and total_mutations > 0 and mutations_killed == total_mutations:
-            # Empirical verification with single mutation
-            status = "VERIFIED"
-            confidence = 0.85
-        elif post_passed and pre_passed:
-            # 2-stage execution without mutation testing (Provisional)
+        # Split scripts are useful diagnostics, but are never 4-stage evidence.
+        if post_passed and pre_passed:
             status = "PROVISIONAL"
-            confidence = 0.65
         elif post_passed:
             status = "DRAFT"
-            confidence = 0.40
         else:
             status = "FAILED"
-            confidence = 0.10
 
         return EvidenceDefinition(
             verificationStatus=status,
@@ -322,11 +409,18 @@ class SandboxRunner:
             sandboxExitCode=post_exit,
             passedTests=1 if post_passed else 0,
             totalTests=1,
-            confidenceScore=confidence,
+            confidenceScore=None,
             preExit=pre_exit,
             postExit=post_exit,
             mutationsKilled=f"{mutations_killed}/{total_mutations}",
-            primarySource=primary_source
+            primarySource=primary_source,
+            evidenceContract=None,
+            isolationProfile={
+                "verificationProfile": "trusted-process-limits-v1",
+                "isolationStatus": "NOT_ATTESTED",
+                "networkIsolation": False,
+                "filesystemIsolation": False,
+            },
         )
 
     @classmethod
@@ -341,14 +435,13 @@ class SandboxRunner:
             res = await cls.run_python_test(test_suite)
 
         status = "DRAFT" if res["passed"] else "FAILED"
-        confidence = 0.50 if res["passed"] else 0.10
         return EvidenceDefinition(
             verificationStatus=status,
             lastTestedAt=datetime.now(timezone.utc),
             sandboxExitCode=res["exitCode"],
             passedTests=1 if res["passed"] else 0,
             totalTests=1,
-            confidenceScore=confidence,
+            confidenceScore=None,
             preExit=1,
             postExit=res["exitCode"],
             mutationsKilled="0/0",

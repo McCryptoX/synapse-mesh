@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily Synapse-Mesh verification refresh
+
+[Timer]
+OnCalendar=*-*-* 03:17:00 UTC
+RandomizedDelaySec=30m
+AccuracySec=1m
+Persistent=true
+Unit=synapse-verification.service
+
+[Install]
+WantedBy=timers.target

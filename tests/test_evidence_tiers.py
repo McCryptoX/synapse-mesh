@@ -10,7 +10,7 @@ from app.core.sandbox import SandboxRunner
 async def test_submission_without_mutations_receives_provisional_tier():
     """
     Ensures that submitting a recipe without mutations is strictly labeled as PROVISIONAL
-    (tier: COMMUNITY_UNMUTATED_PROVISIONAL, confidence: 0.65), preventing label dilution.
+    without publishing an uncalibrated probability, preventing label dilution.
     """
     repro = "import sys\nprint('CustomError: test unmutated')\nsys.exit(1)\n"
     test_suite = "import sys\nprint('PASS')\nsys.exit(0)\n"
@@ -24,14 +24,14 @@ async def test_submission_without_mutations_receives_provisional_tier():
     )
 
     assert evidence.verificationStatus == "PROVISIONAL"
-    assert evidence.confidenceScore == 0.65
+    assert evidence.confidenceScore is None
     assert evidence.mutationsKilled == "0/0"
 
 
 @pytest.mark.asyncio
-async def test_submission_with_multi_mutations_receives_verified():
+async def test_split_scripts_with_multi_mutations_remain_provisional():
     """
-    Ensures that only recipes with >=2 killed mutations receive full VERIFIED status (0.99).
+    Standalone mutant scripts do not prove that a diff was applied to one workspace.
     """
     repro = "import sys\nprint('CustomError: test mutated')\nsys.exit(1)\n"
     test_suite = "import sys\nprint('PASS')\nsys.exit(0)\n"
@@ -46,9 +46,10 @@ async def test_submission_with_multi_mutations_receives_verified():
         mutations=[mut1, mut2]
     )
 
-    assert evidence.verificationStatus == "VERIFIED"
-    assert evidence.confidenceScore == 0.99
+    assert evidence.verificationStatus == "PROVISIONAL"
+    assert evidence.confidenceScore is None
     assert evidence.mutationsKilled == "2/2"
+    assert evidence.evidenceContract is None
 
 
 def test_signature_matcher_rejects_exception_class_mismatch():

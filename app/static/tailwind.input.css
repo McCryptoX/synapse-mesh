@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    background-color: #090d16;
+    color: #e2e8f0;
+    overflow-x: hidden;
+  }
+
+  svg {
+    max-width: 100%;
+  }
+}
+
+@layer components {
+  .glow-border {
+    box-shadow: 0 0 30px -5px rgb(45 212 191 / 15%);
+  }
+
+  .terminal-code {
+    background: rgb(15 23 42 / 85%);
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* Keep inline icons bounded even when a caller supplies only a width utility. */
+svg.w-3 {
+  width: 0.75rem !important;
+  height: 0.75rem !important;
+  min-width: 0.75rem !important;
+}
+
+svg.w-3\.5 {
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+  min-width: 0.875rem !important;
+}
+
+svg.w-4 {
+  width: 1rem !important;
+  height: 1rem !important;
+  min-width: 1rem !important;
+}
+
+svg.w-5 {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  min-width: 1.25rem !important;
+}
+
+svg.w-6 {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  min-width: 1.5rem !important;
+}
+
+/* Chrome WebMCP agent focus pseudo-classes. */
+form:tool-form-active {
+  outline: 2px dashed #2dd4bf !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 25px rgb(45 212 191 / 40%);
+}
+
+input:tool-submit-active,
+button:tool-submit-active {
+  outline: 2px dashed #2dd4bf !important;
+  outline-offset: 2px;
+}
+
+@media print {
+  body {
+    background-color: #090d16 !important;
+    print-color-adjust: exact;
+  }
+
+  header,
+  footer {
+    break-inside: avoid;
+  }
+}

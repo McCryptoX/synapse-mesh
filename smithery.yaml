@@ -2,7 +2,7 @@
 name: "synapse-mesh"
 description: "Execution-verified compatibility bundles and 4-stage sandbox contract resolver for coding AI agents."
 version: "1.0.0"
-author: "Synapse-Mesh Operator"
+author: "Synapse-Mesh Contributors"
 repository: "https://github.com/McCryptoX/synapse-mesh"
 
 startCommand:

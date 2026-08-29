@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 from typing import List, Dict, Any
@@ -16,14 +17,19 @@ from app.models.recipe import (
     EvidenceDefinition
 )
 from app.core.sanitizer import ZeroPiiSanitizer
-from app.core.sandbox import SandboxRunner
 
 logging.basicConfig(level="INFO", format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("batch_importer")
 
 
 async def process_candidate_recipes(json_file_path: str, force_reverify: bool = False):
-    """Loads candidate recipes, runs genuine 4-stage sandbox verification on new/changed items, and stores verified ones."""
+    """Import legacy candidates as sanitized, unexecuted drafts.
+
+    The historical batch files contain executable puppet fixtures.  They are
+    retained as discovery material but can never be promoted by this importer.
+    ``force_reverify`` is accepted for CLI compatibility and has no execution
+    semantics.
+    """
     await init_db()
     path = Path(json_file_path)
     if not path.exists():
@@ -43,19 +49,10 @@ async def process_candidate_recipes(json_file_path: str, force_reverify: bool = 
     for idx, item in enumerate(candidates, 1):
         recipe_id = item.get("id") or f"rec_ingest_{idx:03d}"
 
-        # 0. Incremental Ingestion Gate: Skip if already verified in DB unless force_reverify is requested
-        if not force_reverify:
-            try:
-                db_check = await get_db_connection()
-                cur = await db_check.execute("SELECT verification_status FROM recipes WHERE id = ?", (recipe_id,))
-                row = await cur.fetchone()
-                await db_check.close()
-                if row and row["verification_status"] == "VERIFIED":
-                    skipped_count += 1
-                    verified_count += 1
-                    continue
-            except Exception:
-                pass
+        if not isinstance(recipe_id, str) or not re.fullmatch(r"rec_[a-z0-9_-]{3,120}", recipe_id):
+            skipped_count += 1
+            logger.warning("Skipping candidate with invalid or reserved identifier")
+            continue
         
         prob_dict = item.get("problem", {})
         sol_dict = item.get("solution", {})
@@ -80,53 +77,57 @@ async def process_candidate_recipes(json_file_path: str, force_reverify: bool = 
         sanitized_summary = ZeroPiiSanitizer.sanitize_text(summary)
         sanitized_error = ZeroPiiSanitizer.sanitize_text(error_sig)
 
-        # 2. Genuine 4-Stage Sandbox Verification
-        evidence = await SandboxRunner.verify_recipe_full(
-            runtime=runtime,
-            error_signature=sanitized_error,
-            repro_script=repro_script,
-            test_suite=test_suite,
-            mutations=mutations,
-            primary_source=primary_source
+        # 2. Fail-closed evidence: no legacy candidate code is executed here.
+        evidence = EvidenceDefinition(
+            verificationStatus="DRAFT",
+            verificationNote="Legacy candidate imported without execution; structured four-stage verification is required.",
+            primarySource=(
+                ZeroPiiSanitizer.sanitize_text(primary_source)
+                if isinstance(primary_source, str) and primary_source.startswith(("http://", "https://"))
+                else None
+            ),
         )
-
-        if evidence.verificationStatus == "VERIFIED":
-            verified_count += 1
-            logger.info(f"[✓ VERIFIED] {recipe_id} ({runtime}) -> Pre:{evidence.preExit} Post:{evidence.postExit} Mut:{evidence.mutationsKilled}")
-        elif evidence.verificationStatus in ("PROVISIONAL", "DRAFT"):
-            draft_count += 1
-            logger.info(f"[~ {evidence.verificationStatus}] {recipe_id} ({runtime}) -> Status {evidence.verificationStatus}, awaiting mutations.")
-        else:
-            failed_count += 1
-            logger.warning(f"[✗ FAILED] {recipe_id} ({runtime}) -> Sandbox Exit {evidence.sandboxExitCode}")
+        draft_count += 1
+        logger.info("[~ DRAFT] %s (%s) imported without execution", recipe_id, runtime)
 
         # 3. Store in Database with short-lived connection
         prob = ProblemDefinition(
             errorSignature=sanitized_error,
             runtime=runtime.lower(),
             description=sanitized_desc,
-            packages=prob_dict.get("packages", {})
+            packages=ZeroPiiSanitizer.sanitize_data(prob_dict.get("packages", {}))
         )
         sol = SolutionDefinition(
             summary=sanitized_summary,
-            codeDiff=diff,
-            patchDiff=diff,
-            instructions=sol_dict.get("instructions", []),
-            pinnedDependencies=pinned_deps,
-            doNot=do_not
+            codeDiff=ZeroPiiSanitizer.sanitize_text(diff),
+            patchDiff=ZeroPiiSanitizer.sanitize_text(diff),
+            instructions=ZeroPiiSanitizer.sanitize_data(sol_dict.get("instructions", [])),
+            pinnedDependencies=ZeroPiiSanitizer.sanitize_data(pinned_deps),
+            doNot=ZeroPiiSanitizer.sanitize_data(do_not)
         )
         repro = ReproductionDefinition(
-            script=repro_script,
-            testSuite=test_suite
+            script=ZeroPiiSanitizer.sanitize_text(repro_script),
+            testSuite=ZeroPiiSanitizer.sanitize_text(test_suite)
         )
 
         try:
             db = await get_db_connection()
             await db.execute("""
-                INSERT OR REPLACE INTO recipes (
+                INSERT INTO recipes (
                     id, runtime, error_signature, problem_json, solution_json, 
                     reproduction_json, evidence_json, confidence_score, verification_status
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    runtime = excluded.runtime,
+                    error_signature = excluded.error_signature,
+                    problem_json = excluded.problem_json,
+                    solution_json = excluded.solution_json,
+                    reproduction_json = excluded.reproduction_json,
+                    evidence_json = excluded.evidence_json,
+                    confidence_score = excluded.confidence_score,
+                    verification_status = 'DRAFT',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE recipes.verification_status <> 'VERIFIED'
             """, (
                 recipe_id,
                 runtime.lower(),
@@ -135,7 +136,7 @@ async def process_candidate_recipes(json_file_path: str, force_reverify: bool = 
                 json.dumps(sol.model_dump()),
                 json.dumps(repro.model_dump()),
                 json.dumps(evidence.model_dump(), default=str),
-                evidence.confidenceScore,
+                0.0,
                 evidence.verificationStatus
             ))
             await db.commit()
@@ -143,7 +144,11 @@ async def process_candidate_recipes(json_file_path: str, force_reverify: bool = 
         except Exception as dbe:
             logger.warning(f"Failed to persist {recipe_id} to database: {dbe}")
 
-    logger.info(f"=== Import Completed: {verified_count} VERIFIED ({skipped_count} incremental skips), {draft_count} PROVISIONAL/DRAFT, {failed_count} FAILED ===")
+    logger.info(
+        "=== Draft Import Completed: %s unexecuted drafts, %s invalid/reserved skipped ===",
+        draft_count,
+        skipped_count,
+    )
 
 
 if __name__ == "__main__":

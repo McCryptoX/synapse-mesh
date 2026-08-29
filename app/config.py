@@ -8,16 +8,19 @@ class Settings(BaseSettings):
     mcp_protocol_version: str = "2026-07-28"
     domain: str = "synapsemesh.dev"
     base_url: str = "https://synapsemesh.dev"
-    canonical_mcp_url: str = "https://mcp.synapsemesh.dev"
+    canonical_mcp_url: str = "https://mcp.synapsemesh.dev/mcp"
     environment: str = "production"
     log_level: str = "INFO"
+    autonomous_mining_enabled: bool = True
     
     # Database
     db_path: str = "data/synapse_mesh.sqlite3"
     
     # Security
     admin_token: str = ""
-    ops_password: str = "synapse-ops-2026"
+    # No built-in credential. Production must provision OPS_PASSWORD or
+    # ADMIN_TOKEN once; the first successful login persists a password hash.
+    ops_password: str = ""
     
     # CORS
     cors_origins: list[str] = ["*"]

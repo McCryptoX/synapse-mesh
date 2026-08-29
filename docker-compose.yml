@@ -5,27 +5,40 @@ services:
       dockerfile: Dockerfile
     container_name: synapse_api
     restart: unless-stopped
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--no-access-log"]
+    # SSE sessions are intentionally process-local, so production uses one worker.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--no-access-log"]
     volumes:
       - ./data:/app/data
-      - ./app:/app/app:ro
-      - ./scripts:/app/scripts:ro
-      - ./synapse_cli:/app/synapse_cli:ro
-      - ./bundles:/app/bundles
-      - ./benchmark:/app/benchmark:ro
-      - ./tests:/app/tests:ro
-      - ./schemas:/app/schemas:ro
-      - ./packages:/app/packages:ro
+      - ./bundles/golden:/app/bundles/golden:ro
+      - ./bundles/drafts:/app/bundles/drafts
+      - ./evidence/runs:/app/evidence/runs:ro
+      - ./evidence/lifecycle:/app/evidence/lifecycle:ro
     environment:
       - ENVIRONMENT=production
       - DOMAIN=synapsemesh.dev
       - LOG_LEVEL=WARNING
       - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - AUTONOMOUS_MINING_ENABLED=true
+      - OPS_PASSWORD=${OPS_PASSWORD:-}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,noexec,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 128
+    mem_limit: 1024m
+    cpus: 2.0
     deploy:
       resources:
         limits:
           cpus: '2.0'
           memory: 1024M
+          pids: 128
         reservations:
           memory: 256M
     logging:
@@ -53,8 +66,19 @@ services:
         limits:
           cpus: '1.0'
           memory: 128M
+          pids: 128
         reservations:
           memory: 64M
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,noexec,size=32m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    pids_limit: 128
     logging:
       driver: "json-file"
       options:

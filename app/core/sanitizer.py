@@ -1,4 +1,5 @@
 import re
+import ipaddress
 from typing import Any, Dict, List, Union
 
 
@@ -7,8 +8,10 @@ class ZeroPiiSanitizer:
 
     # Patterns
     EMAIL_PATTERN = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
-    IPV4_PATTERN = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
-    IPV6_PATTERN = re.compile(r'\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b')
+    IPV4_PATTERN = re.compile(r'(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w.])')
+    IPV6_CANDIDATE_PATTERN = re.compile(
+        r'(?<![0-9A-Fa-f:])(?:[0-9A-Fa-f]{0,4}:){2,8}[0-9A-Fa-f]{0,4}(?![0-9A-Fa-f:])'
+    )
     
     # API Keys & Secrets
     TOKEN_PATTERNS = [
@@ -51,8 +54,23 @@ class ZeroPiiSanitizer:
         text = cls.EMAIL_PATTERN.sub('[REDACTED_EMAIL]', text)
 
         # 4. Redact IPs (avoiding version strings like 1.2.3 by checking context or replacement)
-        text = cls.IPV4_PATTERN.sub('[REDACTED_IP]', text)
-        text = cls.IPV6_PATTERN.sub('[REDACTED_IPV6]', text)
+        def redact_ipv4(match: re.Match) -> str:
+            try:
+                ipaddress.ip_address(match.group(0))
+            except ValueError:
+                return match.group(0)
+            return '[REDACTED_IP]'
+
+        def redact_ipv6(match: re.Match) -> str:
+            candidate = match.group(0)
+            try:
+                parsed = ipaddress.ip_address(candidate)
+            except ValueError:
+                return candidate
+            return '[REDACTED_IPV6]' if parsed.version == 6 else '[REDACTED_IP]'
+
+        text = cls.IPV4_PATTERN.sub(redact_ipv4, text)
+        text = cls.IPV6_CANDIDATE_PATTERN.sub(redact_ipv6, text)
 
         # 5. Redact User local directory paths
         for path_pat in cls.USER_PATH_PATTERNS:
@@ -65,7 +83,19 @@ class ZeroPiiSanitizer:
         if isinstance(data, str):
             return cls.sanitize_text(data)
         elif isinstance(data, dict):
-            return {k: cls.sanitize_data(v) for k, v in data.items()}
+            sanitized = {}
+            for key, value in data.items():
+                clean_key = cls.sanitize_text(key) if isinstance(key, str) else key
+                if clean_key in sanitized:
+                    # Do not let two redacted PII keys silently overwrite data.
+                    suffix = 2
+                    candidate = f"{clean_key}_{suffix}"
+                    while candidate in sanitized:
+                        suffix += 1
+                        candidate = f"{clean_key}_{suffix}"
+                    clean_key = candidate
+                sanitized[clean_key] = cls.sanitize_data(value)
+            return sanitized
         elif isinstance(data, list):
             return [cls.sanitize_data(item) for item in data]
         return data

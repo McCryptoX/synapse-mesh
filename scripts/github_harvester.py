@@ -1,5 +1,4 @@
 import asyncio
-import glob
 import httpx
 import json
 import logging
@@ -12,8 +11,8 @@ from typing import List, Dict, Any, Optional
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.database import init_db, get_db_connection
-from scripts.batch_importer import process_candidate_recipes
+from app.database import init_db
+from app.core.sanitizer import ZeroPiiSanitizer
 
 logging.basicConfig(level="INFO", format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("github_harvester")
@@ -39,7 +38,7 @@ TARGET_REPOSITORIES = [
 
 
 class GitHubReleaseHarvester:
-    """Automated, rate-limited release notes crawler and batch verification ingester."""
+    """Automated, rate-limited release-note crawler and draft synthesizer."""
 
     def __init__(self, github_token: Optional[str] = None):
         self.headers = {
@@ -80,8 +79,8 @@ class GitHubReleaseHarvester:
                             "body": content
                         })
                     return items
-        except Exception as e:
-            logger.debug(f"Atom feed fallback for {owner}/{repo} error: {e}")
+        except Exception as exc:
+            logger.debug("Atom feed fallback failed for %s/%s (%s)", owner, repo, type(exc).__name__)
 
         return []
 
@@ -113,36 +112,80 @@ class GitHubReleaseHarvester:
         return sections
 
     async def harvest_and_ingest(self):
-        """Runs the harvest pipeline and executes automated sandbox verification across all candidate batches."""
+        """Crawl upstream release notes and synthesize unexecuted drafts.
+
+        Release bodies are third-party input.  They are never executed by this
+        service; promotion requires a separate verification boundary.
+        """
         await init_db()
         logger.info(f"=== 1. Starting GitHub Release Scan across {len(TARGET_REPOSITORIES)} repositories ===")
 
+        crawled_entries: List[Dict[str, Any]] = []
         total_extracted = 0
 
         for target in TARGET_REPOSITORIES:
             owner, repo, runtime = target["owner"], target["repo"], target["runtime"]
             logger.info(f"Scanning releases for {owner}/{repo} ({runtime})...")
             releases = await self.fetch_releases(owner, repo, limit=3)
-            
+
             for rel in releases:
-                tag = rel.get("tag_name", "unknown")
-                body = rel.get("body", "")
+                tag = str(rel.get("tag_name") or rel.get("name") or "unknown")
+                body = rel.get("body") or ""
                 sections = self.extract_breaking_sections(body)
                 if sections:
                     total_extracted += len(sections)
+                    notes = "\n\n".join(sections)
+                else:
+                    notes = body
+                if notes and len(notes.strip()) >= 40:
+                    pkg = repo.replace(".js", "").lower()
+                    clean_notes = ZeroPiiSanitizer.sanitize_text(notes[:8000])
+                    clean_url = ZeroPiiSanitizer.sanitize_text(
+                        f"https://github.com/{owner}/{repo}/releases"
+                    )
+                    crawled_entries.append({
+                        "package": pkg,
+                        "version": tag.lstrip("v"),
+                        "runtime": "python" if runtime == "docker" else runtime,
+                        "release_notes": clean_notes,
+                        "url": clean_url,
+                    })
 
             await asyncio.sleep(0.3)
 
-        logger.info(f"Scan complete: Found {total_extracted} breaking change sections.")
+        logger.info(
+            f"Scan complete: {total_extracted} breaking-change sections, "
+            f"{len(crawled_entries)} release notes queued for synthesis."
+        )
 
-        # 2. Process and verify all candidate batches into database
-        logger.info("=== 2. Running Automated Sandbox Verification & Batch Ingestion ===")
-        data_dir = Path("data")
-        batch_files = sorted(glob.glob(str(data_dir / "candidate_recipes*.json")))
-        
-        for batch_file in batch_files:
-            logger.info(f"Processing candidate batch: {batch_file}")
-            await process_candidate_recipes(batch_file)
+        # 2. Synthesize unexecuted drafts (never golden/).
+        logger.info("=== 2. Synthesize crawled notes as unexecuted drafts ===")
+        try:
+            from app.core.upstream_miner import (
+                BundleSynthesizer,
+                DRAFTS_DIR,
+            )
+
+            DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
+            synthesized = 0
+            for entry in crawled_entries[:24]:
+                entry["trusted_code_examples"] = False
+                bundle = BundleSynthesizer.synthesize_bundle(entry)
+                if not bundle:
+                    continue
+                synthesized += 1
+                bundle.status = "DRAFT"
+                out_path = DRAFTS_DIR / f"{bundle.bundleId}.json"
+                temp_path = DRAFTS_DIR / f".{bundle.bundleId}.{os.getpid()}.tmp"
+                temp_path.write_text(json.dumps(bundle.model_dump(), indent=2), encoding="utf-8")
+                os.replace(temp_path, out_path)
+            logger.info("Crawled synthesis: %s unexecuted drafts.", synthesized)
+        except Exception as exc:
+            logger.warning("Crawled draft synthesis failed (%s)", type(exc).__name__)
+
+        # Historical candidate batches contain executable puppet fixtures.  The
+        # autonomous service intentionally does not run or promote them.
+        logger.info("=== 3. Legacy executable candidate batches skipped (fail closed) ===")
 
         logger.info("=== Harvester & Verification Pipeline Complete! ===")
 

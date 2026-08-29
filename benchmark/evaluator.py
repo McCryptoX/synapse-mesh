@@ -52,7 +52,8 @@ class ScientificBenchmarkEvaluator:
         repro_res = await SandboxRunner.run_workspace_test(
             files=repro_files,
             entrypoint=repro_entrypoint,
-            runtime=repro_runtime
+            runtime=repro_runtime,
+            allow_toolchain_subprocesses=runtime in {"nodejs", "rust"},
         )
         
         if repro_res.get("unverified"):
@@ -86,7 +87,8 @@ class ScientificBenchmarkEvaluator:
         post_res = await SandboxRunner.run_workspace_test(
             files=valid_files,
             entrypoint=case.entrypoint,
-            runtime=post_runtime
+            runtime=post_runtime,
+            allow_toolchain_subprocesses=runtime in {"nodejs", "rust"},
         )
         
         post_pass_ok = (post_res["exitCode"] == 0 and post_res["passed"] is True)
@@ -103,7 +105,8 @@ class ScientificBenchmarkEvaluator:
             mut_res = await SandboxRunner.run_workspace_test(
                 files=mut_files,
                 entrypoint=case.entrypoint,
-                runtime=post_runtime
+                runtime=post_runtime,
+                allow_toolchain_subprocesses=runtime in {"nodejs", "rust"},
             )
             if mut_res["exitCode"] != 0 or mut_res["passed"] is False:
                 mutations_rejected += 1

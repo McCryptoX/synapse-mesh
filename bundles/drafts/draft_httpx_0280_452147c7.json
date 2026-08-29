@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "draft_httpx_0280_452147c7",
-  "status": "VERIFIED",
+  "status": "UNVERIFIED",
   "description": "Draft compatibility bundle for httpx 0.28.0 migration.",
   "tags": [
     "httpx",

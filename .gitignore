@@ -1,6 +1,19 @@
-# Operating System
+# Operating System & IDE
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets & Environment variables
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
 
 # Python
 __pycache__/
@@ -26,6 +39,13 @@ wheels/
 .installed.cfg
 *.egg
 
+# Node.js
+node_modules/
+.next/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # Testing & Linting
 .pytest_cache/
 .coverage
@@ -33,15 +53,34 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
-# Databases & Runtime Data
-*.sqlite3*
+# Databases & Runtime State
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.sqlite3-wal
+*.sqlite3-shm
 *.db
-data/*.sqlite3*
+data/*.sqlite*
+data/*.db
+backups/
+*.bak
 logs/
+*.log
+tmp/
+temp/
 
-# Environment variables & secrets
-.env
-.env.local
-.env.*.local
-*.pem
-*.key
+# Development screenshots, media, AI prompt dumps, chat exports & private review memos
+/Bildschirmfoto*
+/IMG_*
+/*.pdf
+/AGENT_COMMUNICATION_PROMPTS.txt
+/CODEX_REVIEW_*.txt
+/DECISION_MEMO_*.txt
+/GEMINI_*.txt
+/PROMPT_*.txt
+/RUECKMELDUNG_*.txt
+/synapsemesh_*_review_*.txt
+
+# Temporary benchmark output & local test results
+benchmark/results/
+data/benchmark_results/

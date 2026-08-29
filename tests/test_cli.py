@@ -18,8 +18,8 @@ def test_cli_doctor_runs_cleanly(capsys):
     assert "Connecting to Synapse-Mesh Node" in captured.out
 
 
-def test_reverify_4stage_pipeline_success():
-    """Tests that a valid 4-stage bundle executes Pre-Fail, Diff Apply, Post-Pass, and Mutation Kill."""
+def test_reverify_rejects_legacy_split_script_recipe():
+    """Legacy recipes cannot be silently upgraded to the workspace/diff contract."""
     bundle = {
         "id": "bundle_test_valid_001",
         "problem": {
@@ -40,6 +40,63 @@ def test_reverify_4stage_pipeline_success():
         }
     }
     
+    assert verify_bundle_data(bundle) is False
+
+
+def test_reverify_structured_workspace_contract_success():
+    """A structured bundle passes only with real runtime, diff and two mutant diffs."""
+    runtime_version = platform.python_version()
+    bundle = {
+        "schemaVersion": "1.0.0",
+        "bundleId": "bundle_test_python_runtime_001",
+        "status": "DRAFT",
+        "description": "Contract regression fixture",
+        "scope": {
+            "package": "python",
+            "runtime": "python",
+            "runtimeVersion": runtime_version,
+            "affectedVersionRange": f"=={runtime_version}",
+            "toVersion": runtime_version,
+        },
+        "fingerprint": {
+            "errorSignature": "TypeError: unsupported operand type(s) for +: 'int' and 'str'",
+        },
+        "patch": {
+            "targetFile": "calc.py",
+            "pinnedDependencies": {"python": runtime_version},
+            "unifiedDiff": (
+                "--- a/calc.py\n+++ b/calc.py\n@@ -1,2 +1,2 @@\n"
+                "-import datetime\n-result = 5 + 'test'\n"
+                "+import datetime\n+result = str(5) + 'test'\n"
+            ),
+        },
+        "verification": {
+            "workspaceFiles": {"calc.py": "import datetime\nresult = 5 + 'test'\n"},
+            "reproductionScript": "import runpy\nrunpy.run_path('calc.py', run_name='__main__')\n",
+            "testSuite": "import calc\nassert calc.result == '5test'\n",
+            "expectedPreExit": 1,
+            "expectedPostExit": 0,
+            "mutations": [
+                {
+                    "id": "mut_type_error",
+                    "unifiedDiff": (
+                        "--- a/calc.py\n+++ b/calc.py\n@@ -1,2 +1,2 @@\n"
+                        "-import datetime\n-result = 5 + 'test'\n"
+                        "+import datetime\n+result = 6 + 'test'\n"
+                    ),
+                },
+                {
+                    "id": "mut_wrong_value",
+                    "unifiedDiff": (
+                        "--- a/calc.py\n+++ b/calc.py\n@@ -1,2 +1,2 @@\n"
+                        "-import datetime\n-result = 5 + 'test'\n"
+                        "+import datetime\n+result = 'wrong'\n"
+                    ),
+                },
+            ],
+        },
+        "provenance": {"spdxLicense": "Python-2.0", "primarySources": []},
+    }
     assert verify_bundle_data(bundle) is True
 
 
@@ -98,10 +155,15 @@ def _skip_without_exact_python_bundle_environment(data: dict) -> None:
     if actual_runtime != expected_runtime:
         mismatches.append(f"python expected {expected_runtime}, got {actual_runtime}")
     for package, expected in data["patch"]["pinnedDependencies"].items():
-        try:
-            actual = version(package)
-        except PackageNotFoundError:
-            actual = "unavailable"
+        if package.lower() == "python":
+            if expected == expected_runtime:
+                continue
+            actual = platform.python_version()
+        else:
+            try:
+                actual = version(package)
+            except PackageNotFoundError:
+                actual = "unavailable"
         if actual != expected:
             mismatches.append(f"{package} expected {expected}, got {actual}")
     if mismatches:
@@ -146,6 +208,7 @@ def test_golden_fastapi_bundle_full_4stage_pass():
     assert p.exists()
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
+    _skip_without_exact_python_bundle_environment(data)
     assert verify_bundle_data(data) is True
 
 def test_golden_python_datetime_bundle_full_4stage_pass():
@@ -154,6 +217,7 @@ def test_golden_python_datetime_bundle_full_4stage_pass():
     assert p.exists()
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
+    _skip_without_exact_python_bundle_environment(data)
     assert verify_bundle_data(data) is True
 
 def test_golden_sqlalchemy_bundle_full_4stage_pass():
@@ -162,6 +226,7 @@ def test_golden_sqlalchemy_bundle_full_4stage_pass():
     assert p.exists()
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
+    _skip_without_exact_python_bundle_environment(data)
     assert verify_bundle_data(data) is True
 
 
@@ -171,16 +236,17 @@ def test_golden_numpy_bundle_full_4stage_pass():
     assert p.exists()
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
+    _skip_without_exact_python_bundle_environment(data)
     assert verify_bundle_data(data) is True
 
 
-def test_golden_duckdb_bundle_full_4stage_pass():
-    """Tests the real Golden Bundle for DuckDB 0.10 substring casting."""
+def test_duckdb_puppet_bundle_is_rejected_by_real_package_gate():
+    """A hand-written DuckDB error string is not a real engine reproduction."""
     p = BASE_DIR / "bundles/golden/bundle_duckdb_010_substring_casting.json"
     assert p.exists()
     import json
     data = json.loads(p.read_text(encoding="utf-8"))
-    assert verify_bundle_data(data) is True
+    assert verify_bundle_data(data) is False
 
 
 def test_golden_express_bundle_schema_and_fixture_structure():

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "bundleId": "draft_numpy_200_c879ed00",
-  "status": "VERIFIED",
+  "status": "DRAFT",
   "description": "Draft compatibility bundle for numpy 2.0.0 migration.",
   "tags": [
     "numpy",
@@ -26,7 +26,7 @@
   },
   "patch": {
     "targetFile": "client.py",
-    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,13 +1,11 @@\n-import sys\n-class MockNumPy:\n-    nan = float('nan')\n-    def __getattr__(self, name):\n-        if name == 'NAN':\n-            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n-        raise AttributeError(name)\n-np = MockNumPy()\n-try:\n-    val = np.NAN\n-except AttributeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+import sys\n+import math\n+class MockNumPy:\n+    nan = float('nan')\n+    def __getattr__(self, name):\n+        if name == 'NAN':\n+            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n+        raise AttributeError(name)\n+np = MockNumPy()\n+val = np.nan\n+assert math.isnan(val)",
+    "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,2 +1,4 @@\n-import numpy as np\n-val = np.NAN\n+import numpy as np\n+import math\n+val = np.nan\n+assert math.isnan(val)",
     "pinnedDependencies": {
       "numpy": ">=2.0.0"
     },
@@ -37,20 +37,20 @@
   "verification": {
     "scriptLanguage": "python",
     "workspaceFiles": {
-      "client.py": "import sys\nclass MockNumPy:\n    nan = float('nan')\n    def __getattr__(self, name):\n        if name == 'NAN':\n            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n        raise AttributeError(name)\nnp = MockNumPy()\ntry:\n    val = np.NAN\nexcept AttributeError as e:\n    sys.stderr.write(str(e) + \"\\n\")\n    sys.exit(1)"
+      "client.py": "import numpy as np\nval = np.NAN"
     },
     "reproductionScript": "import runpy\nrunpy.run_path(\"client.py\", run_name=\"__main__\")\n",
-    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"session\", \"form\", \"chain\", \"router\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
+    "testSuite": "import runpy\nmod = runpy.run_path(\"client.py\", run_name=\"__main__\")\nassert any(k in mod for k in (\"result\", \"val\", \"res\", \"con\", \"client\", \"transport\", \"u\", \"settings\", \"session\", \"form\", \"chain\", \"router\", \"_obj\", \"app\", \"_handler\")), \"Target execution failed to produce valid output state\"\nprint(\"VERIFICATION_PASSED_STAGE_3\")\n",
     "mutations": [
       {
-        "id": "mutant_pass_silence",
-        "description": "Hallucinated empty pass mutant",
-        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,13 +1,1 @@\n-import sys\n-class MockNumPy:\n-    nan = float('nan')\n-    def __getattr__(self, name):\n-        if name == 'NAN':\n-            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n-        raise AttributeError(name)\n-np = MockNumPy()\n-try:\n-    val = np.NAN\n-except AttributeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+pass\n"
+        "id": "mutant_empty_bypass",
+        "description": "Empty bypass mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,2 +1,1 @@\n-import numpy as np\n-val = np.NAN\n+pass\n"
       },
       {
-        "id": "mutant_empty_return",
-        "description": "Hallucinated empty return mutant",
-        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,13 +1,1 @@\n-import sys\n-class MockNumPy:\n-    nan = float('nan')\n-    def __getattr__(self, name):\n-        if name == 'NAN':\n-            raise AttributeError(\"AttributeError: `np.NAN` was removed in the NumPy 2.0 release. Use `np.nan` instead.\")\n-        raise AttributeError(name)\n-np = MockNumPy()\n-try:\n-    val = np.NAN\n-except AttributeError as e:\n-    sys.stderr.write(str(e) + \"\\n\")\n-    sys.exit(1)\n+# empty bypass\n"
+        "id": "mutant_exception_bypass",
+        "description": "Exception or empty-output mutant",
+        "unifiedDiff": "--- a/client.py\n+++ b/client.py\n@@ -1,2 +1,1 @@\n-import numpy as np\n-val = np.NAN\n+# empty bypass\n"
       }
     ],
     "expectedPreExit": 1,
@@ -58,10 +58,12 @@
     "timeoutMs": 15000
   },
   "provenance": {
-    "spdxLicense": "MIT",
+    "spdxLicense": "NOASSERTION",
     "primarySources": [
       "https://numpy.org/devdocs/release/2.0.0-notes.html"
     ],
-    "verifiedAt": "2026-08-26T06:39:28.020695+00:00"
-  }
+    "verifiedAt": null,
+    "sourceTrusted": true
+  },
+  "evidencePublication": null
 }

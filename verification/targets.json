@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "targets": [
+    {
+      "targetId": "httpx-0.28.1-asgi-transport",
+      "bundleId": "bundle_httpx_028_asgi_transport_001",
+      "bundlePath": "bundles/golden/bundle_httpx_028_asgi_transport.json",
+      "bundleSha256": "aea793c600f9037e1d7b78efb26723f8c99df28c9804d1a3a8a32c66d8d3ae81",
+      "dockerfile": "verification/worker/Dockerfile",
+      "requirementsLock": "verification/worker/requirements-httpx.lock",
+      "runnerSource": "verification/worker/verify_bundle.py",
+      "imageTag": "synapse-mesh-verifier-httpx-0281:local",
+      "runnerVersion": "synapse-disposable-verifier-v1",
+      "scheduled": true
+    }
+  ]
+}

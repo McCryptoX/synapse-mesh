@@ -6,15 +6,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#090d16">
-    <title>Synapse-Mesh | Open Verified Compatibility Layer for Software Agents</title>
-    <meta name="description" content="Open, verifiable compatibility and verification layer for AI software agents (Cursor, Claude Code, ChatGPT Codex, Grok, Gemini). MCP Spec 2026-07-28 & A2A protocol.">
-    <meta name="keywords" content="mcp, model context protocol, a2a, ai agents, coding assistant, pydantic v2, python 3.12, next.js 15, verified compatibility bundles">
-    <meta name="author" content="Synapse-Mesh Operator">
+    <title>Synapse-Mesh | Open Compatibility Bundle Registry for Software Agents</title>
+    <meta name="description" content="Open compatibility bundle registry for software agents, with reproducible local verification contracts and machine-readable MCP discovery.">
+    <meta name="keywords" content="mcp, model context protocol, software agents, coding assistant, compatibility bundles, local verification">
+    <meta name="author" content="Synapse-Mesh Contributors">
     <link rel="canonical" href="https://synapsemesh.dev/">
-    <!-- WebMCP & Agent Discovery Standards -->
-    <link rel="mcp-server" href="https://mcp.synapsemesh.dev/mcp">
+    <!-- MCP and generic agent discovery metadata; no A2A task gateway -->
+    <link rel="mcp-server" href="{{ canonical_mcp_url }}">
     <link rel="mcp-manifest" type="application/json" href="https://synapsemesh.dev/.well-known/mcp.json">
-    <link rel="agent-card" type="application/json" href="https://synapsemesh.dev/.well-known/agent-card.json">
+    <link rel="alternate" type="application/json" title="Generic agent discovery metadata" href="https://synapsemesh.dev/.well-known/agent-card.json">
     <link rel="llms-txt" type="text/markdown" href="https://synapsemesh.dev/llms.txt">
 
 
@@ -24,8 +24,8 @@
     <meta property="og:image" content="https://synapsemesh.dev/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:title" content="Synapse-Mesh | Open Verified Compatibility Layer">
-    <meta property="og:description" content="Deterministic, execution-verified compatibility bundles and 2-phase client-side verification for AI software agents.">
+    <meta property="og:title" content="Synapse-Mesh | Open Compatibility Bundle Registry">
+    <meta property="og:description" content="Curated compatibility bundles with pinned scopes and reproducible local verification contracts for software agents.">
     <meta property="og:site_name" content="Synapse-Mesh">
 
     <!-- Schema.org Structured Data (JSON-LD) -->
@@ -36,40 +36,17 @@
       "name": "Synapse-Mesh",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "All",
-      "description": "Open Verified Compatibility Layer for AI Software Agents (MCP 2026-07-28 & A2A).",
+      "description": "Open compatibility bundle registry for software agents with reproducible local verification contracts.",
       "url": "https://synapsemesh.dev",
       "author": {
-        "@type": "Person",
-        "name": "Synapse-Mesh Operator"
+        "@type": "Organization",
+        "name": "Synapse-Mesh Contributors"
       },
-      "license": "https://opensource.org/licenses/MIT",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://synapsemesh.dev/api/v1/bundles/search?errorSignature={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      "license": "https://opensource.org/licenses/MIT"
     }
     </script>
     
-    <!-- Tailwind CSS CDN -->
-    <style>
-*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.\!container{width:100%!important}.container{width:100%}@media (min-width:640px){.\!container{max-width:640px!important}.container{max-width:640px}}@media (min-width:768px){.\!container{max-width:768px!important}.container{max-width:768px}}@media (min-width:1024px){.\!container{max-width:1024px!important}.container{max-width:1024px}}@media (min-width:1280px){.\!container{max-width:1280px!important}.container{max-width:1280px}}@media (min-width:1536px){.\!container{max-width:1536px!important}.container{max-width:1536px}}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.left-4{left:1rem}.right-4{right:1rem}.top-0{top:0}.top-4{top:1rem}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mt-0{margin-top:0}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.inline-flex{display:inline-flex}.table{display:table}.grid{display:grid}.hidden{display:none}.h-16{height:4rem}.h-2{height:.5rem}.h-3{height:.75rem}.h-3\.5{height:.875rem}.h-5{height:1.25rem}.min-h-screen{min-height:100vh}.w-2{width:.5rem}.w-3{width:.75rem}.w-3\.5{width:.875rem}.w-5{width:1.25rem}.w-full{width:100%}.max-w-2xl{max-width:42rem}.max-w-3xl{max-width:48rem}.max-w-4xl{max-width:56rem}.max-w-6xl{max-width:72rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;-moz-user-select:none;user-select:none}.list-disc{list-style-type:disc}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-x-5{-moz-column-gap:1.25rem;column-gap:1.25rem}.gap-y-2{row-gap:.5rem}.gap-y-2\.5{row-gap:.625rem}.space-x-1>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(.25rem*var(--tw-space-x-reverse));margin-left:calc(.25rem*(1 - var(--tw-space-x-reverse)))}.space-x-1\.5>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(.375rem*var(--tw-space-x-reverse));margin-left:calc(.375rem*(1 - var(--tw-space-x-reverse)))}.space-x-2>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(.5rem*var(--tw-space-x-reverse));margin-left:calc(.5rem*(1 - var(--tw-space-x-reverse)))}.space-x-3>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(.75rem*var(--tw-space-x-reverse));margin-left:calc(.75rem*(1 - var(--tw-space-x-reverse)))}.space-x-4>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(1rem*var(--tw-space-x-reverse));margin-left:calc(1rem*(1 - var(--tw-space-x-reverse)))}.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.25rem*var(--tw-space-y-reverse))}.space-y-1\.5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.375rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.375rem*var(--tw-space-y-reverse))}.space-y-10>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2.5rem*var(--tw-space-y-reverse))}.space-y-16>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(4rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(4rem*var(--tw-space-y-reverse))}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem*var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem*var(--tw-space-y-reverse))}.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem*var(--tw-space-y-reverse))}.space-y-5>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem*var(--tw-space-y-reverse))}.space-y-6>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem*var(--tw-space-y-reverse))}.space-y-8>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem*var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.whitespace-nowrap{white-space:nowrap}.break-words{overflow-wrap:break-word}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-xl{border-radius:.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-brand-500{--tw-border-opacity:1;border-color:rgb(20 184 166/var(--tw-border-opacity,1))}.border-brand-500\/30{border-color:rgba(20,184,166,.3)}.border-brand-500\/40{border-color:rgba(20,184,166,.4)}.border-brand-500\/60{border-color:rgba(20,184,166,.6)}.border-brand-600{--tw-border-opacity:1;border-color:rgb(13 148 136/var(--tw-border-opacity,1))}.border-brand-600\/30{border-color:rgba(13,148,136,.3)}.border-brand-700{--tw-border-opacity:1;border-color:rgb(15 118 110/var(--tw-border-opacity,1))}.border-cyan-800{--tw-border-opacity:1;border-color:rgb(21 94 117/var(--tw-border-opacity,1))}.border-emerald-700{--tw-border-opacity:1;border-color:rgb(4 120 87/var(--tw-border-opacity,1))}.border-emerald-700\/60{border-color:rgba(4,120,87,.6)}.border-emerald-800{--tw-border-opacity:1;border-color:rgb(6 95 70/var(--tw-border-opacity,1))}.border-emerald-800\/50{border-color:rgba(6,95,70,.5)}.border-indigo-800{--tw-border-opacity:1;border-color:rgb(55 48 163/var(--tw-border-opacity,1))}.border-purple-800{--tw-border-opacity:1;border-color:rgb(107 33 168/var(--tw-border-opacity,1))}.border-rose-950{--tw-border-opacity:1;border-color:rgb(76 5 25/var(--tw-border-opacity,1))}.border-rose-950\/40{border-color:rgba(76,5,25,.4)}.border-rose-950\/50{border-color:rgba(76,5,25,.5)}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85/var(--tw-border-opacity,1))}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59/var(--tw-border-opacity,1))}.border-slate-800\/80{border-color:rgba(30,41,59,.8)}.bg-brand-500{--tw-bg-opacity:1;background-color:rgb(20 184 166/var(--tw-bg-opacity,1))}.bg-brand-600{--tw-bg-opacity:1;background-color:rgb(13 148 136/var(--tw-bg-opacity,1))}.bg-brand-900{--tw-bg-opacity:1;background-color:rgb(19 78 74/var(--tw-bg-opacity,1))}.bg-brand-900\/50{background-color:rgba(19,78,74,.5)}.bg-brand-950{--tw-bg-opacity:1;background-color:rgb(4 47 46/var(--tw-bg-opacity,1))}.bg-brand-950\/60{background-color:rgba(4,47,46,.6)}.bg-cyan-950{--tw-bg-opacity:1;background-color:rgb(8 51 68/var(--tw-bg-opacity,1))}.bg-emerald-400{--tw-bg-opacity:1;background-color:rgb(52 211 153/var(--tw-bg-opacity,1))}.bg-emerald-950{--tw-bg-opacity:1;background-color:rgb(2 44 34/var(--tw-bg-opacity,1))}.bg-emerald-950\/60{background-color:rgba(2,44,34,.6)}.bg-emerald-950\/80{background-color:rgba(2,44,34,.8)}.bg-indigo-950{--tw-bg-opacity:1;background-color:rgb(30 27 75/var(--tw-bg-opacity,1))}.bg-purple-950{--tw-bg-opacity:1;background-color:rgb(59 7 100/var(--tw-bg-opacity,1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42/var(--tw-bg-opacity,1))}.bg-slate-900\/30{background-color:rgba(15,23,42,.3)}.bg-slate-900\/40{background-color:rgba(15,23,42,.4)}.bg-slate-900\/50{background-color:rgba(15,23,42,.5)}.bg-slate-900\/60{background-color:rgba(15,23,42,.6)}.bg-slate-900\/70{background-color:rgba(15,23,42,.7)}.bg-slate-900\/80{background-color:rgba(15,23,42,.8)}.bg-slate-900\/90{background-color:rgba(15,23,42,.9)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23/var(--tw-bg-opacity,1))}.bg-slate-950\/60{background-color:rgba(2,6,23,.6)}.bg-slate-950\/80{background-color:rgba(2,6,23,.8)}.bg-gradient-to-r{background-image:linear-gradient(to right,var(--tw-gradient-stops))}.from-brand-400{--tw-gradient-from:#2dd4bf var(--tw-gradient-from-position);--tw-gradient-to:rgba(45,212,191,0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}.from-brand-500{--tw-gradient-from:#14b8a6 var(--tw-gradient-from-position);--tw-gradient-to:rgba(20,184,166,0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),var(--tw-gradient-to)}.via-teal-300{--tw-gradient-to:rgba(94,234,212,0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from),#5eead4 var(--tw-gradient-via-position),var(--tw-gradient-to)}.to-cyan-400{--tw-gradient-to:#22d3ee var(--tw-gradient-to-position)}.bg-clip-text{-webkit-background-clip:text;background-clip:text}.p-2{padding:.5rem}.p-2\.5{padding:.625rem}.p-3{padding:.75rem}.p-3\.5{padding:.875rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-1{padding-left:.25rem;padding-right:.25rem}.px-1\.5{padding-left:.375rem;padding-right:.375rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-3\.5{padding-left:.875rem;padding-right:.875rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-0{padding-top:0;padding-bottom:0}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-8{padding-top:2rem;padding-bottom:2rem}.pb-4{padding-bottom:1rem}.pl-12{padding-left:3rem}.pl-5{padding-left:1.25rem}.pt-1{padding-top:.25rem}.pt-2{padding-top:.5rem}.pt-4{padding-top:1rem}.text-left{text-align:left}.text-center{text-align:center}.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-\[10px\]{font-size:10px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-tight{letter-spacing:-.025em}.tracking-wider{letter-spacing:.05em}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36/var(--tw-text-opacity,1))}.text-black{--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.text-brand-400{--tw-text-opacity:1;color:rgb(45 212 191/var(--tw-text-opacity,1))}.text-brand-500{--tw-text-opacity:1;color:rgb(20 184 166/var(--tw-text-opacity,1))}.text-cyan-400{--tw-text-opacity:1;color:rgb(34 211 238/var(--tw-text-opacity,1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183/var(--tw-text-opacity,1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153/var(--tw-text-opacity,1))}.text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248/var(--tw-text-opacity,1))}.text-purple-400{--tw-text-opacity:1;color:rgb(192 132 252/var(--tw-text-opacity,1))}.text-rose-400{--tw-text-opacity:1;color:rgb(251 113 133/var(--tw-text-opacity,1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240/var(--tw-text-opacity,1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225/var(--tw-text-opacity,1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105/var(--tw-text-opacity,1))}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23/var(--tw-text-opacity,1))}.text-transparent{color:transparent}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.underline{text-decoration-line:underline}.placeholder-slate-300::-moz-placeholder{--tw-placeholder-opacity:1;color:rgb(203 213 225/var(--tw-placeholder-opacity,1))}.placeholder-slate-300::placeholder{--tw-placeholder-opacity:1;color:rgb(203 213 225/var(--tw-placeholder-opacity,1))}.shadow{--tw-shadow:0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px -1px rgba(0,0,0,.1);--tw-shadow-colored:0 1px 3px 0 var(--tw-shadow-color),0 1px 2px -1px var(--tw-shadow-color)}.shadow,.shadow-inner{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-inner{--tw-shadow:inset 0 2px 4px 0 rgba(0,0,0,.05);--tw-shadow-colored:inset 0 2px 4px 0 var(--tw-shadow-color)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color),0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.blur{--tw-blur:blur(8px)}.blur,.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur{--tw-backdrop-blur:blur(8px)}.backdrop-blur,.backdrop-filter{-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}body,html{background-color:#090d16;color:#e2e8f0;overflow-x:hidden}.glow-border{box-shadow:0 0 30px -5px rgba(45,212,191,.15)}.terminal-code{background:rgba(15,23,42,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}.selection\:bg-brand-500 ::-moz-selection{--tw-bg-opacity:1;background-color:rgb(20 184 166/var(--tw-bg-opacity,1))}.selection\:bg-brand-500 ::selection{--tw-bg-opacity:1;background-color:rgb(20 184 166/var(--tw-bg-opacity,1))}.selection\:text-black ::-moz-selection{--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.selection\:text-black ::selection{--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.selection\:bg-brand-500::-moz-selection{--tw-bg-opacity:1;background-color:rgb(20 184 166/var(--tw-bg-opacity,1))}.selection\:bg-brand-500::selection{--tw-bg-opacity:1;background-color:rgb(20 184 166/var(--tw-bg-opacity,1))}.selection\:text-black::-moz-selection{--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.selection\:text-black::selection{--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.hover\:border-brand-400:hover{--tw-border-opacity:1;border-color:rgb(45 212 191/var(--tw-border-opacity,1))}.hover\:border-slate-700:hover{--tw-border-opacity:1;border-color:rgb(51 65 85/var(--tw-border-opacity,1))}.hover\:bg-brand-500:hover{--tw-bg-opacity:1;background-color:rgb(20 184 166/var(--tw-bg-opacity,1))}.hover\:bg-brand-900\/60:hover{background-color:rgba(19,78,74,.6)}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85/var(--tw-bg-opacity,1))}.hover\:text-brand-400:hover{--tw-text-opacity:1;color:rgb(45 212 191/var(--tw-text-opacity,1))}.hover\:text-brand-500:hover{--tw-text-opacity:1;color:rgb(20 184 166/var(--tw-bg-opacity,1))}.hover\:underline:hover{text-decoration-line:underline}.focus\:border-brand-500:focus{--tw-border-opacity:1;border-color:rgb(20 184 166/var(--tw-border-opacity,1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}@media (min-width:640px){.sm\:inline{display:inline}.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.sm\:space-x-3>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(.75rem*var(--tw-space-x-reverse));margin-left:calc(.75rem*(1 - var(--tw-space-x-reverse)))}.sm\:space-x-5>:not([hidden])~:not([hidden]){--tw-space-x-reverse:0;margin-right:calc(1.25rem*var(--tw-space-x-reverse));margin-left:calc(1.25rem*(1 - var(--tw-space-x-reverse)))}.sm\:p-8{padding:2rem}.sm\:px-3\.5{padding-left:.875rem;padding-right:.875rem}.sm\:text-3xl{font-size:1.875rem;line-height:2.25rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}.sm\:text-5xl{font-size:3rem;line-height:1}.sm\:text-lg{font-size:1.125rem;line-height:1.75rem}.sm\:text-sm{font-size:.875rem;line-height:1.25rem}.sm\:text-xs{font-size:.75rem;line-height:1rem}}@media (min-width:768px){.md\:inline-block{display:inline-block}.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.md\:flex-row{flex-direction:row}.md\:items-center{align-items:center}.md\:text-6xl{font-size:3.75rem;line-height:1}}@media (min-width:1024px){.lg\:flex{display:flex}}
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0;}
-/* Chrome WebMCP Agent Focus Pseudo-Classes */
-form:tool-form-active {
-    outline: 2px dashed #2dd4bf !important;
-    outline-offset: 4px;
-    box-shadow: 0 0 25px rgba(45, 212, 191, 0.4);
-}
-input:tool-submit-active, button:tool-submit-active {
-    outline: 2px dashed #2dd4bf !important;
-    outline-offset: 2px;
-}
-@media print {
-    body { background-color: #090d16 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    header, footer { page-break-inside: avoid; }
-}
-</style>
+    <link rel="stylesheet" href="/style.min.css">
     <!-- Declarative WebMCP Tool Schema for AI Browser Agents (Google Chromium Spec) -->
     <script type="application/webmcp+json">
     {
@@ -77,7 +54,7 @@ input:tool-submit-active, button:tool-submit-active {
       "tools": [
         {
           "name": "find_solution",
-          "description": "Search verified compatibility bundles by exact error message or keyword",
+          "description": "Search curated compatibility records. A result is VERIFIED_MATCH only with a valid run artifact and an exact supplied package version equal to the observed release; otherwise it is UNVERIFIED_MATCH and requires full reproduction.",
           "inputSchema": {
             "type": "object",
             "properties": {
@@ -89,6 +66,12 @@ input:tool-submit-active, button:tool-submit-active {
                 "type": "string",
                 "enum": ["all", "python", "nodejs", "docker"],
                 "description": "Optional runtime platform filter"
+              },
+              "packages": {
+                "type": "object",
+                "description": "Package names mapped to exact target versions",
+                "additionalProperties": {"type": "string"},
+                "maxProperties": 64
               }
             },
             "required": ["errorSignature"]
@@ -100,41 +83,25 @@ input:tool-submit-active, button:tool-submit-active {
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-black">
 
-    <!-- Header / Nav -->
-    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center space-x-2 group shrink-0" aria-label="Synapse-Mesh Homepage">
-                <div class="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse shrink-0" aria-hidden="true"></div>
-                <span class="font-bold text-sm sm:text-lg tracking-wider text-white whitespace-nowrap">SYNAPSE<span class="text-brand-400">-MESH</span></span>
-                <span class="text-[10px] uppercase px-2 py-0.5 rounded bg-brand-950/80 border border-brand-500/30 text-brand-300 font-mono hidden lg:inline-block">Verified Compatibility</span>
-            </a>
-            <nav aria-label="Main Navigation" class="flex items-center space-x-2 sm:space-x-4 text-xs sm:text-sm font-mono">
-                <a href="/" class="text-brand-300 font-semibold border-b-2 border-brand-400 pb-0.5 whitespace-nowrap">Search</a>
-                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap hidden sm:inline">Benchmark</a>
-                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap hidden md:inline">Architecture</a>
-                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition whitespace-nowrap hidden sm:inline">Docs</a>
-                <a href="#mcp-section" class="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold transition whitespace-nowrap">MCP Connect</a>
-            </nav>
-        </div>
-    </header>
+    {% include "partials/public_header.html" %}
 
     <!-- Main Content Container -->
     <main class="max-w-6xl mx-auto px-4 py-8 sm:py-12 space-y-10 sm:space-y-16 w-full">
 
         <!-- Hero Section -->
         <section class="text-center space-y-5 sm:space-y-6 pt-2 sm:pt-4">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-[11px] sm:text-xs text-slate-300 font-mono">
+            <div class="inline-flex max-w-full min-w-0 items-center space-x-2 px-3 py-1 rounded-full border border-slate-700 bg-slate-900/80 text-[11px] sm:text-xs text-slate-300 font-mono">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0" aria-hidden="true"></span>
-                <span class="truncate">MCP Spec 2026-07-28 &bull; A2A &bull; Client-Side Re-Verification</span>
+                <span class="min-w-0 truncate">MCP Discovery &bull; Agent Metadata &bull; Local Re-Verification</span>
             </div>
             
             <h1 class="text-2xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-                The Verified Compatibility Layer for <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">AI Software Agents</span>
+                The Evidence-First Compatibility Layer for <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-teal-300 to-cyan-400">AI Software Agents</span>
             </h1>
 
             <p class="text-slate-200 max-w-3xl mx-auto text-sm sm:text-lg leading-relaxed">
-                Synapse-Mesh does not claim universal answers. It delivers <strong class="text-white font-semibold">portable, execution-verified compatibility bundles</strong>: 
-                exact package pins, clean unified diffs, negative recipes (<code class="text-brand-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700 text-xs">doNot</code>), and a 4-stage client verifier that every AI can prove in its own workspace.
+                Synapse-Mesh does not claim universal answers. It publishes <strong class="text-white font-semibold">portable, curated compatibility bundles</strong> with exact package pins, unified diffs, negative recipes (<code class="text-brand-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700 text-xs">doNot</code>), and executable verification contracts.
+                Patches are MIT-licensed <strong class="text-white">AS IS</strong>. A registry label is not a production warranty. Run the local re-verifier in your own workspace before applying a change.
             </p>
 
             <!-- 1-Line Terminal Install -->
@@ -150,100 +117,60 @@ input:tool-submit-active, button:tool-submit-active {
         </section>
 
         <!-- Stats Counter Section -->
-        <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
-            <div class="p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-verified-count" class="text-2xl sm:text-3xl font-bold text-brand-400 font-mono">{{ total_verified | default(94) }}</div>
-                <div class="text-[10px] sm:text-xs text-slate-300 uppercase mt-1 tracking-wider">Verified Bundles</div>
+        <section id="stats-section" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-5xl mx-auto">
+            <div class="min-h-[7.5rem] flex flex-col justify-center p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div id="stat-verified-count" class="min-h-9 flex items-center justify-center text-2xl sm:text-3xl font-bold text-brand-400 font-mono">{{ total_verified | default(0) }}</div>
+                <div class="whitespace-nowrap text-[9px] sm:text-[10px] md:text-[9px] lg:text-[11px] text-slate-300 uppercase mt-1 tracking-wide">EVIDENCE-QUALIFIED</div>
             </div>
-            <div class="p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div id="stat-pass-rate" class="text-2xl sm:text-3xl font-bold text-emerald-400 font-mono">{{ pass_rate | default('97%') }}</div>
-                <div class="text-[10px] sm:text-xs text-slate-300 uppercase mt-1 tracking-wider">Verification Ratio</div>
+            <div class="min-h-[7.5rem] flex flex-col justify-center p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div id="stat-pass-rate" class="min-h-9 flex items-center justify-center whitespace-nowrap text-sm sm:text-base md:text-sm lg:text-lg font-bold text-amber-400 font-mono">{{ pass_rate | default('NOT EXPOSED') }}</div>
+                <div class="whitespace-nowrap text-[9px] sm:text-[10px] md:text-[9px] lg:text-[11px] text-slate-300 uppercase mt-1 tracking-wide">RUNTIME OUTPUT</div>
             </div>
-            <div class="p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div class="text-2xl sm:text-3xl font-bold text-cyan-400 font-mono">0 PII</div>
-                <div class="text-[10px] sm:text-xs text-slate-300 uppercase mt-1 tracking-wider">GDPR & EU AI Act</div>
+            <div class="min-h-[7.5rem] flex flex-col justify-center p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div class="min-h-9 flex items-center justify-center whitespace-nowrap text-sm sm:text-base md:text-sm lg:text-lg font-bold text-cyan-400 font-mono">NO APP IP LOGGING</div>
+                <div class="whitespace-nowrap text-[9px] sm:text-[10px] md:text-[9px] lg:text-[11px] text-slate-300 uppercase mt-1 tracking-wide">CONFIGURED MINIMIZATION</div>
             </div>
-            <div class="p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                <div class="text-2xl sm:text-3xl font-bold text-indigo-400 font-mono">&lt; 800</div>
-                <div class="text-[10px] sm:text-xs text-slate-300 uppercase mt-1 tracking-wider">Tokens per MCP Call</div>
+            <div class="min-h-[7.5rem] flex flex-col justify-center p-3.5 sm:p-5 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
+                <div class="min-h-9 flex items-center justify-center whitespace-nowrap text-sm sm:text-base md:text-sm lg:text-lg font-bold text-indigo-400 font-mono">FAIL CLOSED</div>
+                <div class="whitespace-nowrap text-[9px] sm:text-[10px] md:text-[9px] lg:text-[11px] text-slate-300 uppercase mt-1 tracking-wide">MISSING EVIDENCE</div>
             </div>
         </section>
 
-        <!-- The 4-Stage Verification Guarantee -->
-        <section class="max-w-4xl mx-auto p-4 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-5 sm:space-y-6 glow-border">
-            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3 sm:pb-4">
-                <div>
-                    <h2 class="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
-                        <span>🛡️ The 4-Stage Verification Contract</span>
-                    </h2>
-                    <p class="text-slate-300 text-xs font-mono mt-0.5">Every bundle must satisfy all 4 stages in isolated sandbox before earning VERIFIED status</p>
-                </div>
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-700/60">
-                    4-STAGE VERIFIED
-                </span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 font-mono text-xs">
-                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
-                    <div class="text-rose-400 font-bold flex items-center space-x-1.5">
-                        <span>1. Pre-Fail Validation</span>
-                    </div>
-                    <p class="text-slate-200 text-xs leading-relaxed">Reproduction script executes unpatched ➔ Must fail with non-zero exit code and match exact error signature regex.</p>
-                </div>
-                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
-                    <div class="text-cyan-400 font-bold flex items-center space-x-1.5">
-                        <span>2. Unified Diff Application</span>
-                    </div>
-                    <p class="text-slate-200 text-xs leading-relaxed">Clean, AST-compliant unified git diff applied to isolated workspace with pinned versions.</p>
-                </div>
-                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
-                    <div class="text-emerald-400 font-bold flex items-center space-x-1.5">
-                        <span>3. Post-Pass Execution</span>
-                    </div>
-                    <p class="text-slate-200 text-xs leading-relaxed">Hermetic automated test suite executes on patched workspace ➔ Must exit with code 0 in native compiler/engine.</p>
-                </div>
-                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5">
-                    <div class="text-amber-400 font-bold flex items-center space-x-1.5">
-                        <span>4. Mutation Sanity (doNot)</span>
-                    </div>
-                    <p class="text-slate-200 text-xs leading-relaxed">All known web-fehlfixes and hallucinated partial fixes are executed ➔ Must be rejected 100%.</p>
-                </div>
-            </div>
-        </section>
+        {% include "partials/verification_contract.html" %}
 
         <!-- Compact Live Solution Explorer -->
         <section class="space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                 <div>
                     <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center space-x-2">
-                        <span>🔍 Verified Bundle Registry</span>
+                        <span>🔍 Curated Bundle Registry</span>
                     </h2>
                     <p class="text-slate-200 text-xs sm:text-sm">Query live via CLI <code class="text-brand-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">synapse search</code> or MCP <code class="text-brand-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">find_solution</code>.</p>
                 </div>
                 <!-- Category Filter Pills -->
                 <div role="tablist" aria-label="Runtime category filter" class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-mono">
-                    <button type="button" role="tab" aria-selected="true" aria-controls="resultsContainer" onclick="filterRuntime('all')" id="tab-all" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition cursor-pointer">All (<span id="count-all">{{ total_verified | default(94) }}</span>)</button>
-                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('python')" id="tab-python" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Python (<span id="count-python">{{ count_python | default(59) }}</span>)</button>
-                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Node.js (<span id="count-nodejs">{{ count_nodejs | default(32) }}</span>)</button>
-                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('docker')" id="tab-docker" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Docker (<span id="count-docker">{{ count_docker | default(3) }}</span>)</button>
+                    <button type="button" role="tab" aria-selected="true" aria-controls="resultsContainer" onclick="filterRuntime('all')" id="tab-all" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-brand-600 text-slate-950 font-bold transition cursor-pointer">All (<span id="count-all">{{ total_all | default(0) }}</span>)</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('python')" id="tab-python" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Python (<span id="count-python">{{ count_python | default(0) }}</span>)</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('nodejs')" id="tab-nodejs" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Node.js (<span id="count-nodejs">{{ count_nodejs | default(0) }}</span>)</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="resultsContainer" onclick="filterRuntime('docker')" id="tab-docker" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition cursor-pointer">Docker (<span id="count-docker">{{ count_docker | default(0) }}</span>)</button>
                 </div>
             </div>
 
             <!-- Search Input (Declarative WebMCP Tool Annotated for Chrome AI Agents) -->
             <form id="searchForm" role="search" action="/api/v1/bundles/search" method="GET"
                   toolname="find_solution"
-                  tooldescription="Search verified compatibility bundles by exact error message or keyword"
+                  tooldescription="Search curated compatibility bundles by exact error message or keyword"
                   toolautosubmit
-                  data-tool-name="find_solution" data-tool-description="Search verified compatibility bundles by exact error message or keyword">
+                  data-tool-name="find_solution" data-tool-description="Search curated compatibility bundles by exact error message or keyword">
                 <div class="relative flex items-center">
-                    <label for="searchInput" class="sr-only">Search verified compatibility bundles by error signature or package</label>
+                    <label for="searchInput" class="sr-only">Search curated compatibility bundles by error signature or package</label>
                     <svg class="text-slate-400 pointer-events-none" style="position: absolute; left: 1.25rem; width: 1.35rem; height: 1.35rem;" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                     <input type="text" id="searchInput" name="errorSignature" required
                            toolparamdescription="The error message, exception type, or traceback keyword to search"
                            data-param-name="errorSignature" data-param-description="The error message or traceback keyword to search"
-                           aria-label="Search verified compatibility bundles by error signature or runtime"
+                           aria-label="Search curated compatibility bundles by error signature or runtime"
                            placeholder="Search error signatures (e.g. 'model_validator', 'runes', 'lifespan', 'import attributes')..." 
                            class="w-full py-4 sm:py-4.5 pr-20 rounded-2xl bg-slate-900/90 border border-slate-700 hover:border-slate-600 focus:border-brand-500 focus:outline-none text-white placeholder-slate-400 font-mono text-xs sm:text-sm shadow-xl transition"
                            style="padding-left: 3.5rem; padding-top: 1rem; padding-bottom: 1rem;">
@@ -254,6 +181,9 @@ input:tool-submit-active, button:tool-submit-active {
             </form>
 
             <!-- Search Results Container (Compact List) -->
+            {# Historical no-JavaScript sample cards are intentionally not rendered.
+               Runtime status must come from the validated bundle loader. #}
+            {% if false %}
             <div id="resultsContainer" class="space-y-4">
                 <!-- Golden Bundle 1: HTTPX 0.28 -->
                 <div class="p-4 sm:p-5 rounded-xl border border-brand-500/40 bg-slate-900/70 shadow-lg hover:border-slate-700 transition space-y-3">
@@ -261,9 +191,9 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">python</span>
-                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-950 text-amber-400 border border-slate-700">CURATED SOURCE</span>
                             </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shrink-0">✓ 4-STAGE PROVEN</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950 text-emerald-400 border border-emerald-700 shrink-0">VERIFIED</span>
                         </div>
                         <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
                             bundle_httpx_028_asgi_transport_001
@@ -286,7 +216,7 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="overflow-x-auto max-w-full">
                             <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_httpx_028_asgi_transport_001</code>
                         </div>
-                        <a href="/api/v1/bundles/bundle_httpx_028_asgi_transport_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_httpx_028_asgi_transport_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
+                        <a href="/api/v1/bundles/bundle_httpx_028_asgi_transport_001" target="_blank" rel="noopener noreferrer" aria-label="View machine-readable JSON bundle for bundle_httpx_028_asgi_transport_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
                 </div>
 
@@ -296,9 +226,9 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">python</span>
-                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-950 text-amber-400 border border-slate-700">CURATED SOURCE</span>
                             </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shrink-0">✓ 4-STAGE PROVEN</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950 text-emerald-400 border border-emerald-700 shrink-0">VERIFIED</span>
                         </div>
                         <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
                             bundle_pydantic_v2_model_validator_001
@@ -320,7 +250,7 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="overflow-x-auto max-w-full">
                             <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_pydantic_v2_model_validator_001</code>
                         </div>
-                        <a href="/api/v1/bundles/bundle_pydantic_v2_model_validator_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_pydantic_v2_model_validator_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
+                        <a href="/api/v1/bundles/bundle_pydantic_v2_model_validator_001" target="_blank" rel="noopener noreferrer" aria-label="View machine-readable JSON bundle for bundle_pydantic_v2_model_validator_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
                 </div>
 
@@ -330,9 +260,9 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">python</span>
-                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-950 text-amber-400 border border-slate-700">CURATED SOURCE</span>
                             </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shrink-0">✓ 4-STAGE PROVEN</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950 text-emerald-400 border border-emerald-700 shrink-0">VERIFIED</span>
                         </div>
                         <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
                             bundle_fastapi_0115_lifespan_context_001
@@ -354,7 +284,7 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="overflow-x-auto max-w-full">
                             <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_fastapi_0115_lifespan_context_001</code>
                         </div>
-                        <a href="/api/v1/bundles/bundle_fastapi_0115_lifespan_context_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_fastapi_0115_lifespan_context_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
+                        <a href="/api/v1/bundles/bundle_fastapi_0115_lifespan_context_001" target="_blank" rel="noopener noreferrer" aria-label="View machine-readable JSON bundle for bundle_fastapi_0115_lifespan_context_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
                 </div>
 
@@ -364,9 +294,9 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">python</span>
-                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>
+                                <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-950 text-amber-400 border border-slate-700">CURATED SOURCE</span>
                             </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 shrink-0">✓ 4-STAGE PROVEN</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-950 text-emerald-400 border border-emerald-700 shrink-0">VERIFIED</span>
                         </div>
                         <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
                             bundle_python_312_datetime_utc_aware_001
@@ -387,15 +317,25 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="overflow-x-auto max-w-full">
                             <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">synapse reverify bundle_python_312_datetime_utc_aware_001</code>
                         </div>
-                        <a href="/api/v1/bundles/bundle_python_312_datetime_utc_aware_001" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for bundle_python_312_datetime_utc_aware_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
+                        <a href="/api/v1/bundles/bundle_python_312_datetime_utc_aware_001" target="_blank" rel="noopener noreferrer" aria-label="View machine-readable JSON bundle for bundle_python_312_datetime_utc_aware_001" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
+                </div>
+            </div>
+            {% endif %}
+            <div id="resultsContainer" class="space-y-4">
+                <div class="p-6 text-center text-slate-300 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">
+                    {% if total_all | default(0) %}
+                    Loading the validated curated registry…
+                    {% else %}
+                    No validated curated bundle files are currently available.
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Show All / Pagination Toggle -->
             <div id="paginationContainer" class="text-center pt-4">
                 <button id="showAllBtn" type="button" class="cursor-pointer px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl border border-brand-500/60 bg-brand-950/60 hover:bg-brand-900/60 text-brand-300 font-mono text-xs sm:text-sm font-bold shadow-lg hover:border-brand-400 transition-all flex items-center space-x-2 mx-auto">
-                    <span id="showAllBtnText">View All Verified Bundles ({{ total_verified | default(94) }}) &darr;</span>
+                    <span id="showAllBtnText">View All Curated Bundles ({{ total_all | default(0) }}) &darr;</span>
                 </button>
             </div>
         </section>
@@ -404,7 +344,7 @@ input:tool-submit-active, button:tool-submit-active {
         <section id="connect" class="p-8 rounded-2xl border border-slate-800 bg-slate-900/50 space-y-6">
             <div class="space-y-2">
                 <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
-                    <span>🔌 MCP Spec 2026-07-28 & A2A Integration</span>
+                    <span>🔌 MCP Integration & Agent Discovery Metadata</span>
                 </h2>
                 <p class="text-slate-200 text-sm">
                     Connect Synapse-Mesh directly to <strong class="text-white font-medium">Claude Desktop</strong>, <strong class="text-white font-medium">Cursor</strong>, <strong class="text-white font-medium">ChatGPT Codex</strong>, <strong class="text-white font-medium">Grok</strong>, or <strong class="text-white font-medium">Antigravity</strong>.
@@ -415,7 +355,7 @@ input:tool-submit-active, button:tool-submit-active {
                 <pre class="terminal-code p-5 rounded-xl border border-slate-800 text-emerald-400 font-mono text-xs overflow-x-auto"><code>{
   "mcpServers": {
     "synapse-mesh": {
-      "url": "https://mcp.synapsemesh.dev/mcp"
+      "url": "{{ canonical_mcp_url }}"
     }
   }
 }</code></pre>
@@ -427,33 +367,8 @@ input:tool-submit-active, button:tool-submit-active {
 
     </main>
 
-    <!-- Footer with Impressum & Datenschutz -->
-    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-xs text-slate-400 font-mono">
-        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-slate-400">
-                <span class="text-white font-semibold">SYNAPSE-MESH &copy; 2026</span>
-                <span>&bull;</span>
-                <span>Zero-PII Architecture</span>
-                <span>&bull;</span>
-                <span class="text-emerald-400">MCP Spec 2026-07-28</span>
-            </div>
-            <nav class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs" aria-label="Footer Navigation">
-                <a href="/" class="text-slate-300 hover:text-brand-400 transition underline">Home</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/benchmark" class="text-slate-300 hover:text-brand-400 transition underline">Benchmark</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/verification" class="text-slate-300 hover:text-brand-400 transition underline">Architecture</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="https://docs.synapsemesh.dev" class="text-slate-300 hover:text-brand-400 transition underline">Docs</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/legal" class="text-slate-300 hover:text-brand-400 transition underline">Legal Notice</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/privacy" class="text-slate-300 hover:text-brand-400 transition underline">Privacy Policy</a>
-                <span class="text-slate-600">&bull;</span>
-                <a href="/llms.txt" class="text-slate-300 hover:text-brand-400 transition underline">/llms.txt</a>
-            </nav>
-        </div>
-    </footer>
+    <!-- Footer with Legal Notice and Privacy Policy -->
+    {% include "partials/public_footer.html" %}
 
     <script id="synapse-initial-data" type="application/json">
 {{ initial_data_json | default('[]') | safe }}
@@ -461,57 +376,7 @@ input:tool-submit-active, button:tool-submit-active {
 
     <!-- JavaScript for Live Search, Tabs & Stats -->
     <script>
-        // Baseline Golden Compatibility Bundles embedded for 0-latency and zero initial network requests
-        const EMBEDDED_GOLDEN_BUNDLES = [
-            {
-                id: "bundle_httpx_028_asgi_transport_001",
-                isGolden: true,
-                runtime: "python",
-                errorSignature: "TypeError: AsyncClient.__init__() got an unexpected keyword argument 'app'",
-                summary: "HTTPX 0.28 removes the AsyncClient app shortcut; explicit ASGITransport is required for in-process ASGI testing.",
-                diff: "--- a/client.py\n+++ b/client.py\n@@ -16,7 +16,8 @@\n-    async with httpx.AsyncClient(app=app, base_url=\"http://testserver\") as client:\n+    transport = httpx.ASGITransport(app=app)\n+    async with httpx.AsyncClient(transport=transport, base_url=\"http://testserver\") as client:\n         return await client.get(\"/health\")",
-                pins: {"httpx": "0.28.1"},
-                doNot: ["Do not pin httpx<0.28 indefinitely", "Do not instantiate ASGITransport without app kwarg"],
-                status: "VERIFIED",
-                reverify: "synapse reverify bundle_httpx_028_asgi_transport_001"
-            },
-            {
-                id: "bundle_pydantic_v2_model_validator_001",
-                isGolden: true,
-                runtime: "python",
-                errorSignature: "PydanticDeprecatedSince20: Pydantic V1 style `@root_validator` validators are deprecated.",
-                summary: "Pydantic v2 replaces root_validator with @model_validator(mode='before') that preserves and returns raw input.",
-                diff: "--- a/user_model.py\n+++ b/user_model.py\n@@ -4,4 +4,4 @@\n-    @root_validator(pre=True)\n+    @model_validator(mode=\"before\")\n+    @classmethod",
-                pins: {"pydantic": ">=2.0.0, <3.0.0"},
-                doNot: ["Do not silence warning with root_validator", "Do not drop transformed input"],
-                status: "VERIFIED",
-                reverify: "synapse reverify bundle_pydantic_v2_model_validator_001"
-            },
-            {
-                id: "bundle_fastapi_0115_lifespan_context_001",
-                isGolden: true,
-                runtime: "python",
-                errorSignature: "DeprecationWarning: on_event is deprecated, use lifespan event handlers instead.",
-                summary: "FastAPI 0.100+ deprecates @app.on_event in favor of async context manager lifespan handlers.",
-                diff: "--- a/server.py\n+++ b/server.py\n@@ -5,6 +5,6 @@\n-@app.on_event(\"startup\")\n+@asynccontextmanager\n+async def lifespan(app: FastAPI):",
-                pins: {"fastapi": ">=0.100.0", "starlette": ">=0.27.0"},
-                doNot: ["Do not retain @app.on_event alongside lifespan", "Do not omit yield in lifespan"],
-                status: "VERIFIED",
-                reverify: "synapse reverify bundle_fastapi_0115_lifespan_context_001"
-            },
-            {
-                id: "bundle_python_312_datetime_utc_aware_001",
-                isGolden: true,
-                runtime: "python",
-                errorSignature: "DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version.",
-                summary: "Python 3.12+ deprecates naive datetime.utcnow() in favor of timezone-aware datetime.now(timezone.utc).",
-                diff: "--- a/timestamps.py\n+++ b/timestamps.py\n@@ -4,2 +4,2 @@\n-    return datetime.utcnow()\n+    return datetime.now(timezone.utc)",
-                pins: {"python": ">=3.12.0"},
-                doNot: ["Do not return naive datetime.now()", "Do not silence warning without timezone.utc"],
-                status: "VERIFIED",
-                reverify: "synapse reverify bundle_python_312_datetime_utc_aware_001"
-            }
-        ];
+        const EMBEDDED_GOLDEN_BUNDLES = [];
 
         let allItems = [];
         try {
@@ -527,7 +392,7 @@ input:tool-submit-active, button:tool-submit-active {
 
         let activeRuntime = 'all';
         let showAll = false;
-        let isDataFetched = allItems.length > 14;
+        let isDataFetched = allItems.length > 0;
         let isFetching = false;
         const INITIAL_LIMIT = 6;
 
@@ -539,31 +404,30 @@ input:tool-submit-active, button:tool-submit-active {
             const seenIds = new Set();
 
             try {
-                const res = await fetch('/api/v1/recipes?limit=200&status=VERIFIED', {
+                const res = await fetch('/api/v1/bundles', {
                     headers: { 'Accept': 'application/json' }
                 });
 
                 if (res.ok) {
-                    const recipes = await res.json();
-                    if (Array.isArray(recipes) && recipes.length > 0) {
-                        recipes.forEach(r => {
-                            const rid = r.id;
+                    const bundles = await res.json();
+                    if (Array.isArray(bundles) && bundles.length > 0) {
+                        bundles.forEach(r => {
+                            const rid = r.bundleId;
                             if (!seenIds.has(rid)) {
                                 seenIds.add(rid);
-                                const rt = ((r.problem && r.problem.runtime) || r.runtime || 'python').toLowerCase();
-                                const isGolden = rid.startsWith('bundle_');
+                                const rt = ((r.scope && r.scope.runtime) || 'unknown').toLowerCase();
                                 results.push({
                                     id: rid,
-                                    isGolden: isGolden,
+                                    isGolden: true,
+                                    isEvidenceQualified: r.status === 'VERIFIED',
                                     runtime: (rt === 'javascript' || rt === 'typescript') ? 'nodejs' : rt,
-                                    errorSignature: (r.problem && r.problem.errorSignature) || r.errorSignature || rid,
-                                    summary: (r.solution && r.solution.summary) || '',
-                                    diff: (r.solution && (r.solution.codeDiff || r.solution.patchDiff)) || '',
-                                    pins: (r.solution && r.solution.pinnedDependencies) || (r.problem && r.problem.packages) || {},
-                                    doNot: (r.solution && r.solution.doNot) || [],
-                                    status: (r.evidence && r.evidence.verificationStatus) || 'VERIFIED',
-                                    reverify: 'synapse reverify ' + rid,
-                                    detailUrl: isGolden ? null : ('/recipes/' + rid)
+                                    errorSignature: (r.fingerprint && r.fingerprint.errorSignature) || rid,
+                                    summary: r.description || '',
+                                    diff: (r.patch && r.patch.unifiedDiff) || '',
+                                    pins: (r.patch && r.patch.pinnedDependencies) || {},
+                                    doNot: (r.patch && r.patch.doNot) || [],
+                                    status: r.status || 'UNVERIFIED',
+                                    reverify: 'synapse reverify ' + rid
                                 });
                             }
                         });
@@ -581,9 +445,10 @@ input:tool-submit-active, button:tool-submit-active {
             isDataFetched = true;
             isFetching = false;
 
+            const evidenceN = allItems.filter(r => r.isEvidenceQualified || r.status === 'VERIFIED').length;
             const statEl = document.getElementById('stat-verified-count');
-            if (statEl && allItems.length > 0) {
-                statEl.textContent = allItems.length;
+            if (statEl) {
+                statEl.textContent = String(evidenceN);
             }
             const elAll = document.getElementById('count-all');
             if (elAll && allItems.length > 0) {
@@ -610,35 +475,6 @@ input:tool-submit-active, button:tool-submit-active {
             }
         }
 
-        async function loadStats() {
-            try {
-                const res = await fetch('/api/v1/recipes/stats', {
-                    headers: { 'Accept': 'application/json' }
-                });
-                if (!res.ok) return;
-                const contentType = res.headers.get("content-type") || "";
-                if (!contentType.includes("json")) return;
-                const data = await res.json();
-                const statEl = document.getElementById('stat-verified-count');
-                if (statEl && data.verifiedRecipes) statEl.textContent = data.verifiedRecipes;
-                const passEl = document.getElementById('stat-pass-rate');
-                if (passEl) {
-                    const passRate = data.verifiedRatio ? Math.round(data.verifiedRatio * 100) : 95;
-                    passEl.textContent = passRate + '%';
-                }
-                if (data.runtimes) {
-                    const elAll = document.getElementById('count-all');
-                    if (elAll && data.verifiedRecipes) elAll.textContent = data.verifiedRecipes;
-                    const elPy = document.getElementById('count-python');
-                    if (elPy && data.runtimes.python) elPy.textContent = data.runtimes.python;
-                    const elNode = document.getElementById('count-nodejs');
-                    if (elNode && data.runtimes.nodejs) elNode.textContent = data.runtimes.nodejs;
-                    const elDock = document.getElementById('count-docker');
-                    if (elDock && data.runtimes.docker) elDock.textContent = data.runtimes.docker;
-                }
-            } catch(e) {}
-        }
-
         function filterRuntime(rt) {
             activeRuntime = rt;
             ['all', 'python', 'nodejs', 'docker'].forEach(k => {
@@ -661,7 +497,7 @@ input:tool-submit-active, button:tool-submit-active {
             showAll = !showAll;
             const btnText = document.getElementById('showAllBtnText') || document.getElementById('showAllBtn');
             if (btnText) {
-                btnText.textContent = showAll ? 'Show Fewer Bundles ↑' : ('View All Verified Bundles (' + allItems.length + ') ↓');
+                    btnText.textContent = showAll ? 'Show Fewer Bundles ↑' : ('View All Curated Bundles (' + allItems.length + ') ↓');
             }
             ensureDataLoaded();
             renderItems();
@@ -690,7 +526,7 @@ input:tool-submit-active, button:tool-submit-active {
             const displayed = (showAll || query) ? filtered : filtered.slice(0, INITIAL_LIMIT);
 
             if (displayed.length === 0) {
-                container.innerHTML = '<div class="p-6 text-center text-slate-300 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No verified compatibility bundles matching your criteria.</div>';
+                container.innerHTML = '<div class="p-6 text-center text-slate-300 font-mono text-sm border border-slate-800 rounded-xl bg-slate-900/30">No curated compatibility bundles matching your criteria.</div>';
                 const pag = document.getElementById('paginationContainer');
                 if (pag) pag.style.display = 'none';
                 return;
@@ -701,23 +537,23 @@ input:tool-submit-active, button:tool-submit-active {
                 pag.style.display = (query || totalFiltered <= INITIAL_LIMIT) ? 'none' : 'block';
                 const btnText = document.getElementById('showAllBtnText') || document.getElementById('showAllBtn');
                 if (btnText && !query) {
-                    btnText.textContent = showAll ? 'Show Fewer Bundles ↑' : ('View All Verified Bundles (' + totalFiltered + ') ↓');
+                    btnText.textContent = showAll ? 'Show Fewer Bundles ↑' : ('View All Curated Bundles (' + totalFiltered + ') ↓');
                 }
             }
 
             container.innerHTML = displayed.map(r => `
-                <div class="p-4 sm:p-5 rounded-xl border ${r.isGolden ? 'border-brand-500/40 bg-slate-900/70 shadow-lg' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 transition space-y-3">
+                <div class="p-4 sm:p-5 rounded-xl border ${(r.isEvidenceQualified || r.status === 'VERIFIED') ? 'border-brand-500/40 bg-slate-900/70 shadow-lg' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 transition space-y-3">
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold uppercase tracking-wider bg-slate-800 text-slate-200 border border-slate-700">${escapeHtml(r.runtime)}</span>
                                 ${r.isGolden ? 
-                                    `<span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-950 text-amber-400 border border-amber-700/60">★ GOLDEN</span>` : 
+                                    `<span class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-950 text-amber-400 border border-slate-700">CURATED SOURCE</span>` :
                                     `<span class="px-2.5 py-0.5 rounded text-[11px] font-mono bg-slate-800 text-slate-400 border border-slate-700">RECIPE</span>`
                                 }
                             </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium ${r.status === 'VERIFIED' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/60' : 'bg-slate-800 text-slate-300 border border-slate-700'} shrink-0">
-                                ${r.status === 'VERIFIED' ? '✓ 4-STAGE PROVEN' : escapeHtml(r.status)}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-mono font-medium ${(r.isEvidenceQualified || r.status === 'VERIFIED') ? 'bg-emerald-950 text-emerald-400 border border-emerald-700' : 'bg-slate-950 text-slate-300 border border-slate-700'} shrink-0">
+                                ${escapeHtml(r.status || 'UNVERIFIED')}
                             </span>
                         </div>
                         <div class="font-mono text-sm sm:text-base font-bold text-white tracking-wide break-all">
@@ -737,10 +573,7 @@ input:tool-submit-active, button:tool-submit-active {
                         <div class="overflow-x-auto max-w-full">
                             <code class="text-slate-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 inline-block text-[11px] sm:text-xs">${escapeHtml(r.reverify)}</code>
                         </div>
-                        ${r.detailUrl ? 
-                            `<a href="${r.detailUrl}" aria-label="View verification details and test evidence for ${escapeHtml(r.id)}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Detail View →</a>` : 
-                            `<a href="/api/v1/bundles/${escapeHtml(r.id)}" target="_blank" rel="noopener noreferrer" aria-label="View verified machine-readable JSON bundle for ${escapeHtml(r.id)}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>`
-                        }
+                        <a href="/api/v1/bundles/${encodeURIComponent(r.id)}" target="_blank" rel="noopener noreferrer" aria-label="View machine-readable JSON bundle for ${escapeHtml(r.id)}" class="text-slate-300 hover:text-brand-400 transition underline shrink-0 text-xs">Raw JSON →</a>
                     </div>
                 </div>
             `).join('');
@@ -748,7 +581,12 @@ input:tool-submit-active, button:tool-submit-active {
 
         function escapeHtml(str) {
             if (!str) return '';
-            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         let debounceTimer;
@@ -783,7 +621,7 @@ input:tool-submit-active, button:tool-submit-active {
             const config = JSON.stringify({
                 "mcpServers": {
                     "synapse-mesh": {
-                        "url": "https://mcp.synapsemesh.dev/mcp"
+                        "url": {{ canonical_mcp_url | tojson }}
                     }
                 }
             }, null, 2);
@@ -795,33 +633,55 @@ input:tool-submit-active, button:tool-submit-active {
             }
         }
 
-        // Declarative WebMCP Form Submit Handler (Supporting e.agentInvoked and e.respondWith)
+        async function callCanonicalFindSolution({ errorSignature, runtime, packages }, { signal } = {}) {
+            const args = { errorSignature };
+            if (runtime && runtime !== 'all') args.runtime = runtime;
+            if (packages && typeof packages === 'object') args.packages = packages;
+            const response = await fetch('/mcp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 'homepage-webmcp',
+                    method: 'tools/call',
+                    params: { name: 'find_solution', arguments: args }
+                }),
+                signal
+            });
+            if (!response.ok) throw new Error('Synapse MCP request failed');
+            const envelope = await response.json();
+            if (envelope.error) throw new Error('Synapse MCP returned an error');
+            const text = envelope.result && envelope.result.content &&
+                envelope.result.content.find(item => item.type === 'text');
+            if (!text || typeof text.text !== 'string') {
+                throw new Error('Synapse MCP returned no structured result');
+            }
+            return JSON.parse(text.text);
+        }
+
+        // Browser-agent form requests use the canonical MCP matcher and its version gate.
         const searchFormEl = document.getElementById('searchForm');
         if (searchFormEl) {
             searchFormEl.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const input = document.getElementById('searchInput');
                 const query = (input ? input.value : '').trim();
+                if (e.agentInvoked && typeof e.respondWith === 'function') {
+                    e.respondWith(callCanonicalFindSolution({
+                        errorSignature: query,
+                        runtime: activeRuntime
+                    }));
+                    return;
+                }
                 await ensureDataLoaded();
                 renderItems();
-
-                if (e.agentInvoked && typeof e.respondWith === 'function') {
-                    const q = query.toLowerCase();
-                    const matches = allItems.filter(r => 
-                        (activeRuntime === 'all' || (r.runtime || '').toLowerCase() === activeRuntime) &&
-                        ((r.errorSignature && r.errorSignature.toLowerCase().includes(q)) ||
-                         (r.summary && r.summary.toLowerCase().includes(q)) ||
-                         (r.id && r.id.toLowerCase().includes(q)))
-                    );
-                    e.respondWith(Promise.resolve({ results: matches }));
-                }
             });
         }
 
         // WebMCP Tool Definition
         const webmcpFindSolutionTool = {
             name: "find_solution",
-            description: "Search verified compatibility bundles by exact error message or keyword",
+            description: "Search using the canonical Synapse MCP matcher and exact package-version evidence gate",
             inputSchema: {
                 type: "object",
                 properties: {
@@ -833,22 +693,17 @@ input:tool-submit-active, button:tool-submit-active {
                         type: "string",
                         enum: ["all", "python", "nodejs", "docker"],
                         description: "Optional runtime filter"
+                    },
+                    packages: {
+                        type: "object",
+                        description: "Package names mapped to exact target versions",
+                        additionalProperties: { type: "string" },
+                        maxProperties: 64
                     }
                 },
                 required: ["errorSignature"]
             },
-            execute: async ({ errorSignature, runtime }, { signal } = {}) => {
-                await ensureDataLoaded();
-                const q = (errorSignature || '').toLowerCase().trim();
-                const rt = (runtime || 'all').toLowerCase();
-                let matches = allItems.filter(r => 
-                    (rt === 'all' || (r.runtime || '').toLowerCase() === rt) &&
-                    ((r.errorSignature && r.errorSignature.toLowerCase().includes(q)) ||
-                     (r.summary && r.summary.toLowerCase().includes(q)) ||
-                     (r.id && r.id.toLowerCase().includes(q)))
-                );
-                return { results: matches };
-            }
+            execute: (args, options = {}) => callCanonicalFindSolution(args, options)
         };
 
         // Official Chrome WebMCP API (document.modelContext.registerTool)
@@ -873,12 +728,17 @@ input:tool-submit-active, button:tool-submit-active {
         window.__mcp_tools__ = [
             {
                 name: "find_solution",
-                description: "Search verified compatibility bundles by exact error message or keyword",
+                description: "Search via the canonical MCP matcher with exact package-version evidence gating",
                 parameters: {
                     type: "object",
                     properties: {
                         errorSignature: { type: "string", description: "The error message or traceback keyword" },
-                        runtime: { type: "string", description: "Optional runtime filter: python, nodejs, docker" }
+                        runtime: { type: "string", description: "Optional runtime filter: python, nodejs, docker" },
+                        packages: {
+                            type: "object",
+                            description: "Package names mapped to exact target versions",
+                            additionalProperties: { type: "string" }
+                        }
                     },
                     required: ["errorSignature"]
                 }
@@ -886,6 +746,7 @@ input:tool-submit-active, button:tool-submit-active {
         ];
 
         // No network requests on pageload; data is pre-hydrated from SSR.
+        renderItems();
     </script>
 </body>
 </html>

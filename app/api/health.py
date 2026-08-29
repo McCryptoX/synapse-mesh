@@ -1,39 +1,57 @@
 import json
 from fastapi import APIRouter, Request, Response, Query
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, FileResponse
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
 from typing import Optional
 from app.config import settings
-from app.database import get_db_connection
+from app.api.bundles import load_all_golden_bundles
+from app.models.recipe import VERIFIED_EVIDENCE_CONTRACT
 
 router = APIRouter()
 
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 INDEX_HTML_PATH = TEMPLATES_DIR / "index.html"
-LEGAL_HTML_PATH = TEMPLATES_DIR / "legal.html"
-PRIVACY_HTML_PATH = TEMPLATES_DIR / "privacy.html"
-VERIFICATION_HTML_PATH = TEMPLATES_DIR / "verification.html"
-BENCHMARK_HTML_PATH = TEMPLATES_DIR / "benchmark.html"
 FAVICON_SVG_PATH = STATIC_DIR / "favicon.svg"
 OG_IMAGE_PATH = STATIC_DIR / "og-image.png"
 STYLE_CSS_PATH = STATIC_DIR / "style.min.css"
+PUBLIC_TEMPLATE_ENV = Environment(
+    loader=FileSystemLoader(str(TEMPLATES_DIR)),
+    autoescape=select_autoescape(enabled_extensions=("html", "xml"), default=True),
+)
+
+
+def _render_public_template(
+    template_name: str,
+    fallback: str,
+    **context: object,
+) -> HTMLResponse:
+    template_path = TEMPLATES_DIR / template_name
+    if not template_path.exists():
+        return HTMLResponse(fallback)
+    template = PUBLIC_TEMPLATE_ENV.get_template(template_name)
+    return HTMLResponse(template.render(**context))
 
 @router.get("/static/style.min.css", tags=["Assets"])
 @router.get("/style.min.css", tags=["Assets"])
+@router.head("/static/style.min.css", tags=["Assets"])
+@router.head("/style.min.css", tags=["Assets"])
 async def style_css():
-    """Serves ultra-optimized, pre-compiled and minified standalone CSS stylesheet for 100/100 PageSpeed."""
+    """Serve the stylesheet with bounded caching so deployments can invalidate it."""
     if STYLE_CSS_PATH.exists():
         return FileResponse(
             path=STYLE_CSS_PATH,
             media_type="text/css",
-            headers={"Cache-Control": "public, max-age=31536000, immutable"}
+            headers={"Cache-Control": "public, max-age=0, must-revalidate"}
         )
     return Response(status_code=404)
 
 
 @router.get("/og-image.png", tags=["Assets"])
 @router.get("/og-image.jpg", tags=["Assets"])
+@router.head("/og-image.png", tags=["Assets"])
+@router.head("/og-image.jpg", tags=["Assets"])
 async def og_image():
     """Serves high-resolution 1200x630 OpenGraph Social Preview Banner."""
     if OG_IMAGE_PATH.exists():
@@ -47,6 +65,8 @@ async def og_image():
 
 @router.get("/favicon.svg", tags=["Assets"])
 @router.get("/favicon.ico", tags=["Assets"])
+@router.head("/favicon.svg", tags=["Assets"])
+@router.head("/favicon.ico", tags=["Assets"])
 async def favicon():
     """Serves high-resolution custom Synapse-Mesh SVG favicon."""
     if FAVICON_SVG_PATH.exists():
@@ -71,13 +91,6 @@ Sitemap: {settings.base_url}/sitemap.xml
 @router.get("/sitemap.xml", tags=["SEO"])
 async def sitemap_xml():
     """Dynamically generated XML Sitemap for Search Engines & AI Web Crawlers."""
-    db = await get_db_connection()
-    try:
-        cursor = await db.execute("SELECT id, updated_at FROM recipes WHERE verification_status = 'VERIFIED'")
-        recipes = await cursor.fetchall()
-    finally:
-        await db.close()
-
     xml_entries = [
         f"""  <url>
     <loc>{settings.base_url}/</loc>
@@ -105,14 +118,6 @@ async def sitemap_xml():
     <priority>0.3</priority>
   </url>"""
     ]
-
-    for r in recipes:
-        xml_entries.append(f"""  <url>
-    <loc>{settings.base_url}/recipes/{r['id']}</loc>
-    <lastmod>{str(r['updated_at'])[:10]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>""")
 
     sitemap_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -142,38 +147,45 @@ async def health_check():
 @router.get("/benchmark", tags=["Architecture"], response_class=HTMLResponse)
 @router.head("/benchmark", tags=["Architecture"])
 async def benchmark_page():
-    if BENCHMARK_HTML_PATH.exists():
-        with open(BENCHMARK_HTML_PATH, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Benchmark Dashboard</h1>")
+    return _render_public_template(
+        "benchmark.html",
+        "<h1>Benchmark Dashboard</h1>",
+        active_page="benchmark",
+    )
 
 @router.get("/verification", tags=["Architecture"], response_class=HTMLResponse)
 @router.head("/verification", tags=["Architecture"])
 @router.get("/architecture", tags=["Architecture"], response_class=HTMLResponse)
 @router.head("/architecture", tags=["Architecture"])
 async def verification_page():
-    if VERIFICATION_HTML_PATH.exists():
-        with open(VERIFICATION_HTML_PATH, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Verification Architecture</h1>")
+    return _render_public_template(
+        "verification.html",
+        "<h1>Verification Architecture</h1>",
+        active_page="architecture",
+        verification_profile=VERIFIED_EVIDENCE_CONTRACT,
+    )
 
 
 @router.get("/legal", tags=["Legal"], response_class=HTMLResponse)
 @router.head("/legal", tags=["Legal"])
 async def legal_page():
-    if LEGAL_HTML_PATH.exists():
-        with open(LEGAL_HTML_PATH, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Legal Notice</h1><p>Synapse-Mesh Operator - mesh-direct@synapsemesh.dev</p>")
+    """English legal notice pursuant to § 5 DDG / § 18 MStV."""
+    return _render_public_template(
+        "legal.html",
+        "<h1>Legal Notice</h1><p>Synapse-Mesh Operator — mesh-direct [at] synapsemesh.dev</p>",
+        active_page="legal",
+    )
 
 
 @router.get("/privacy", tags=["Legal"], response_class=HTMLResponse)
 @router.head("/privacy", tags=["Legal"])
 async def privacy_page():
-    if PRIVACY_HTML_PATH.exists():
-        with open(PRIVACY_HTML_PATH, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Privacy Policy</h1><p>Zero-PII Architecture.</p>")
+    """English privacy policy pursuant to Art. 13/14 GDPR."""
+    return _render_public_template(
+        "privacy.html",
+        "<h1>Privacy Policy</h1><p>Data-minimizing architecture.</p>",
+        active_page="privacy",
+    )
 
 
 @router.get("/", tags=["System"])
@@ -184,10 +196,35 @@ async def root(request: Request, format: Optional[str] = Query(None)):
     # Return JSON ONLY if explicitly asked via query param ?format=json or pure Accept: application/json without text/html
     if format == "json" or ("application/json" in accept and "text/html" not in accept and "*/*" not in accept):
         return {
-            "message": "Welcome to Synapse-Mesh (Project Exocortex) - Verified Compatibility Layer for AI Agents",
+            "message": "Welcome to Synapse-Mesh (Project Exocortex) - Evidence-First Compatibility Registry for Software Agents",
             "axiom": "Synapse does not try to be known by AIs. Synapse is built so that AIs can discover, understand, and immediately execute it as a tool.",
             "protocolVersion": settings.mcp_protocol_version,
             "version": settings.app_version,
+            "registry": {
+                "source": "curated-bundle-files",
+                "bundleCount": len(load_all_golden_bundles()),
+                "evidenceQualifiedCount": sum(
+                    1 for bundle in load_all_golden_bundles() if bundle.get("status") == "VERIFIED"
+                ),
+                "legacySqliteVerifiedClaimsIncluded": False,
+            },
+            "executionPolicy": {
+                "publicSubmissionsStoredAs": "DRAFT",
+                "publicSubmissionCodeExecuted": False,
+                "localReverificationRequiresExplicitExecution": True,
+            },
+            "autonomousMaintenance": {
+                "scheduledDiscovery": settings.autonomous_mining_enabled,
+                "requiresLlm": False,
+                "selfModifiesApplicationCode": False,
+                "selfPromotesGoldenEvidence": False,
+            },
+            "matchSemantics": {
+                "VERIFIED_MATCH": "valid run-bound artifact and exact supplied version equals the observed release; reproduce before applying",
+                "UNVERIFIED_MATCH": "no exact-version run evidence applies, including missing or ambiguous target versions; reproduce every stage before considering",
+                "VERSION_MISMATCH": "outside declared affected range; do not apply",
+                "NO_VERIFIED_MATCH": "no deterministic curated match; do not apply",
+            },
             "discovery": {
                 "mcp": "/.well-known/mcp.json",
                 "agent": "/.well-known/agent.json",
@@ -206,70 +243,57 @@ async def root(request: Request, format: Optional[str] = Query(None)):
                 "submit": "/api/v1/recipes/submit",
                 "docs": "/docs",
                 "openapi": "/openapi.json",
-                "impressum": "/impressum",
-                "datenschutz": "/datenschutz"
+                "legalNotice": "/legal",
+                "privacyPolicy": "/privacy"
             }
         }
 
-    # Default to HTML for all browsers and social crawlers (WhatsApp, Telegram, Discord, Facebook, Googlebot, etc.)
-    db = await get_db_connection()
-    try:
-        cursor = await db.execute("SELECT COUNT(*) as total FROM recipes")
-        total_all = (await cursor.fetchone())["total"]
+    # The public registry is deliberately sourced only from the curated,
+    # read-only bundle directory. Historical SQLite recipe labels are not
+    # evidence and must never be promoted into the homepage by a DB query.
+    items = []
+    curated_runtime = {}
+    for bundle in sorted(load_all_golden_bundles(), key=lambda b: str(b.get("bundleId", ""))):
+        bundle_id = str(bundle.get("bundleId", ""))
+        if not bundle_id:
+            continue
+        scope = bundle.get("scope") or {}
+        fingerprint = bundle.get("fingerprint") or {}
+        patch = bundle.get("patch") or {}
+        runtime = str(scope.get("runtime") or "unknown").lower()
+        runtime = "nodejs" if runtime in ("javascript", "typescript") else runtime
+        curated_runtime[runtime] = curated_runtime.get(runtime, 0) + 1
+        evidence_qualified = bundle.get("status") == "VERIFIED"
+        items.append({
+            "id": bundle_id,
+            "isGolden": True,
+            "isEvidenceQualified": evidence_qualified,
+            "runtime": runtime,
+            "errorSignature": fingerprint.get("errorSignature") or bundle_id,
+            "summary": bundle.get("description") or "",
+            "diff": patch.get("unifiedDiff") or "",
+            "pins": patch.get("pinnedDependencies") or {},
+            "doNot": patch.get("doNot") or [],
+            "status": bundle.get("status") or "UNVERIFIED",
+            "reverify": "synapse reverify " + bundle_id,
+            "detailUrl": None,
+        })
 
-        cursor = await db.execute("""
-            SELECT id, runtime, error_signature, problem_json, solution_json, evidence_json 
-            FROM recipes 
-            WHERE verification_status = 'VERIFIED' 
-            ORDER BY updated_at DESC
-        """)
-        rows = await cursor.fetchall()
-        total_verified = len(rows)
+    curated_count = len(items)
+    evidence_count = sum(1 for item in items if item["isEvidenceQualified"])
 
-        by_runtime = {}
-        items = []
-        for r in rows:
-            prob = json.loads(r["problem_json"]) if r["problem_json"] else {}
-            sol = json.loads(r["solution_json"]) if r["solution_json"] else {}
-            rt = (prob.get("runtime") or r["runtime"] or "python").lower()
-            normalized_rt = "nodejs" if rt in ("javascript", "typescript") else rt
-            by_runtime[normalized_rt] = by_runtime.get(normalized_rt, 0) + 1
-            is_golden = r["id"].startswith("bundle_")
-            items.append({
-                "id": r["id"],
-                "isGolden": is_golden,
-                "runtime": normalized_rt,
-                "errorSignature": prob.get("errorSignature") or r["error_signature"] or r["id"],
-                "summary": sol.get("summary", ""),
-                "diff": sol.get("codeDiff") or sol.get("patchDiff", ""),
-                "pins": sol.get("pinnedDependencies") or prob.get("packages", {}),
-                "doNot": sol.get("doNot", []),
-                "status": "VERIFIED",
-                "reverify": "synapse reverify " + r["id"],
-                "detailUrl": None if is_golden else ("/recipes/" + r["id"])
-            })
-        
-        ratio = round((total_verified / total_all * 100)) if total_all > 0 else 97
-    except Exception:
-        total_all = 111
-        total_verified = 108
-        by_runtime = {"python": 69, "nodejs": 36, "docker": 3}
-        ratio = 97
-        items = []
-    finally:
-        await db.close()
-
-    from jinja2 import Environment, FileSystemLoader
-    jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=True)
     if INDEX_HTML_PATH.exists():
-        template = jinja_env.get_template("index.html")
+        template = PUBLIC_TEMPLATE_ENV.get_template("index.html")
         html_content = template.render(
-            total_verified=total_verified,
-            total_all=total_all,
-            pass_rate=f"{ratio}%",
-            count_python=by_runtime.get("python", 69),
-            count_nodejs=by_runtime.get("nodejs", 36),
-            count_docker=by_runtime.get("docker", 3),
+            active_page="search",
+            canonical_mcp_url=settings.canonical_mcp_url,
+            verification_profile=VERIFIED_EVIDENCE_CONTRACT,
+            total_verified=evidence_count,
+            total_all=curated_count,
+            pass_rate="NOT EXPOSED",
+            count_python=curated_runtime.get("python", 0),
+            count_nodejs=curated_runtime.get("nodejs", 0),
+            count_docker=curated_runtime.get("docker", 0),
             initial_data_json=json.dumps(items).replace("<", "\\u003c")
         )
         return HTMLResponse(content=html_content)

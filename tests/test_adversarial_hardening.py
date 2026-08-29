@@ -1,5 +1,6 @@
 import asyncio
 import os
+import signal
 import sys
 import time
 import pytest
@@ -58,7 +59,7 @@ for _ in range(2000):
 
 
 @pytest.mark.asyncio
-async def test_sse_backpressure_and_slow_consumer_eviction():
+async def test_sse_backpressure_and_slow_consumer_eviction(monkeypatch):
     """
     Priority 4 Test: Ensures that when a slow/stalled consumer fills the SSE queue
     beyond capacity (100 messages), the server drops the session with HTTP 429
@@ -75,8 +76,18 @@ async def test_sse_backpressure_and_slow_consumer_eviction():
     # Prepare simulated incoming request
     class MockRequest:
         headers = {"content-type": "application/json"}
-        async def json(self):
-            return {"jsonrpc": "2.0", "id": 1, "method": "ping"}
+
+        async def stream(self):
+            yield b'{"jsonrpc":"2.0","id":1,"method":"ping"}'
+
+    dispatched = False
+
+    async def should_not_dispatch(_request):
+        nonlocal dispatched
+        dispatched = True
+        return {"jsonrpc": "2.0", "id": 1, "result": {}}
+
+    monkeypatch.setattr("app.mcp.server._dispatch_bounded_post", should_not_dispatch)
 
     # Attempt to push 11th message into full queue -> should evict session
     with pytest.raises(Exception) as exc_info:
@@ -85,6 +96,7 @@ async def test_sse_backpressure_and_slow_consumer_eviction():
     # Session must be completely evicted from sse_sessions dictionary
     assert session_id not in sse_sessions
     assert exc_info.value.status_code == 429
+    assert dispatched is False
 
 
 @pytest.mark.asyncio
@@ -178,11 +190,17 @@ for _ in range(500):
 
 
 @pytest.mark.asyncio
-async def test_memory_bomb_isolation():
+async def test_memory_bomb_does_not_complete_allocation():
     """
-    Security Gate 3: Verifies that excessive memory allocation inside sandbox fails
-    cleanly (MemoryError / RLIMIT_AS) without bringing down host or container.
+    Characterises how the trusted process runner handles excessive allocation.
+
+    A direct POSIX signal exit is negative in asyncio (for example ``-9`` for
+    SIGKILL), while a shell wrapper may expose the same outcome as ``137``.
+    This is not an isolation attestation.
     """
+    if not sys.platform.startswith("linux"):
+        pytest.skip("the per-process RLIMIT_AS gate is Linux-specific")
+
     mem_bomb_script = """
 # Attempt to allocate 4 Gigabytes
 x = []
@@ -198,8 +216,22 @@ except (MemoryError, OverflowError):
         entrypoint="mem_bomb.py",
         runtime="python"
     )
-    # The sandbox must not freeze or crash the host
-    assert res["exitCode"] in (0, -1, 1, 137, 134)
+    assert "ALLOC_FINISHED" not in res["stdout"]
+    caught = (
+        res["exitCode"] == 0
+        and "ALLOC_CAUGHT_MEMORY_ERROR" in res["stdout"]
+    )
+    terminated = res["exitCode"] in {
+        -signal.SIGKILL,
+        -signal.SIGABRT,
+        128 + signal.SIGKILL,
+        128 + signal.SIGABRT,
+    }
+    timed_out = (
+        res["exitCode"] == -1
+        and "timed out" in res["stderr"].lower()
+    )
+    assert caught or terminated or timed_out
 
 
 @pytest.mark.asyncio
@@ -235,4 +267,3 @@ time.sleep(600)
 
     assert not res["passed"]
     assert duration < 15.0
-
